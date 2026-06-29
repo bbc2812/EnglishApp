@@ -36,11 +36,14 @@ Key tables: `words`, `flashcards` (SRS state), `units`, `lessons`, `exercises`, 
 
 ### AI provider abstraction
 
-`src/lib/ai/index.ts` defines an `AIProvider` interface (`chat`, `isAvailable`). Two implementations:
-- `ClaudeProvider` (`src/lib/ai/claude.ts`) — uses `@anthropic-ai/sdk`, requires API key in `settingsStore`
+`src/lib/ai/index.ts` defines an `AIProvider` interface (`chat`, `isAvailable`). Three implementations:
+- `ClaudeProvider` (`src/lib/ai/claude.ts`) — uses `@anthropic-ai/sdk`, requires paid API key from console.anthropic.com
+- `GeminiProvider` (`src/lib/ai/gemini.ts`) — uses `@google/generative-ai`, **free tier** via aistudio.google.com
 - `OllamaProvider` (`src/lib/ai/ollama.ts`) — HTTP fetch to `localhost:11434/api/chat`, fully offline
 
-The active provider is selected in Settings and stored in `settingsStore`. All AI calls go through the `useAI` hook which picks the provider transparently.
+> Note: Claude Pro (claude.ai subscription) does NOT provide API access. API keys are separate.
+
+The active provider (`claude` | `gemini` | `ollama`) is stored in `settingsStore`. All AI calls in the renderer go through `window.api.ai.chat(provider, messages, system, options)` via IPC — the actual SDK calls happen in `electron/handlers/ai.ts` in the main process.
 
 ### SRS (Spaced Repetition)
 

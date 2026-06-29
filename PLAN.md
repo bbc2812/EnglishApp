@@ -19,7 +19,8 @@ Build a comprehensive offline-capable Electron desktop app for a Vietnamese-spea
 | Audio playback | Howler.js | Cross-platform audio |
 | Waveform | WaveSurfer.js | Waveform vis for shadowing |
 | Animations | Framer Motion | Roadmap path animations |
-| AI (cloud) | @anthropic-ai/sdk (Claude) | Best reasoning/tutor |
+| AI (cloud) | @anthropic-ai/sdk (Claude API) | Best reasoning/tutor — needs API key from console.anthropic.com |
+| AI (free cloud) | @google/generative-ai (Gemini) | Free tier via Google AI Studio — no credit card needed |
 | AI (local) | Ollama HTTP (localhost:11434) | Fully offline fallback |
 | Dictionary | Free Dictionary API + local cache | IPA + audio, no auth needed |
 
@@ -32,17 +33,20 @@ EnglishApp/
 ├── electron/
 │   ├── main.ts                 # App window, lifecycle
 │   ├── preload.ts              # contextBridge IPC exposure
+│   ├── db/
+│   │   └── migrate.ts          # Schema + seed (runs on startup)
 │   └── handlers/
-│       ├── ai.ts               # Claude + Ollama IPC handlers
+│       ├── ai.ts               # Claude + Gemini + Ollama IPC handlers
 │       ├── db.ts               # SQLite IPC handlers
-│       ├── audio.ts            # File-based audio IPC
-│       └── content.ts          # HTTP content fetching (VOA/BBC)
+│       └── content.ts          # HTTP content fetching (RSS, dictionary, translation)
 ├── src/
 │   ├── main.tsx
 │   ├── App.tsx
+│   ├── env.d.ts                # window.api type declarations
+│   ├── index.css               # Tailwind base + custom components
 │   ├── pages/
 │   │   ├── Dashboard.tsx       # Roadmap + daily stats
-│   │   ├── Flashcards.tsx      # SRS review session
+│   │   ├── Flashcards.tsx      # SRS review session ✅ DONE
 │   │   ├── Shadowing.tsx       # Listen + record + compare
 │   │   ├── Listening.tsx       # Audio + comprehension Qs
 │   │   ├── Reading.tsx         # Article + click-to-define
@@ -53,56 +57,71 @@ EnglishApp/
 │   │   ├── AITutor.tsx         # Chat interface
 │   │   └── Settings.tsx        # API keys, provider toggle, daily limits
 │   ├── components/
+│   │   ├── Layout/Sidebar.tsx  # App sidebar navigation ✅ DONE
+│   │   ├── DictionaryPopup/    # Click-any-word overlay ✅ DONE
 │   │   ├── Roadmap/            # SVG path + unit nodes
-│   │   ├── FlashCard/          # Card flip, IPA, audio, rating buttons
 │   │   ├── AudioPlayer/        # Speed control, progress bar
 │   │   ├── Recorder/           # MediaRecorder, waveform
-│   │   ├── DictionaryPopup/    # Click-any-word overlay (Pronounce/EN-EN/EN-VN tabs)
 │   │   └── ChatMessage/        # AI tutor message bubbles
 │   ├── hooks/
 │   │   ├── useAI.ts            # Provider-agnostic AI hook
-│   │   ├── useSRS.ts           # FSRS scheduling hook
+│   │   ├── useSRS.ts           # FSRS scheduling hook ✅ DONE
 │   │   ├── useAudio.ts         # Howler playback hook
-│   │   └── useDictionary.ts    # Dictionary lookup + cache hook
+│   │   └── useDictionary.ts    # Dictionary lookup + cache hook ✅ DONE
 │   ├── store/
-│   │   ├── settingsStore.ts    # API keys, provider, preferences
-│   │   ├── progressStore.ts    # Daily stats, streaks
-│   │   └── sessionStore.ts     # Current flashcard session state
+│   │   ├── settingsStore.ts    # API keys, provider, preferences ✅ DONE
+│   │   ├── progressStore.ts    # Daily stats, streaks ✅ DONE
+│   │   └── sessionStore.ts     # Current flashcard session state ✅ DONE
 │   ├── lib/
-│   │   ├── srs/fsrs.ts         # FSRS-4.5 algorithm implementation
+│   │   ├── srs/fsrs.ts         # FSRS-4.5 algorithm ✅ DONE
 │   │   ├── ai/claude.ts        # Claude API provider
+│   │   ├── ai/gemini.ts        # Gemini provider (free tier)
 │   │   ├── ai/ollama.ts        # Ollama HTTP provider
-│   │   ├── ai/index.ts         # AIProvider interface + factory
-│   │   └── phonetics.ts        # IPA display utilities
-│   └── db/
-│       ├── schema.ts           # Drizzle schema definitions
-│       ├── migrate.ts          # Migration runner
-│       └── queries/            # typed query functions per domain
+│   │   └── ai/index.ts         # AIProvider interface + factory
+│   └── db/                     # (types only — DB runs in main process)
 ├── assets/
 │   └── wordlists/
 │       ├── oxford5000.csv      # Oxford 5000 word list
 │       └── academic.csv        # Academic Word List
 ├── PLAN.md                     # This file
+├── CLAUDE.md                   # Architecture guide for Claude Code
 ├── electron.vite.config.ts
-├── tsconfig.json
+├── tsconfig.json / tsconfig.node.json / tsconfig.web.json
 ├── tailwind.config.ts
 └── package.json
 ```
 
 ---
 
-## Database Schema (SQLite via Drizzle)
+## Build Status
+
+| Phase | Status | Commit |
+|---|---|---|
+| Phase 1+2 — Scaffold + DB schema | ✅ Done | bc3ea1b |
+| Phase 3 — Flashcard engine (FSRS-4.5) | ✅ Done | fe8af27 |
+| Phase 4 — Dictionary popup (EN-EN + EN-VN) | ✅ Done | fe8af27 |
+| Phase 5 — Roadmap + unit unlock | 🔜 Next | — |
+| Phase 6 — Listening & Reading module | ⏳ Pending | — |
+| Phase 6b — Newspaper & Podcast module | ⏳ Pending | — |
+| Phase 7 — Shadowing mode | ⏳ Pending | — |
+| Phase 7b — Writing module | ⏳ Pending | — |
+| Phase 8 — AI Tutor (Claude / Gemini / Ollama) | ⏳ Pending | — |
+| Phase 9 — Settings & polish | ⏳ Pending | — |
+
+---
+
+## Database Schema (SQLite via better-sqlite3)
 
 ```sql
 -- Curriculum
-units          (id, title, cefr_level, order, description, unlocked)
-lessons        (id, unit_id, title, type ENUM(listening|reading|speaking|writing), content_url, transcript, locked)
-exercises      (id, lesson_id, question, options JSON, answer, type ENUM(mcq|fill|reorder|dictation|transform|error_detect|free))
+units          (id, title, cefr_level, unit_order, description, unlocked)
+lessons        (id, unit_id, title, type, content_url, transcript, locked)
+exercises      (id, lesson_id, question, options JSON, answer, type)
 
 -- Vocabulary & SRS
 words          (id, word, ipa, audio_url, definition, pos, examples JSON, level, unit_id)
 flashcards     (id, word_id, due_date, stability, difficulty, elapsed_days, scheduled_days,
-                reps, lapses, state ENUM(new|learning|review|relearning), last_review)
+                reps, lapses, state, last_review)
 
 -- Progress
 lesson_progress  (id, lesson_id, completed_at, score)
@@ -115,7 +134,7 @@ saved_articles  (id, url, title, source, level, content, saved_at)
 saved_podcasts  (id, url, title, source, duration, transcript JSON, saved_at)
 
 -- AI
-conversations   (id, type ENUM(tutor|pronunciation|speaking|writing), provider, messages JSON, created_at)
+conversations   (id, type, provider, messages JSON, created_at)
 writing_history (id, prompt, content, ai_feedback JSON, score, created_at)
 
 -- Cache
@@ -123,245 +142,174 @@ dictionary_cache  (word TEXT PK, data JSON, fetched_at)
 translation_cache (word TEXT PK, translation TEXT, fetched_at)
 ```
 
+All 16 tables created via `electron/db/migrate.ts` which runs on every app startup (idempotent `CREATE TABLE IF NOT EXISTS`). 12 CEFR units are seeded with `INSERT OR IGNORE`.
+
 ---
 
 ## FSRS-4.5 Algorithm
 
-Implement `src/lib/srs/fsrs.ts` with:
-- `schedule(card, rating, now)` → returns updated card with new `due_date`, `stability`, `difficulty`
+Implemented in `src/lib/srs/fsrs.ts`:
+- `schedule(card, rating)` → returns updated card with new `due_date`, `stability`, `difficulty`
 - Ratings: `Again=1`, `Hard=2`, `Good=3`, `Easy=4`
-- Use the published FSRS-4.5 parameters (w0–w19)
+- Uses published FSRS-4.5 w0–w18 default parameters
 - Daily queue: `SELECT * FROM flashcards WHERE due_date <= today ORDER BY due_date LIMIT ?`
 
 ---
 
-## AI Provider Abstraction (`src/lib/ai/index.ts`)
+## AI Provider Abstraction
+
+Three providers, all routed through `electron/handlers/ai.ts` via IPC:
 
 ```typescript
-interface AIProvider {
-  chat(messages: Message[], system?: string): Promise<string>
-  isAvailable(): Promise<boolean>
-}
-class ClaudeProvider implements AIProvider  // uses @anthropic-ai/sdk
-class OllamaProvider implements AIProvider  // uses fetch to localhost:11434/api/chat
+// Provider selection in settingsStore
+type AiProvider = 'claude' | 'gemini' | 'ollama'
 ```
 
-Settings page lets user: enter Claude API key, choose Ollama model (llama3.2, mistral, etc.), set default provider.
+| Provider | Package | Key source | Cost |
+|---|---|---|---|
+| Claude | `@anthropic-ai/sdk` | console.anthropic.com | Paid per token |
+| Gemini | `@google/generative-ai` | aistudio.google.com | **Free tier available** |
+| Ollama | HTTP fetch | localhost:11434 | Free (local) |
 
-**AI Tutor system prompt** (saved in `settingsStore`):
+> **Note:** Claude Pro (claude.ai subscription) does NOT give API access. The app requires a separate API key from console.anthropic.com. Use Gemini for a free cloud option.
+
+**AI Tutor system prompt:**
 ```
 You are an expert English tutor for a Vietnamese speaker at B1/B2 level aiming for C1/C2.
 Correct grammar mistakes inline using [correction] format. Explain WHY each correction matters.
-When the user asks about vocabulary, provide: definition, IPA, 3 example sentences, common collocations,
-and note any Vietnamese false friends or tricky points. Keep responses concise and encouraging.
+When the user asks about vocabulary, provide: definition, IPA, 3 example sentences, common
+collocations, and note any Vietnamese false friends or tricky points. Be concise and encouraging.
 ```
 
 ---
 
 ## Roadmap System
 
-- 12 units: Units 1-4 (B1→B2), Units 5-8 (B2→C1), Units 9-12 (C1→C2)
-- Unit 1 unlocked by default; unlock next when `lesson_progress` shows ≥80% of current unit lessons complete
-- Dashboard renders SVG path connecting unit node circles (Framer Motion for "path drawing" animation)
-- Each unit node shows: title, lock icon (if locked), completion % ring
+- 12 units: 1-4 (B1→B2), 5-8 (B2→C1), 9-12 (C1→C2)
+- Unit 1 unlocked by default; unlock next when `lesson_progress` shows ≥80% of current unit lessons done
+- Dashboard renders SVG curved path connecting 12 unit node circles
+- Framer Motion animates the path drawing on first render
+- Each node shows: title, CEFR badge, lock icon (if locked), completion % ring
 
 ---
 
-## Content Sources (all free, fetched at runtime)
+## Content Sources (all free)
 
-| Source | Usage | How |
+| Source | Usage | Method |
 |---|---|---|
-| Free Dictionary API (`api.dictionaryapi.dev/api/v2/entries/en/{word}`) | EN-EN IPA, audio, definitions | HTTP GET, cache in SQLite |
-| MyMemory / LibreTranslate | EN→VN translation | HTTP GET, cache in SQLite |
-| VOA Learning English (`learningenglish.voanews.com`) | Listening + reading articles | RSS feed → parse articles |
-| BBC Learning English (`bbc.co.uk/learningenglish`) | Structured lessons + audio | HTTP scrape or RSS |
-| The Guardian API (free tier) | Real newspaper articles (C1/C2) | API key-less RSS |
-| NPR News (`npr.org/rss`) | Podcast transcripts + audio | RSS + audio URL |
-| 6 Minute English (BBC) | Podcast with transcript | RSS |
-| TED Talks (scrape `ted.com/talks`) | Advanced listening | HTTP + transcript |
-| Oxford 5000 list | Vocabulary curriculum | Bundled CSV in `assets/wordlists/` |
+| Free Dictionary API (`api.dictionaryapi.dev`) | EN-EN IPA, audio, definitions | HTTP GET, SQLite cache |
+| MyMemory API | EN→VN translation | HTTP GET, SQLite cache |
+| VOA Learning English | Listening + reading articles | RSS feed |
+| BBC Learning English | Structured lessons + audio | RSS / HTTP |
+| The Guardian | Real newspaper articles (C1/C2) | RSS |
+| NPR News | Podcast transcripts + audio | RSS |
+| BBC 6 Minute English | Podcast with transcript | RSS |
+| TED Talks | Advanced listening | HTTP + transcript |
+| Oxford 5000 list | Vocabulary curriculum | Bundled CSV |
 | Academic Word List | Advanced vocab (C1/C2) | Bundled CSV |
-| YouTube via yt-dlp (optional) | Shadowing audio | User pastes URL, yt-dlp extracts audio |
 
-**Click-to-define & translate popup** triggered by `mouseup` on any text → `window.getSelection()` → show popover with tabs:
-- **Pronounce**: play audio + IPA phonetic display
-- **EN-EN**: English definition + examples (Free Dictionary API)
-- **EN-VN**: Vietnamese translation (MyMemory API, cached)
-- **Add to flashcard** button
+**Click-to-define popup** (`src/components/DictionaryPopup/`) — global `mouseup` listener → 3 tabs:
+- **Pronounce**: IPA + audio playback
+- **EN-EN**: definition + examples
+- **EN-VN**: Vietnamese translation (cached)
+- **Add to Flashcards** button
 
 ---
 
 ## Writing Skill Module
 
-A dedicated **Writing** page with:
-- **Daily Writing Prompts**: AI generates topic (essay, email, opinion, IELTS Task 2 style) matched to unit level
-- **Grammar Checker**: User writes → AI analyzes → inline corrections with explanations (color-coded: red=error, yellow=suggestion, green=good)
-- **Common Vietnamese→English Error Counter**: persistent sidebar listing the top 10 grammar mistakes the user makes, with "avoid this" reminders (e.g., article usage, subject-verb agreement, verb tense)
-- **Model Answer**: after user submits, AI shows a C1/C2 model answer for comparison
-- **Writing History**: saved in SQLite, user can review past essays and see improvement
+- Daily AI-generated writing prompts (essay / email / opinion / IELTS Task 2)
+- Grammar checker: inline color-coded corrections (red=error, yellow=suggestion, green=good)
+- Vietnamese→English mistake tracker: top 10 recurring errors in `grammar_mistakes` table
+- Model answer shown after submission
+- Writing history browser (all past essays in SQLite)
 
-Writing exercises per unit:
-- Sentence transformation (passive→active, direct→reported speech)
-- Error correction drills (spot and fix 5 mistakes in a paragraph)
-- Cloze tests (fill missing grammar words)
-- Free writing (timed: 150 words in 10 minutes)
+Exercise types: sentence transformation, error detection drills, cloze tests, timed free writing.
 
 ---
 
 ## Newspaper & Podcast Module
 
-### Newspaper Feed (`/News` page)
-- Aggregates articles from: The Guardian RSS, VOA News, BBC News
-- Filter by difficulty level (AI tags each article B1/B2/C1/C2 based on vocabulary density)
-- Reader view: clean article display with click-to-define on every word
-- Highlight unknown words (cross-reference against user's flashcard deck)
-- "Save to reading list" + "Add all highlighted words to flashcards" bulk action
+**News page:** Guardian + VOA + BBC RSS → article list with AI-assigned level badges. Reader view with click-to-define. Unknown word highlighting. Bulk "Add to Flashcards".
 
-### Podcast Feed (`/Podcasts` page)
-- Sources: VOA Learning English, BBC 6 Minute English, NPR, TED Talks
-- Episode list with: title, duration, level badge, transcript availability flag
-- In-app podcast player: speed control (0.5x–2x), 10s rewind button
-- Transcript panel (side-by-side or below player) — synced highlighting as audio plays
-- Sentence-level repeat: click any transcript sentence → jumps to that timestamp + loops it
-- "Shadow this sentence" button: opens shadowing mode for that single sentence
+**Podcasts page:** VOA + BBC 6min + NPR + TED → episode list + in-app player. Speed control (0.5x–2x), 10s rewind. Transcript panel with sync highlighting. Sentence-level loop + "Shadow this sentence" shortcut.
 
 ---
 
-## Shadowing Mode Flow
+## Exercises (10 types)
 
-1. Display sentence text + play native audio (from lesson transcript + audio file)
-2. User clicks "Record" → `MediaRecorder` captures mic audio
-3. WaveSurfer.js shows both waveforms (native vs user) side by side
-4. Option A (offline): visual waveform comparison only + speed metrics
-5. Option B (AI): send user audio transcript to AI provider for pronunciation/rhythm feedback
-6. "Try again" button loops the exercise
-
----
-
-## Exercises (per lesson, per unit)
-
-Each unit includes multiple exercise types to maximize interaction:
-
-| Exercise Type | Module | Description |
-|---|---|---|
-| Multiple choice comprehension | Listening/Reading | 5 questions after each article/audio |
-| Fill-in-the-blank cloze | Reading/Writing | Remove key words, user fills them |
-| Sentence reordering | Grammar | Drag words into correct order |
-| Error detection drill | Writing | Find the 3 grammar mistakes in this text |
-| Dictation | Listening | Audio plays, user types what they hear |
-| Sentence transformation | Grammar | Rewrite keeping the same meaning |
-| Word form exercise | Vocabulary | noun→verb→adjective→adverb chains |
-| Collocation matching | Vocabulary | Match verb + noun pairs (make/do, etc.) |
-| Speaking prompt | Speaking | AI gives topic, user records 60s response, AI evaluates |
-| Debate/Opinion | Speaking | AI takes opposite position, user must respond |
-
-Exercises are stored in the `exercises` table, linked to `lessons`. Each completed exercise contributes to `unit_progress`.
+| Type | Module |
+|---|---|
+| Multiple choice comprehension | Listening/Reading |
+| Fill-in-the-blank cloze | Reading/Writing |
+| Sentence reordering (drag) | Grammar |
+| Error detection drill | Writing |
+| Dictation | Listening |
+| Sentence transformation | Grammar |
+| Word form chains (noun/verb/adj/adv) | Vocabulary |
+| Collocation matching | Vocabulary |
+| Speaking prompt (60s record + AI eval) | Speaking |
+| Debate/Opinion (AI takes opposite side) | Speaking |
 
 ---
 
-## Implementation Phases
+## Remaining Implementation Phases
 
-### Phase 1 — Scaffold (Day 1)
-- `npm create @quick-start/electron@latest EnglishApp -- --template react-ts`
-- Add Tailwind, shadcn/ui, React Router, Zustand, drizzle-orm, better-sqlite3
-- Set up electron-vite config, TypeScript strict mode
-- Create IPC bridge in preload.ts (expose `window.electron.ai`, `window.electron.db`)
-- Basic shell layout: sidebar nav (Dashboard, Flashcards, Shadowing, Listening, Reading, Speaking, Writing, News, Podcasts, AI Tutor, Settings)
+### Phase 5 — Roadmap + Units (next)
+- `src/pages/Dashboard.tsx`: SVG roadmap with 12 nodes on a curved path
+- Unit unlock check: query `lesson_progress`, if ≥80% complete → `UPDATE units SET unlocked=1`
+- Framer Motion path-drawing animation on mount
+- Unit node click → lesson list view
 
-### Phase 2 — Database & Schema (Day 1-2)
-- Write Drizzle schema in `src/db/schema.ts`
-- Migration runner on app startup
-- Seed Oxford 5000 CSV into `words` table
-- Create 12 units + sample lessons (3 per unit)
+### Phase 6 — Listening & Reading Module
+- `src/pages/Listening.tsx` + `src/pages/Reading.tsx`
+- VOA/BBC RSS parsed in `electron/handlers/content.ts` (fetchRss already implemented)
+- Howler.js audio player: speed control, 10s rewind, progress bar
+- Transcript sync highlighting + click-to-define
+- Exercise UI: MCQ, fill-in-blank, dictation, sentence reorder
+- On completion → write `lesson_progress` → trigger unit unlock check
 
-### Phase 3 — Flashcard Engine (Day 2-4)
-- Implement FSRS-4.5 in `src/lib/srs/fsrs.ts`
-- Flashcard review UI: card flip animation, IPA display, audio play button, rating buttons
-- Daily session: fetch due cards, run FSRS on each rating, update DB
-- Progress bar for session, "Well done!" screen at end
+### Phase 6b — Newspaper & Podcast Module
+- `src/pages/News.tsx`: RSS aggregator + article reader
+- `src/pages/Podcasts.tsx`: episode browser + player with transcript sync
+- "Shadow this sentence" → navigates to `/shadowing` with prefilled sentence
 
-### Phase 4 — Dictionary Integration (Day 3-4)
-- `useDictionary` hook: check SQLite cache → fetch Free Dictionary API → cache result
-- `DictionaryPopup` component: Pronounce / EN-EN / EN-VN tabs, "Add to flashcards" button
-- Register `mouseup` listener on `document` for click-to-define in any page
-- MyMemory API integration for EN→VN translation (cached in SQLite)
+### Phase 7 — Shadowing Mode
+- `src/pages/Shadowing.tsx`: MediaRecorder + WaveSurfer.js dual waveform
+- Loop: play → record → compare → rate → next sentence
+- Optional AI pronunciation feedback
 
-### Phase 5 — Roadmap & Units (Day 4-5)
-- Dashboard SVG roadmap component
-- Unit unlock logic (trigger on lesson completion)
-- Unit detail page: list of lessons with completion badges
+### Phase 7b — Writing Module
+- `src/pages/Writing.tsx`: timed essay UI + AI grammar analysis
+- `grammar_mistakes` table: upsert on each AI correction
+- Grammar drills: error detect, sentence transform, cloze
 
-### Phase 6 — Listening & Reading Module (Day 5-7)
-- VOA + BBC RSS parser in `electron/handlers/content.ts`
-- Audio player with Howler.js + speed control + 10s rewind
-- Full exercise suite: MCQ, fill-in-blank, dictation, sentence reordering
-- Transcript reveal with click-to-define + click-to-translate (EN-EN + EN-VN tabs)
-- Transcript sync highlighting (word highlights as audio plays)
+### Phase 8 — AI Tutor + Gemini support
+- `src/pages/AITutor.tsx`: full chat UI with provider toggle
+- Add `chatWithGemini()` to `electron/handlers/ai.ts` using `@google/generative-ai`
+- Add `geminiApiKey` field to `settingsStore`
+- Conversation persistence in `conversations` table
 
-### Phase 6b — Newspaper & Podcast Module (Day 7-8)
-- News feed aggregator (Guardian + VOA + BBC RSS)
-- AI level-tagging of articles (B1/B2/C1/C2)
-- Podcast player with transcript sync + sentence-loop feature
-- "Shadow this sentence" quick-launch to shadowing mode
-
-### Phase 7 — Shadowing Mode (Day 8-10)
-- MediaRecorder setup in renderer
-- WaveSurfer.js dual waveform display
-- Session loop: play → record → compare → rate → next
-- AI feedback call (optional, if provider configured)
-
-### Phase 7b — Writing Module (Day 10-11)
-- Writing prompt UI with timer
-- AI grammar analysis → inline color-coded correction display
-- Vietnamese→English common mistake tracker (persisted in SQLite)
-- Grammar drills: error detection, sentence transformation, cloze
-- Writing history browser
-
-### Phase 8 — AI Tutor (Day 11-13)
-- Chat interface (messages list + input)
-- Provider toggle button in chat header
-- System prompt with Vietnamese-speaker tutor persona
-- Grammar correction display: inline `[correction]` highlighting
-- Conversation persistence in SQLite
-
-### Phase 9 — Settings & Polish (Day 13-15)
-- Settings page: API key inputs, provider toggle, daily word limit, Ollama URL config
-- Daily streak tracker + stats on dashboard
-- Onboarding flow (first launch): set level, enter API key (optional)
-- Dark/light mode toggle (Tailwind `dark:` classes)
+### Phase 9 — Settings & Polish
+- `src/pages/Settings.tsx`: Claude key, Gemini key, Ollama URL/model, daily word limit
+- Dashboard: live daily stats + streak counter
+- Onboarding modal on first launch
 
 ---
 
-## Navigation (Sidebar)
+## Verification Checklist
 
-- Dashboard (roadmap + daily stats + streak)
-- Flashcards (SRS review)
-- Listening (lessons + exercises)
-- Reading (articles + exercises)
-- Shadowing (pronunciation practice)
-- Speaking (AI conversation + opinion prompts)
-- Writing (essays + grammar drills)
-- News (newspaper feed)
-- Podcasts (episode browser + player)
-- AI Tutor (free chat)
-- Settings (API keys, preferences)
-
----
-
-## Verification Plan
-
-1. `npm run dev` → app opens, all sidebar pages navigate correctly
-2. Seed database → flashcard session shows cards with IPA + audio button
+1. `npm run dev` → app opens, all 11 sidebar pages load
+2. Flashcard session → cards show IPA + audio, FSRS updates on rating
 3. Click any word → popup shows Pronounce / EN-EN / EN-VN tabs
-4. Complete a lesson → unit progress updates → next unit unlocks on roadmap
-5. News feed → loads articles with level badges, click-to-translate works
-6. Podcast player → transcript syncs with audio, sentence loop works
-7. Writing page → submit essay → AI returns inline color-coded corrections
+4. Complete a lesson → unit unlocks on roadmap
+5. News feed → articles load with level badges
+6. Podcast player → transcript syncs, sentence loop works
+7. Writing page → AI returns inline color-coded corrections
 8. Grammar mistake counter increments on repeated errors
-9. AI Tutor: send a grammar error → Claude corrects inline
-10. Toggle to Ollama → same chat routes to local model
-11. Shadowing: play sentence audio, record, see dual waveforms
-12. Settings: enter/remove API key → AI features gracefully enable/disable
+9. AI Tutor → Claude, Gemini, Ollama all respond correctly
+10. Shadowing → dual waveforms displayed after recording
+11. Settings → API keys save and AI features enable/disable gracefully
 
 ---
 
@@ -374,9 +322,10 @@ Exercises are stored in the `exercises` table, linked to `lessons`. Each complet
   "react": "^18",
   "react-router-dom": "^6",
   "zustand": "^4",
-  "better-sqlite3": "^9",
-  "drizzle-orm": "^0.30",
-  "@anthropic-ai/sdk": "^0.24",
+  "better-sqlite3": "^11",
+  "drizzle-orm": "^0.31",
+  "@anthropic-ai/sdk": "^0.27",
+  "@google/generative-ai": "^0.21",
   "tailwindcss": "^3",
   "@headlessui/react": "^2",
   "howler": "^2",
@@ -387,4 +336,13 @@ Exercises are stored in the `exercises` table, linked to `lessons`. Each complet
   "cheerio": "^1",
   "dompurify": "^3"
 }
+```
+
+## Resume Trigger
+
+To continue in a new session: **"Continue building WiseRain — start Phase 5 (Roadmap)"**
+
+Node.js setup required in WSL before any npm commands:
+```bash
+export NVM_DIR="$HOME/.nvm" && \. "$NVM_DIR/nvm.sh"
 ```
