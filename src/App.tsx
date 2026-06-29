@@ -1,5 +1,6 @@
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Sidebar from './components/Layout/Sidebar'
+import DictionaryPopup from './components/DictionaryPopup'
 import Dashboard from './pages/Dashboard'
 import Flashcards from './pages/Flashcards'
 import Listening from './pages/Listening'
@@ -17,6 +18,7 @@ export default function App(): JSX.Element {
     <HashRouter>
       <div className="flex h-screen overflow-hidden">
         <Sidebar />
+        <DictionaryPopup />
         <main className="flex-1 overflow-y-auto bg-gray-950">
           <Routes>
             <Route path="/" element={<Dashboard />} />
