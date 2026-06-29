@@ -8,6 +8,11 @@ node_modules/
 dist/
 dist-electron/
 release/
+out/
+
+# Lock files (keep package-lock.json, exclude yarn/pnpm)
+yarn.lock
+pnpm-lock.yaml
 
 # Environment
 .env
