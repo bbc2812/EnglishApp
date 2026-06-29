@@ -3,6 +3,8 @@
 ## Context
 Build a comprehensive offline-capable Electron desktop app for a Vietnamese-speaking user at B1/B2 level targeting C1/C2 fluency in 3 months. The app combines structured CEFR-aligned curriculum, spaced repetition vocabulary, pronunciation shadowing, listening/reading exercises, and an AI tutor — all in a single local desktop app with no mandatory internet requirement (AI features are optional online).
 
+Inspired by best features from: **Memrise, ELSA, MediaDict, TedDict, eJoy, 4English, LingoLand, Blinkist**.
+
 ---
 
 ## Tech Stack
@@ -26,73 +28,6 @@ Build a comprehensive offline-capable Electron desktop app for a Vietnamese-spea
 
 ---
 
-## Directory Structure
-
-```
-EnglishApp/
-├── electron/
-│   ├── main.ts                 # App window, lifecycle
-│   ├── preload.ts              # contextBridge IPC exposure
-│   ├── db/
-│   │   └── migrate.ts          # Schema + seed (runs on startup)
-│   └── handlers/
-│       ├── ai.ts               # Claude + Gemini + Ollama IPC handlers
-│       ├── db.ts               # SQLite IPC handlers
-│       └── content.ts          # HTTP content fetching (RSS, dictionary, translation)
-├── src/
-│   ├── main.tsx
-│   ├── App.tsx
-│   ├── env.d.ts                # window.api type declarations
-│   ├── index.css               # Tailwind base + custom components
-│   ├── pages/
-│   │   ├── Dashboard.tsx       # Roadmap + daily stats
-│   │   ├── Flashcards.tsx      # SRS review session ✅ DONE
-│   │   ├── Shadowing.tsx       # Listen + record + compare
-│   │   ├── Listening.tsx       # Audio + comprehension Qs
-│   │   ├── Reading.tsx         # Article + click-to-define
-│   │   ├── Speaking.tsx        # AI conversation + opinion prompts
-│   │   ├── Writing.tsx         # Essays + grammar drills
-│   │   ├── News.tsx            # Newspaper feed
-│   │   ├── Podcasts.tsx        # Podcast browser + player
-│   │   ├── AITutor.tsx         # Chat interface
-│   │   └── Settings.tsx        # API keys, provider toggle, daily limits
-│   ├── components/
-│   │   ├── Layout/Sidebar.tsx  # App sidebar navigation ✅ DONE
-│   │   ├── DictionaryPopup/    # Click-any-word overlay ✅ DONE
-│   │   ├── Roadmap/            # SVG path + unit nodes
-│   │   ├── AudioPlayer/        # Speed control, progress bar
-│   │   ├── Recorder/           # MediaRecorder, waveform
-│   │   └── ChatMessage/        # AI tutor message bubbles
-│   ├── hooks/
-│   │   ├── useAI.ts            # Provider-agnostic AI hook
-│   │   ├── useSRS.ts           # FSRS scheduling hook ✅ DONE
-│   │   ├── useAudio.ts         # Howler playback hook
-│   │   └── useDictionary.ts    # Dictionary lookup + cache hook ✅ DONE
-│   ├── store/
-│   │   ├── settingsStore.ts    # API keys, provider, preferences ✅ DONE
-│   │   ├── progressStore.ts    # Daily stats, streaks ✅ DONE
-│   │   └── sessionStore.ts     # Current flashcard session state ✅ DONE
-│   ├── lib/
-│   │   ├── srs/fsrs.ts         # FSRS-4.5 algorithm ✅ DONE
-│   │   ├── ai/claude.ts        # Claude API provider
-│   │   ├── ai/gemini.ts        # Gemini provider (free tier)
-│   │   ├── ai/ollama.ts        # Ollama HTTP provider
-│   │   └── ai/index.ts         # AIProvider interface + factory
-│   └── db/                     # (types only — DB runs in main process)
-├── assets/
-│   └── wordlists/
-│       ├── oxford5000.csv      # Oxford 5000 word list
-│       └── academic.csv        # Academic Word List
-├── PLAN.md                     # This file
-├── CLAUDE.md                   # Architecture guide for Claude Code
-├── electron.vite.config.ts
-├── tsconfig.json / tsconfig.node.json / tsconfig.web.json
-├── tailwind.config.ts
-└── package.json
-```
-
----
-
 ## Build Status
 
 | Phase | Status | Commit |
@@ -102,11 +37,11 @@ EnglishApp/
 | Phase 4 — Dictionary popup (EN-EN + EN-VN) | ✅ Done | fe8af27 |
 | Phase 5 — Roadmap + unit unlock | 🔜 Next | — |
 | Phase 6 — Listening & Reading module | ⏳ Pending | — |
-| Phase 6b — Newspaper & Podcast module | ⏳ Pending | — |
-| Phase 7 — Shadowing mode | ⏳ Pending | — |
-| Phase 7b — Writing module | ⏳ Pending | — |
+| Phase 6b — Newspaper, Podcast & Summaries | ⏳ Pending | — |
+| Phase 7 — Shadowing + Pronunciation scoring (ELSA-style) | ⏳ Pending | — |
+| Phase 7b — Writing module + Vietnamese grammar explanations | ⏳ Pending | — |
 | Phase 8 — AI Tutor (Claude / Gemini / Ollama) | ⏳ Pending | — |
-| Phase 9 — Settings & polish | ⏳ Pending | — |
+| Phase 9 — Settings, XP/Achievements, Daily Challenge, Polish | ⏳ Pending | — |
 
 ---
 
@@ -114,23 +49,41 @@ EnglishApp/
 
 ```sql
 -- Curriculum
-units          (id, title, cefr_level, unit_order, description, unlocked)
+units          (id, title, cefr_level, unit_order, description, unlocked, topic_category)
 lessons        (id, unit_id, title, type, content_url, transcript, locked)
 exercises      (id, lesson_id, question, options JSON, answer, type)
 
 -- Vocabulary & SRS
-words          (id, word, ipa, audio_url, definition, pos, examples JSON, level, unit_id)
+words          (id, word, ipa, audio_url, definition, pos, examples JSON, level, unit_id,
+                source_url, source_sentence, mnemonic)
+                -- source_url/sentence: eJoy-style "word seen in context"
+                -- mnemonic: Memrise-style memory story
 flashcards     (id, word_id, due_date, stability, difficulty, elapsed_days, scheduled_days,
                 reps, lapses, state, last_review)
+
+-- Topical vocabulary sets (4English-style)
+vocab_sets     (id, title, topic, level, description)
+vocab_set_words (id, vocab_set_id, word_id)
 
 -- Progress
 lesson_progress  (id, lesson_id, completed_at, score)
 unit_progress    (id, unit_id, percent_complete, unlocked_at)
-daily_stats      (date TEXT PK, words_reviewed, new_words, listening_mins, speaking_mins, writing_mins, streak)
+daily_stats      (date TEXT PK, words_reviewed, new_words, listening_mins, speaking_mins,
+                  writing_mins, xp_earned, streak)
 grammar_mistakes (id, type, description, count, last_seen)
 
+-- Pronunciation (ELSA-style)
+pronunciation_sessions (id, word, native_audio_url, user_audio_blob, match_score,
+                        phoneme_feedback JSON, created_at)
+
+-- Gamification (LingoLand-style)
+user_xp        (id, total_xp, level, updated_at)
+achievements   (id, key TEXT UNIQUE, title, description, icon, unlocked_at)
+daily_challenges (date TEXT PK, type, config JSON, completed INTEGER DEFAULT 0, xp_reward)
+
 -- Content (cached from internet)
-saved_articles  (id, url, title, source, level, content, saved_at)
+saved_articles  (id, url, title, source, level, content, summary, saved_at)
+                -- summary: Blinkist-style key-idea extraction
 saved_podcasts  (id, url, title, source, duration, transcript JSON, saved_at)
 
 -- AI
@@ -142,7 +95,7 @@ dictionary_cache  (word TEXT PK, data JSON, fetched_at)
 translation_cache (word TEXT PK, translation TEXT, fetched_at)
 ```
 
-All 16 tables created via `electron/db/migrate.ts` which runs on every app startup (idempotent `CREATE TABLE IF NOT EXISTS`). 12 CEFR units are seeded with `INSERT OR IGNORE`.
+All tables created via `electron/db/migrate.ts` (idempotent `CREATE TABLE IF NOT EXISTS`). 12 CEFR units seeded with `INSERT OR IGNORE`.
 
 ---
 
@@ -158,12 +111,7 @@ Implemented in `src/lib/srs/fsrs.ts`:
 
 ## AI Provider Abstraction
 
-Three providers, all routed through `electron/handlers/ai.ts` via IPC:
-
-```typescript
-// Provider selection in settingsStore
-type AiProvider = 'claude' | 'gemini' | 'ollama'
-```
+Three providers routed through `electron/handlers/ai.ts` via IPC:
 
 | Provider | Package | Key source | Cost |
 |---|---|---|---|
@@ -171,14 +119,16 @@ type AiProvider = 'claude' | 'gemini' | 'ollama'
 | Gemini | `@google/generative-ai` | aistudio.google.com | **Free tier available** |
 | Ollama | HTTP fetch | localhost:11434 | Free (local) |
 
-> **Note:** Claude Pro (claude.ai subscription) does NOT give API access. The app requires a separate API key from console.anthropic.com. Use Gemini for a free cloud option.
+> **Note:** Claude Pro (claude.ai subscription) ≠ API access. API keys are separate from console.anthropic.com.
 
-**AI Tutor system prompt:**
+**AI Tutor system prompt** (Vietnamese-specific):
 ```
 You are an expert English tutor for a Vietnamese speaker at B1/B2 level aiming for C1/C2.
-Correct grammar mistakes inline using [correction] format. Explain WHY each correction matters.
-When the user asks about vocabulary, provide: definition, IPA, 3 example sentences, common
-collocations, and note any Vietnamese false friends or tricky points. Be concise and encouraging.
+Correct grammar mistakes inline using [correction] format. Explain WHY it matters.
+For vocabulary: give definition, IPA, 3 examples, collocations, Vietnamese false friends.
+For grammar rules: explain in BOTH English and Vietnamese (song ngữ).
+Highlight common Vietnamese→English traps: missing articles, wrong tense, SVO word order errors.
+Be concise, specific, and encouraging.
 ```
 
 ---
@@ -187,9 +137,121 @@ collocations, and note any Vietnamese false friends or tricky points. Be concise
 
 - 12 units: 1-4 (B1→B2), 5-8 (B2→C1), 9-12 (C1→C2)
 - Unit 1 unlocked by default; unlock next when `lesson_progress` shows ≥80% of current unit lessons done
-- Dashboard renders SVG curved path connecting 12 unit node circles
-- Framer Motion animates the path drawing on first render
-- Each node shows: title, CEFR badge, lock icon (if locked), completion % ring
+- Dashboard renders SVG curved path connecting 12 unit node circles (Framer Motion path-draw animation)
+- Each node: title, CEFR badge, lock icon (if locked), completion % ring
+
+---
+
+## Features Inspired by Best-in-Class Apps
+
+### 1. Phoneme Pronunciation Scoring — ELSA-style
+**Phase 7 (Shadowing)**
+- After user records, AI analyzes which specific phonemes are wrong (e.g. "/θ/ sounds like /d/")
+- Word-level score 0–100% displayed after each attempt
+- Colour-coded: green (good), orange (needs work), red (incorrect)
+- Phoneme feedback stored in `pronunciation_sessions` table for progress tracking
+- "Problem sounds" panel: lists your top 5 most-missed phonemes across all sessions
+- Special drills for Vietnamese-speaker weak spots: /θ/ /ð/ /r/ /l/ /v/ /w/ final consonants
+
+### 2. Dual Subtitles — eJoy-style
+**Phase 6b (Podcast player)**
+- Podcast/video transcript shown with **English line + Vietnamese translation line** simultaneously
+- Toggle: EN only / EN+VN / VN only
+- Vietnamese line fetched via MyMemory API per sentence, cached in SQLite
+- Click any word in either subtitle line → DictionaryPopup opens
+
+### 3. Word Seen in Original Context — eJoy/TedDict-style
+**Phase 3 enhancement (Flashcards)**
+- When a word is added to flashcards via the Dictionary popup, the source sentence and URL are saved (`words.source_sentence`, `words.source_url`)
+- Flashcard back side shows: "You first saw this in: [source sentence]" with the word highlighted
+- "Play original context" button: jumps to the podcast/article timestamp where the word appeared
+- Helps brain remember words through episodic memory (where/when you encountered it)
+
+### 4. Visual Mnemonics — Memrise-style
+**Phase 3 enhancement (Flashcards)**
+- Each flashcard has a "Mnemonic" field (stored in `words.mnemonic`)
+- User can write their own memory story/trick per word (e.g. "BIZARRE — bi = two, zarre sounds like 'star', imagine two bizarre stars")
+- AI can auto-generate a mnemonic on request: "Generate a memory trick for this word"
+- Mnemonic shown on card back as a collapsible "💡 Memory Trick" section
+
+### 5. Pronunciation Match % — 4English/ELSA-style
+**Phase 7 (Shadowing)**
+- After recording, Web Audio API compares energy envelope + timing of user vs native audio
+- Displays a **match score %** (e.g. "78% match") as a simple visual meter
+- For AI-enabled mode: sends user transcript to AI, AI returns rhythm/stress/intonation feedback
+- Score history tracked in `pronunciation_sessions` for motivation
+
+### 6. XP + Achievements — LingoLand-style
+**Phase 9 (Polish)**
+- Every activity earns XP: flashcard review (2 XP/card), lesson complete (20 XP), writing submitted (15 XP), shadowing session (10 XP), daily challenge (25 XP)
+- Level thresholds: Level 1 = 0 XP, Level 2 = 100 XP, etc. (stored in `user_xp`)
+- **Achievements** (stored in `achievements` table, unlocked once):
+  - 🔥 "First Flame" — complete first flashcard session
+  - 📚 "Word Hoarder" — add 100 words to deck
+  - 🎯 "Sharpshooter" — 7-day streak
+  - 🗣️ "Mimic Master" — score 90%+ in shadowing
+  - ✍️ "Essay Writer" — submit 10 writing prompts
+  - 🎓 "B2 Graduate" — complete units 1-4
+  - 🏆 "C1 Champion" — complete units 5-8
+- Achievement toast notification when unlocked (Framer Motion slide-in)
+- XP bar visible in sidebar under username
+
+### 7. Book/Article Summaries — Blinkist-style
+**Phase 6b (Reading / News)**
+- For long articles/content, AI generates a **"Quick Read" summary**: 5-8 key ideas, one per card
+- Summary view: swipe/click through key ideas (like Blinkist's blink format)
+- Each key idea is 2-3 sentences, C1/C2 vocabulary used
+- "Expand" button → full article
+- Highlight + save quotes to personal notebook (stored in `saved_articles.summary`)
+- Sources: Guardian long reads, BBC features, TED talk transcripts
+- Daily 15-min reading goal tracked in `daily_stats`
+
+### 8. Topical Vocabulary Sets — 4English-style
+**Phase 5 enhancement (Units/Vocab)**
+- Pre-built vocabulary sets by topic stored in `vocab_sets` + `vocab_set_words`:
+  - Business English (meetings, negotiations, emails)
+  - Travel & Tourism
+  - Academic & Research
+  - Technology & Innovation
+  - Health & Medicine
+  - Law & Society
+  - IELTS Academic Word List
+  - News & Current Affairs idioms
+- Accessible from sidebar or unit pages as supplementary decks
+- Works same as regular flashcards (FSRS scheduling)
+- `units.topic_category` field tags each unit with a topic
+
+### 9. Vietnamese Grammar Explanations — 4English-style
+**Phase 7b (Writing) + Phase 8 (AI Tutor)**
+- Every grammar correction in Writing module includes a Vietnamese explanation panel
+- Example: "❌ 'I go to school yesterday' → ✅ 'I went to school yesterday'" + "💬 Trong tiếng Việt, động từ không thay đổi theo thì (thời gian). Nhưng tiếng Anh bắt buộc phải dùng quá khứ đơn (went) khi nói về hành động đã hoàn thành."
+- Pre-built list of **Top 20 Vietnamese→English errors** shown in Writing sidebar:
+  1. Missing articles (a/an/the)
+  2. Verb tense errors
+  3. Subject-verb agreement
+  4. Word order (adjective placement)
+  5. Preposition confusion (in/on/at)
+  6. Missing progressive aspect
+  7. Overuse of "very" instead of strong adjectives
+  8. Literal translation of Vietnamese idioms
+  9. Double negatives
+  10. Missing plural -s
+  - ... (20 total, each with Vietnamese explanation)
+- AI Tutor responds in bilingual mode when grammar is asked: English explanation + Vietnamese summary
+- Toggle in Settings: "Grammar explanations in Vietnamese" (on by default)
+
+### 10. Daily Challenge — LingoLand-style
+**Phase 9 (Polish)**
+- One special challenge per day, generated fresh each morning and stored in `daily_challenges`
+- Challenge types rotate:
+  - Vocabulary blitz: 20 cards in under 5 minutes
+  - Listening dictation: transcribe a 60-second audio clip
+  - Shadow master: nail a 3-sentence shadowing with ≥80% score
+  - Writing sprint: 150-word essay in 10 minutes
+  - Grammar gauntlet: 10 error-detection questions
+- Bonus XP reward (25 XP) for completing the daily challenge
+- Challenge status shown prominently on Dashboard with countdown timer
+- Streak bonus: completing daily challenge 7 days in a row = +100 XP achievement
 
 ---
 
@@ -198,118 +260,118 @@ collocations, and note any Vietnamese false friends or tricky points. Be concise
 | Source | Usage | Method |
 |---|---|---|
 | Free Dictionary API (`api.dictionaryapi.dev`) | EN-EN IPA, audio, definitions | HTTP GET, SQLite cache |
-| MyMemory API | EN→VN translation | HTTP GET, SQLite cache |
+| MyMemory API | EN→VN translation + dual subtitles | HTTP GET, SQLite cache |
 | VOA Learning English | Listening + reading articles | RSS feed |
 | BBC Learning English | Structured lessons + audio | RSS / HTTP |
 | The Guardian | Real newspaper articles (C1/C2) | RSS |
 | NPR News | Podcast transcripts + audio | RSS |
 | BBC 6 Minute English | Podcast with transcript | RSS |
-| TED Talks | Advanced listening | HTTP + transcript |
+| TED Talks | Advanced listening + summaries | HTTP + transcript |
 | Oxford 5000 list | Vocabulary curriculum | Bundled CSV |
 | Academic Word List | Advanced vocab (C1/C2) | Bundled CSV |
-
-**Click-to-define popup** (`src/components/DictionaryPopup/`) — global `mouseup` listener → 3 tabs:
-- **Pronounce**: IPA + audio playback
-- **EN-EN**: definition + examples
-- **EN-VN**: Vietnamese translation (cached)
-- **Add to Flashcards** button
-
----
-
-## Writing Skill Module
-
-- Daily AI-generated writing prompts (essay / email / opinion / IELTS Task 2)
-- Grammar checker: inline color-coded corrections (red=error, yellow=suggestion, green=good)
-- Vietnamese→English mistake tracker: top 10 recurring errors in `grammar_mistakes` table
-- Model answer shown after submission
-- Writing history browser (all past essays in SQLite)
-
-Exercise types: sentence transformation, error detection drills, cloze tests, timed free writing.
-
----
-
-## Newspaper & Podcast Module
-
-**News page:** Guardian + VOA + BBC RSS → article list with AI-assigned level badges. Reader view with click-to-define. Unknown word highlighting. Bulk "Add to Flashcards".
-
-**Podcasts page:** VOA + BBC 6min + NPR + TED → episode list + in-app player. Speed control (0.5x–2x), 10s rewind. Transcript panel with sync highlighting. Sentence-level loop + "Shadow this sentence" shortcut.
+| Topical vocab sets | Business/travel/IELTS/academic | Bundled JSON |
 
 ---
 
 ## Exercises (10 types)
 
-| Type | Module |
-|---|---|
-| Multiple choice comprehension | Listening/Reading |
-| Fill-in-the-blank cloze | Reading/Writing |
-| Sentence reordering (drag) | Grammar |
-| Error detection drill | Writing |
-| Dictation | Listening |
-| Sentence transformation | Grammar |
-| Word form chains (noun/verb/adj/adv) | Vocabulary |
-| Collocation matching | Vocabulary |
-| Speaking prompt (60s record + AI eval) | Speaking |
-| Debate/Opinion (AI takes opposite side) | Speaking |
+| Type | Module | Inspired by |
+|---|---|---|
+| Multiple choice comprehension | Listening/Reading | Standard |
+| Fill-in-the-blank cloze | Reading/Writing | Standard |
+| Sentence reordering (drag) | Grammar | Standard |
+| Error detection drill | Writing | 4English |
+| Dictation | Listening | Memrise |
+| Sentence transformation | Grammar | Standard |
+| Word form chains (noun/verb/adj/adv) | Vocabulary | Standard |
+| Collocation matching | Vocabulary | Standard |
+| Speaking prompt (60s record + AI eval) | Speaking | ELSA |
+| Debate/Opinion (AI takes opposite side) | Speaking | Standard |
 
 ---
 
 ## Remaining Implementation Phases
 
-### Phase 5 — Roadmap + Units (next)
-- `src/pages/Dashboard.tsx`: SVG roadmap with 12 nodes on a curved path
-- Unit unlock check: query `lesson_progress`, if ≥80% complete → `UPDATE units SET unlocked=1`
-- Framer Motion path-drawing animation on mount
-- Unit node click → lesson list view
+### Phase 5 — Roadmap + Units + Topical Vocab Sets
+- `src/pages/Dashboard.tsx`: SVG roadmap with 12 nodes, Framer Motion path animation
+- Unit unlock: query `lesson_progress`, ≥80% → `UPDATE units SET unlocked=1`
+- Unit node click → lesson list + vocab set for that unit
+- Seed topical vocab sets (business, travel, IELTS, etc.) in migration
+- `vocab_sets` + `vocab_set_words` tables added to schema
 
-### Phase 6 — Listening & Reading Module
+### Phase 6 — Listening & Reading Module + Context Tracking
 - `src/pages/Listening.tsx` + `src/pages/Reading.tsx`
-- VOA/BBC RSS parsed in `electron/handlers/content.ts` (fetchRss already implemented)
-- Howler.js audio player: speed control, 10s rewind, progress bar
-- Transcript sync highlighting + click-to-define
+- Howler.js player: speed control (0.5x–2x), 10s rewind, progress bar
+- Transcript sync highlighting + click-to-define (DictionaryPopup already works)
+- **Save source context**: when adding a word from transcript, store `source_sentence` + `source_url` in `words` table
 - Exercise UI: MCQ, fill-in-blank, dictation, sentence reorder
-- On completion → write `lesson_progress` → trigger unit unlock check
+- On completion → write `lesson_progress` → trigger unit unlock
 
-### Phase 6b — Newspaper & Podcast Module
-- `src/pages/News.tsx`: RSS aggregator + article reader
-- `src/pages/Podcasts.tsx`: episode browser + player with transcript sync
-- "Shadow this sentence" → navigates to `/shadowing` with prefilled sentence
+### Phase 6b — Newspaper, Podcast & Blinkist Summaries
+- `src/pages/News.tsx`: RSS aggregator (Guardian + VOA + BBC), level badges, article reader
+- `src/pages/Podcasts.tsx`: episode browser + player
+  - **Dual subtitles**: EN line + VN translation line, toggle EN/EN+VN/VN
+  - Transcript sync highlighting + sentence-level loop
+  - "Shadow this sentence" shortcut → `/shadowing`
+- **Blinkist-style summaries**: AI extracts 5-8 key ideas from long articles → card-swipe view
+- Reading goal tracker: 15-min daily reading goal in `daily_stats`
 
-### Phase 7 — Shadowing Mode
+### Phase 7 — Shadowing + ELSA-style Pronunciation Scoring
 - `src/pages/Shadowing.tsx`: MediaRecorder + WaveSurfer.js dual waveform
-- Loop: play → record → compare → rate → next sentence
-- Optional AI pronunciation feedback
+- Loop: play → record → compare → score → rate → next
+- **Pronunciation match %**: Web Audio API energy comparison → numeric score
+- **Phoneme-level AI feedback**: send recording transcript to AI → returns which sounds are wrong
+- Phoneme feedback stored in `pronunciation_sessions`
+- "Problem sounds" panel: aggregates your weakest phonemes across all sessions
+- Vietnamese-specific drill pack: /θ/ /ð/ /r/ vs /l/ /v/ /w/ final consonants
 
-### Phase 7b — Writing Module
+### Phase 7b — Writing + Vietnamese Grammar Explanations
 - `src/pages/Writing.tsx`: timed essay UI + AI grammar analysis
-- `grammar_mistakes` table: upsert on each AI correction
+- Every correction includes **Vietnamese explanation** (bilingual feedback)
+- Pre-built **Top 20 Vietnamese→English errors** reference panel in sidebar
+- `grammar_mistakes` table: upsert on each AI correction, shown as "Your Top Mistakes"
 - Grammar drills: error detect, sentence transform, cloze
+- Writing history browser
 
-### Phase 8 — AI Tutor + Gemini support
-- `src/pages/AITutor.tsx`: full chat UI with provider toggle
+### Phase 3 Enhancement — Mnemonics + Context on Flashcards
+*(Implement alongside Phase 7b or as a patch)*
+- Add `mnemonic` + `source_sentence` + `source_url` display to `src/pages/Flashcards.tsx`
+- Card back: show "💡 Memory Trick" section (collapsible) + "📍 First seen in: [sentence]"
+- "Generate mnemonic" AI button: calls AI with word → returns a vivid memory story
+- Store result in `words.mnemonic`
+
+### Phase 8 — AI Tutor (Claude / Gemini / Ollama) + Bilingual Mode
+- `src/pages/AITutor.tsx`: full chat UI with provider toggle (Claude / Gemini / Ollama)
 - Add `chatWithGemini()` to `electron/handlers/ai.ts` using `@google/generative-ai`
-- Add `geminiApiKey` field to `settingsStore`
+- Bilingual grammar explanations: AI responds with Vietnamese summary when grammar is discussed
 - Conversation persistence in `conversations` table
 
-### Phase 9 — Settings & Polish
-- `src/pages/Settings.tsx`: Claude key, Gemini key, Ollama URL/model, daily word limit
-- Dashboard: live daily stats + streak counter
-- Onboarding modal on first launch
+### Phase 9 — Settings, XP/Achievements, Daily Challenge, Polish
+- `src/pages/Settings.tsx`: Claude/Gemini/Ollama keys, daily word limit, bilingual toggle, theme
+- **XP system**: earn XP on every activity, level up, sidebar XP bar
+- **Achievements**: 15+ badges, toast notification on unlock (`achievements` table)
+- **Daily Challenge**: one rotating challenge/day with bonus XP (`daily_challenges` table)
+- Dashboard: XP bar, achievement count, daily challenge card, streak counter
+- Onboarding modal on first launch (set level, choose AI provider, optional API key)
 
 ---
 
 ## Verification Checklist
 
 1. `npm run dev` → app opens, all 11 sidebar pages load
-2. Flashcard session → cards show IPA + audio, FSRS updates on rating
-3. Click any word → popup shows Pronounce / EN-EN / EN-VN tabs
-4. Complete a lesson → unit unlocks on roadmap
-5. News feed → articles load with level badges
-6. Podcast player → transcript syncs, sentence loop works
-7. Writing page → AI returns inline color-coded corrections
-8. Grammar mistake counter increments on repeated errors
-9. AI Tutor → Claude, Gemini, Ollama all respond correctly
-10. Shadowing → dual waveforms displayed after recording
-11. Settings → API keys save and AI features enable/disable gracefully
+2. Flashcard back shows mnemonic + "first seen in" source sentence
+3. Generate mnemonic button → AI returns memory story, saved to DB
+4. Click any word → popup shows Pronounce / EN-EN / EN-VN tabs
+5. Podcast player → dual subtitles toggle works (EN / EN+VN / VN)
+6. Long article → "Quick Read" summary shows 5-8 key ideas
+7. Complete a lesson → unit unlocks on roadmap
+8. Shadowing → pronunciation match % shown, phoneme feedback panel displayed
+9. Writing page → corrections include Vietnamese explanation + top mistakes panel
+10. AI Tutor → Claude, Gemini, Ollama all respond; grammar replies are bilingual
+11. Complete any activity → XP earned, sidebar XP bar updates
+12. Unlock an achievement → toast notification appears
+13. Daily challenge card on Dashboard, completes correctly, +25 XP
+14. Settings → API keys save, bilingual toggle persists across sessions
 
 ---
 
