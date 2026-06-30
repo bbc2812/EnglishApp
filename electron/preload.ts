@@ -40,8 +40,10 @@ const api = {
       ipcRenderer.invoke('content:fetchYouTubeRSS', channelId),
     fetchYouTubeChannel: (channelId?: string): Promise<unknown[]> =>
       ipcRenderer.invoke('content:fetchYouTubeChannel', channelId),
-    fetchYouTubeSubtitles: (videoId: string): Promise<{ text: string; startTime: number; endTime: number }[]> =>
+    fetchYouTubeSubtitles: (videoId: string): Promise<{ sentences: { text: string; startTime: number; endTime: number }[]; language: string }> =>
       ipcRenderer.invoke('content:fetchYouTubeSubtitles', videoId),
+    fetchYouTubeSubtitlesByLang: (videoId: string, langCode: string): Promise<{ sentences: { text: string; startTime: number; endTime: number }[]; language: string }> =>
+      ipcRenderer.invoke('content:fetchYouTubeSubtitlesByLang', videoId, langCode),
     parseManualTranscript: (text: string): Promise<{ text: string; startTime: number; endTime: number }[]> =>
       ipcRenderer.invoke('content:parseManualTranscript', text),
     fetchDatamuse: (query: string, relSyn?: string): Promise<{ word: string; score: number }[]> =>
@@ -59,7 +61,11 @@ const api = {
     saveYouTubeEpisode: (data: { videoId: string; title: string; channel: string; duration?: string; thumbnail?: string; publishedAt: string; level?: string }): Promise<boolean> =>
       ipcRenderer.invoke('content:saveYouTubeEpisode', data),
     fetchWordNetwork: (word: string): Promise<{ synonyms: string[]; associations: string[] }> =>
-      ipcRenderer.invoke('content:fetchWordNetwork', word)
+      ipcRenderer.invoke('content:fetchWordNetwork', word),
+    generatePodcastTranscript: (title: string, description: string, options?: { apiKey?: string; provider?: string }): Promise<{ sentences: { text: string; startTime: number; endTime: number }[]; totalDuration: number }> =>
+      ipcRenderer.invoke('content:generatePodcastTranscript', title, description, options),
+    fetchPodcastEpisodes: (): Promise<any[]> =>
+      ipcRenderer.invoke('content:fetchPodcastEpisodes')
   },
   shadowing: {
     save: (attempt: {
@@ -120,7 +126,22 @@ const api = {
       mode: string
       created_at: string
     }[]> =>
-      ipcRenderer.invoke('shadowing:getHistory', limit)
+      ipcRenderer.invoke('shadowing:getHistory', limit),
+    analyzePronunciation: (request: {
+      sentenceText: string
+      targetPhonemes: { word: string; phoneme: string; difficulty: 'easy' | 'medium' | 'hard' }[]
+      recordingDuration: number
+      provider: string
+      apiKey?: string
+      geminiApiKey?: string
+      ollamaUrl?: string
+      ollamaModel?: string
+    }): Promise<{
+      score: number
+      phoneme_breakdown: { word: string; phoneme: string; issue: string | null; suggestion: string }[]
+      overall_feedback: string
+    }> =>
+      ipcRenderer.invoke('shadowing:analyzePronunciation', request)
   },
   learning: {
     mark: (req: {

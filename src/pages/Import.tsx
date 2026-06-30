@@ -1,7 +1,9 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useSettingsStore } from '../store/settingsStore'
 import { useProgressStore } from '../store/progressStore'
+import { ShadowingPlayer } from '../components/ShadowingPlayer'
+import { TranscriptionSentence } from '../hooks/useShadowing'
 
 interface ArticleData {
   title: string
@@ -25,6 +27,8 @@ export default function Import(): JSX.Element {
   const [startTimestamp, setStartTimestamp] = useState<number>(0)
   const [wordsRead, setWordsRead] = useState(0)
   const [comprehensionScore, setComprehensionScore] = useState(0)
+  const [showShadowing, setShowShadowing] = useState(false)
+  const [shadowingLevel, setShadowingLevel] = useState<'original' | 'B1' | 'B2' | 'C1'>('original')
 
   const handleImport = useCallback(async () => {
     if (!url.trim()) return
@@ -93,6 +97,35 @@ export default function Import(): JSX.Element {
 
   const wordCount = currentContent.split(/\s+/).filter(Boolean).length
 
+  const parseSentences = useCallback((text: string, _level: string) => {
+    const sentences: TranscriptionSentence[] = []
+    const raw = text.match(/[^.!?]+[.!?]+[\s]*/g) || [text]
+    let timeOffset = 0
+    raw.forEach((s) => {
+      const trimmed = s.trim()
+      if (trimmed.length < 5) return
+      const startTime = timeOffset
+      const sentenceDuration = Math.max(2, trimmed.split(/\s+/).length * 0.5)
+      const endTime = startTime + sentenceDuration
+      sentences.push({
+        text: trimmed,
+        translation: undefined,
+        startTime,
+        endTime,
+      })
+      timeOffset = endTime
+    })
+    return sentences
+  }, [])
+
+  const shadowingSentences = useMemo(() => {
+    if (!article) return []
+    const text = shadowingLevel === 'original' ? article.content || '' :
+      shadowingLevel === 'B1' ? b1Text :
+      shadowingLevel === 'B2' ? b2Text : c1Text
+    return parseSentences(text, shadowingLevel)
+  }, [article, b1Text, b2Text, c1Text, shadowingLevel, parseSentences])
+
   // Simulate reading progress
   useEffect(() => {
     if (!startReading || !currentContent) return
@@ -128,7 +161,7 @@ export default function Import(): JSX.Element {
         </div>
       </div>
 
-      {article && !startReading && (
+      {article && !startReading && !showShadowing && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6 space-y-6">
           {/* Article info */}
           <div className="card p-5">
@@ -159,9 +192,15 @@ export default function Import(): JSX.Element {
                 <p className="text-sm text-gray-300 selectable whitespace-pre-line">{summary}</p>
               </div>
             )}
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
               <button onClick={handleStartReading} className="btn-primary px-6 py-2.5 text-sm">
                 📖 Start Reading ({wordCount} words)
+              </button>
+              <button
+                onClick={() => setShowShadowing(true)}
+                className="btn-secondary px-6 py-2.5 text-sm"
+              >
+                🎤 Practice Shadowing
               </button>
               <button
                 onClick={() => {
@@ -176,7 +215,7 @@ export default function Import(): JSX.Element {
         </motion.div>
       )}
 
-      {startReading && currentContent && (
+      {startReading && currentContent && !showShadowing && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6 space-y-4">
           <div className="card p-5">
             <div className="flex items-center justify-between mb-4">
@@ -203,14 +242,69 @@ export default function Import(): JSX.Element {
                 <p key={i} className="mb-3">{p}</p>
               ))}
             </div>
-            <div className="mt-4 flex gap-3 justify-end">
+            <div className="mt-4 flex gap-3 justify-between items-center">
               <button
-                onClick={handleReadingComplete}
-                className="btn-primary px-6 py-2.5 text-sm"
+                onClick={() => setShowShadowing(true)}
+                className="btn-secondary px-5 py-2.5 text-sm"
               >
-                ✅ Done Reading
+                🎤 Shadowing
               </button>
+              <div>
+                <button
+                  onClick={handleReadingComplete}
+                  className="btn-primary px-6 py-2.5 text-sm"
+                >
+                  ✅ Done Reading
+                </button>
+              </div>
             </div>
+          </div>
+        </motion.div>
+      )}
+
+      {startReading && showShadowing && shadowingSentences.length > 0 && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowShadowing(false)}
+              className="btn-secondary px-4 py-2 text-sm"
+            >
+              ← Back to Reading
+            </button>
+            <div className="flex gap-2">
+              {(['original', 'B1', 'B2', 'C1'] as const).map(level => (
+                <button
+                  key={level}
+                  onClick={() => setShadowingLevel(level)}
+                  className={`px-3 py-1.5 rounded text-xs font-medium ${
+                    shadowingLevel === level ? 'bg-brand-600 text-white' : 'bg-gray-800 text-gray-400'
+                  }`}
+                >
+                  {level === 'original' ? 'Original' : level}
+                </button>
+              ))}
+            </div>
+          </div>
+          <ShadowingPlayer
+            sentences={shadowingSentences}
+            episodeType="imported_article"
+            episodeId={article?.url || 'imported'}
+            onClose={() => setShowShadowing(false)}
+          />
+        </motion.div>
+      )}
+
+      {startReading && showShadowing && shadowingSentences.length === 0 && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6 space-y-4">
+          <div className="card p-6 text-center">
+            <p className="text-gray-400 mb-2">No content available for shadowing yet.</p>
+            <p className="text-gray-600 text-sm mb-4">Importing and generating adaptations may take a moment.</p>
+            <button
+              onClick={() => setShowShadowing(false)}
+              className="btn-secondary px-6 py-2 text-sm"
+            >
+              ← Back to Reading
+            </button>
           </div>
         </motion.div>
       )}

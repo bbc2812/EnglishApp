@@ -4,7 +4,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 
 type Message = { role: 'user' | 'assistant'; content: string }
 
-async function chatWithClaude(
+export async function chatWithClaude(
   apiKey: string,
   messages: Message[],
   system?: string
@@ -20,7 +20,7 @@ async function chatWithClaude(
   return block.type === 'text' ? block.text : ''
 }
 
-async function chatWithOllama(
+export async function chatWithOllama(
   baseUrl: string,
   model: string,
   messages: Message[],
@@ -41,7 +41,7 @@ async function chatWithOllama(
   return data.message?.content ?? ''
 }
 
-async function chatWithGemini(
+export async function chatWithGemini(
   apiKey: string,
   messages: Message[],
   system?: string

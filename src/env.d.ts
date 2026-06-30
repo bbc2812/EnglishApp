@@ -27,7 +27,8 @@ interface ContentApi {
   fetchGuardianArticles: (topic?: string, page?: number) => Promise<unknown[]>
   fetchYouTubeRSS: (channelId?: string) => Promise<unknown>
   fetchYouTubeChannel: (channelId?: string) => Promise<unknown[]>
-  fetchYouTubeSubtitles: (videoId: string) => Promise<{ text: string; startTime: number; endTime: number }[]>
+  fetchYouTubeSubtitles: (videoId: string) => Promise<{ sentences: { text: string; startTime: number; endTime: number }[]; language: string }>
+  fetchYouTubeSubtitlesByLang: (videoId: string, langCode: string) => Promise<{ sentences: { text: string; startTime: number; endTime: number }[]; language: string }>
   parseManualTranscript: (text: string) => Promise<{ text: string; startTime: number; endTime: number }[]>
   fetchDatamuse: (query: string, relSyn?: string) => Promise<{ word: string; score: number }[]>
   fetchWiktionary: (word: string) => Promise<unknown>
@@ -37,6 +38,8 @@ interface ContentApi {
   scrapeUrl: (url: string) => Promise<{ title: string; description: string; content: string }>
   saveYouTubeEpisode: (data: { videoId: string; title: string; channel: string; duration?: string; thumbnail?: string; publishedAt: string; level?: string }) => Promise<boolean>
   fetchWordNetwork: (word: string) => Promise<{ synonyms: string[]; associations: string[] }>
+  generatePodcastTranscript: (title: string, description: string, options?: { apiKey?: string; provider?: string }) => Promise<{ sentences: { text: string; startTime: number; endTime: number }[]; totalDuration: number }>
+  fetchPodcastEpisodes: () => Promise<any[]>
 }
 
 interface ShadowingApi {
@@ -93,6 +96,20 @@ interface ShadowingApi {
     mode: string
     created_at: string
   }[]>
+  analyzePronunciation: (request: {
+    sentenceText: string
+    targetPhonemes: { word: string; phoneme: string; difficulty: 'easy' | 'medium' | 'hard' }[]
+    recordingDuration: number
+    provider: string
+    apiKey?: string
+    geminiApiKey?: string
+    ollamaUrl?: string
+    ollamaModel?: string
+  }) => Promise<{
+    score: number
+    phoneme_breakdown: { word: string; phoneme: string; issue: string | null; suggestion: string }[]
+    overall_feedback: string
+  }>
 }
 
 interface LearningApi {

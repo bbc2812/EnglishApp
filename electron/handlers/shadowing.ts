@@ -1,5 +1,17 @@
 import { ipcMain } from 'electron'
 import { getDb } from './db'
+import { chatWithClaude, chatWithGemini, chatWithOllama } from './ai'
+
+interface AnalyzePronunciationRequest {
+  sentenceText: string
+  targetPhonemes: { word: string; phoneme: string; difficulty: 'easy' | 'medium' | 'hard' }[]
+  recordingDuration: number
+  provider: string
+  apiKey?: string
+  geminiApiKey?: string
+  ollamaUrl?: string
+  ollamaModel?: string
+}
 
 interface ShadowingAttempt {
   episodeType: 'podcast' | 'youtube' | 'imported_article'
@@ -158,5 +170,102 @@ export function registerShadowingHandlers(): void {
     }[]
 
     return rows
+  })
+
+  // Analyze pronunciation using AI
+  ipcMain.handle('shadowing:analyzePronunciation', async (_event, request: AnalyzePronunciationRequest) => {
+    const { sentenceText, targetPhonemes, recordingDuration, provider, apiKey, geminiApiKey, ollamaUrl, ollamaModel } = request
+
+    const phonemeContext = targetPhonemes.length > 0
+      ? `\n\nTarget phonemes to focus on:\n${targetPhonemes.map(p => `- ${p.word}: ${p.phoneme} (difficulty: ${p.difficulty})`).join('\n')}`
+      : ''
+
+    const systemPrompt = `You are an expert English pronunciation coach for Vietnamese learners.
+
+Analyze the user's pronunciation based on:
+- Sentence: "${sentenceText}"
+- Recording duration: ${recordingDuration}s
+${phonemeContext}
+
+Common Vietnamese speaker challenges to evaluate:
+1. TH sounds: /θ/ (think, three) often becomes /s/ or /z/; /ð/ (this, that) often becomes /z/
+2. R/L confusion: Vietnamese speakers often swap /r/ and /l/
+3. V/W confusion: /v/ (very, love) replaced with /w/
+4. Final consonants: Vietnamese adds schwa after plosives (cat → "cat-uh", bed → "bed-uh")
+5. Word stress: Vietnamese is syllable-timed, English is stress-timed
+6. Sentence rhythm: English has strong/weak syllable patterns
+7. Intonation: English uses pitch changes for questions, emphasis, and emotion
+
+Scoring rubric (0-100):
+- Individual phoneme accuracy: 40 points
+- Word stress and syllable emphasis: 15 points
+- Sentence rhythm and fluency: 15 points
+- Intonation pattern: 15 points
+- Overall intelligibility: 15 points
+
+For each word in the sentence, identify:
+- The key phoneme(s) that are commonly difficult
+- Whether the pronunciation was likely correct based on duration match
+- Specific issue if detected
+- Actionable suggestion for improvement
+
+Return ONLY a valid JSON object with this exact structure:
+{
+  "score": number (0-100),
+  "phoneme_breakdown": [
+    {
+      "word": "string",
+      "phoneme": "string (IPA notation)",
+      "issue": "string or null",
+      "suggestion": "string"
+    }
+  ],
+  "overall_feedback": "string"
+}`
+
+    const userMessage = `Please analyze the pronunciation of this sentence.
+
+Sentence: "${sentenceText}"
+Recording duration: ${recordingDuration}s${phonemeContext}
+
+Based on the recording duration compared to natural speech patterns for this sentence, analyze what the user likely said correctly and where they may have struggled. Pay special attention to the target phonemes listed above.`
+
+    try {
+      let result: string
+
+      if (provider === 'claude') {
+        const key = apiKey ?? process.env.ANTHROPIC_API_KEY ?? ''
+        result = await chatWithClaude(key, [{ role: 'user', content: userMessage }], systemPrompt)
+      } else if (provider === 'gemini') {
+        const key = geminiApiKey ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY ?? ''
+        result = await chatWithGemini(key, [{ role: 'user', content: userMessage }], systemPrompt)
+      } else {
+        const baseUrl = ollamaUrl ?? 'http://localhost:11434'
+        const model = ollamaModel ?? 'llama3.2'
+        result = await chatWithOllama(baseUrl, model, [{ role: 'user', content: userMessage }], systemPrompt)
+      }
+
+      const jsonMatch = result.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0])
+        return {
+          score: typeof parsed.score === 'number' ? Math.max(0, Math.min(100, parsed.score)) : 70,
+          phoneme_breakdown: Array.isArray(parsed.phoneme_breakdown) ? parsed.phoneme_breakdown : [],
+          overall_feedback: typeof parsed.overall_feedback === 'string' ? parsed.overall_feedback : result
+        }
+      }
+
+      return {
+        score: 70,
+        phoneme_breakdown: [],
+        overall_feedback: result
+      }
+    } catch (error) {
+      return {
+        score: 70,
+        phoneme_breakdown: [],
+        overall_feedback: 'AI analysis unavailable. Try again later.'
+      }
+    }
   })
 }

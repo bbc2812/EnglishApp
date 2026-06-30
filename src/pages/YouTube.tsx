@@ -91,9 +91,9 @@ export default function YouTube(): JSX.Element {
 
   const loadSubtitles = useCallback(async (videoId: string) => {
     try {
-      const subs = await window.api.content.fetchYouTubeSubtitles(videoId) as { text: string; startTime: number; endTime: number }[]
-      if (subs.length > 0) {
-        return subs
+      const result = await window.api.content.fetchYouTubeSubtitles(videoId)
+      if (result.sentences.length > 0) {
+        return result.sentences
       }
     } catch { /* no auto captions */ }
     return null

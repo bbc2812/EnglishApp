@@ -301,39 +301,283 @@ export function registerContentHandlers(): void {
     }
   })
 
-  // --- YouTube Subtitles ---
-  ipcMain.handle('content:fetchYouTubeSubtitles', async (_event, videoId: string) => {
-    // Try to fetch auto-generated subtitles from YouTube
-    const url = `https://www.youtube.com/api/timedtext?v=${videoId}&type=captions`
-    try {
-      const res = await fetch(url)
-      if (!res.ok) return []
+  // --- YouTube Subtitle Helpers ---
+  function decodeEntities(str: string): string {
+    return str
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&apos;/g, "'")
+      .replace(/&#60;/g, '<')
+      .replace(/&#62;/g, '>')
+  }
 
-      const xml = await res.text()
+  function parseXmlCaptions(xml: string): { sentences: { text: string; startTime: number; endTime: number }[]; language: string } {
+    const sentences: { text: string; startTime: number; endTime: number }[] = []
+    let detectedLanguage = 'en'
 
-      // Parse XML captions (YouTube returns in XML format)
-      const sentences: { text: string; startTime: number; endTime: number }[] = []
+    // Detect language from XML attributes
+    const langMatch = xml.match(/lang_code="?([a-zA-Z_-]+)"?/) || xml.match(/language_code="?([a-zA-Z_-]+)"?/)
+    if (langMatch) {
+      const code = langMatch[1]
+      detectedLanguage = code.includes('en') ? 'en' : code.includes('vi') ? 'vi' : code.includes('ko') ? 'ko' : code.includes('ja') ? 'ja' : code.includes('zh') ? 'zh' : code.includes('fr') ? 'fr' : code.includes('de') ? 'de' : code.includes('es') ? 'es' : code.includes('pt') ? 'pt' : code.includes('ru') ? 'ru' : code.includes('ar') ? 'ar' : code.includes('hi') ? 'hi' : 'en'
+    }
 
-      // Simple XML parser for YouTube captions
-      const tags = xml.match(/<text[^>]*>(.*?)<\/text>/g) || []
-      for (const tag of tags) {
-        const startTimeMatch = tag.match(/start="([^"]+)"/)
-        const durationMatch = tag.match(/dur="([^"]+)"/)
-        const textMatch = tag.match(/<text[^>]*>(.*?)<\/text>/)
+    // Detect language name from XML
+    const nameMatch = xml.match(/language="?([^">]+)"?/)
+    if (nameMatch) {
+      const name = nameMatch[1].toLowerCase()
+      if (name.includes('english')) detectedLanguage = 'en'
+      else if (name.includes('vietnam')) detectedLanguage = 'vi'
+      else if (name.includes('korean')) detectedLanguage = 'ko'
+      else if (name.includes('japanese')) detectedLanguage = 'ja'
+      else if (name.includes('chinese')) detectedLanguage = 'zh'
+      else if (name.includes('french')) detectedLanguage = 'fr'
+      else if (name.includes('german')) detectedLanguage = 'de'
+      else if (name.includes('spanish')) detectedLanguage = 'es'
+      else if (name.includes('portuguese')) detectedLanguage = 'pt'
+      else if (name.includes('russian')) detectedLanguage = 'ru'
+      else if (name.includes('arabic')) detectedLanguage = 'ar'
+      else if (name.includes('hindi')) detectedLanguage = 'hi'
+    }
 
-        if (startTimeMatch && durationMatch && textMatch) {
-          sentences.push({
-            text: textMatch[1].replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim(),
-            startTime: parseFloat(startTimeMatch[1]),
-            endTime: parseFloat(startTimeMatch[1]) + parseFloat(durationMatch[1])
-          })
+    // Try <p> element format (newer YouTube subtitles): <p start="12.5" dur="3.2">text here</p>
+    const pTags = xml.match(/<p\s+start="([^"]+)"\s+dur="([^"]+)"[^>]*>([\s\S]*?)<\/p>/g)
+    if (pTags && pTags.length > 0) {
+      for (const pTag of pTags) {
+        const startMatch = pTag.match(/start="([^"]+)"/)
+        const durMatch = pTag.match(/dur="([^"]+)"/)
+        const textMatch = pTag.match(/>([\s\S]*?)<\/p>$/)
+
+        if (startMatch && durMatch && textMatch) {
+          const start = parseFloat(startMatch[1])
+          const dur = parseFloat(durMatch[1])
+          let text = decodeEntities(textMatch[1].replace(/\s+/g, ' '))
+
+          // Remove nested HTML tags like <b>, <i>, etc.
+          text = text.replace(/<\/?[a-zA-Z][^>]*>/g, '').trim()
+
+          if (text.length > 0) {
+            sentences.push({
+              text,
+              startTime: start,
+              endTime: start + dur
+            })
+          }
         }
       }
-
-      return sentences
-    } catch {
-      return []
     }
+
+    // Try <transcript> format: <transcript start="12.5" dur="3.2">text</transcript>
+    if (sentences.length === 0) {
+      const transcriptTags = xml.match(/<transcript\s+start="([^"]+)"\s+dur="([^"]+)"[^>]*>([\s\S]*?)<\/transcript>/g)
+      if (transcriptTags) {
+        for (const tTag of transcriptTags) {
+          const startMatch = tTag.match(/start="([^"]+)"/)
+          const durMatch = tTag.match(/dur="([^"]+)"/)
+          const textMatch = tTag.match(/>([\s\S]*?)<\/transcript>$/)
+
+          if (startMatch && durMatch && textMatch) {
+            const start = parseFloat(startMatch[1])
+            const dur = parseFloat(durMatch[1])
+            let text = decodeEntities(textMatch[1].replace(/\s+/g, ' '))
+            text = text.replace(/<\/?[a-zA-Z][^>]*>/g, '').trim()
+
+            if (text.length > 0) {
+              sentences.push({
+                text,
+                startTime: start,
+                endTime: start + dur
+              })
+            }
+          }
+        }
+      }
+    }
+
+    // Try traditional <text> tag format: <text start="12.5" dur="3.2">text</text>
+    if (sentences.length === 0) {
+      const textTags = xml.match(/<text\s+[^>]*start="([^"]+)"\s+[^>]*dur="([^"]+)"[^>]*>([\s\S]*?)<\/text>/g)
+      if (textTags) {
+        for (const tTag of textTags) {
+          const startMatch = tTag.match(/start="([^"]+)"/)
+          const durMatch = tTag.match(/dur="([^"]+)"/)
+          const textMatch = tTag.match(/>([\s\S]*?)<\/text>$/)
+
+          if (startMatch && durMatch && textMatch) {
+            const start = parseFloat(startMatch[1])
+            const dur = parseFloat(durMatch[1])
+            let text = decodeEntities(textMatch[1].replace(/\s+/g, ' '))
+            text = text.replace(/<\/?[a-zA-Z][^>]*>/g, '').trim()
+
+            if (text.length > 0) {
+              sentences.push({
+                text,
+                startTime: start,
+                endTime: start + dur
+              })
+            }
+          }
+        }
+      }
+    }
+
+    // Try alternate text tag ordering: <text dur="3.2" start="12.5">text</text>
+    if (sentences.length === 0) {
+      const textTags = xml.match(/<text[^>]*>([\s\S]*?)<\/text>/g)
+      if (textTags) {
+        for (const tTag of textTags) {
+          const startMatch = tTag.match(/start="([^"]+)"/)
+          const durMatch = tTag.match(/dur="([^"]+)"/)
+          const textMatch = tTag.match(/>([\s\S]*?)<\/text>$/)
+
+          if (startMatch && durMatch && textMatch) {
+            const start = parseFloat(startMatch[1])
+            const dur = parseFloat(durMatch[1])
+            let text = decodeEntities(textMatch[1].replace(/\s+/g, ' '))
+            text = text.replace(/<\/?[a-zA-Z][^>]*>/g, '').trim()
+
+            if (text.length > 0) {
+              sentences.push({
+                text,
+                startTime: start,
+                endTime: start + dur
+              })
+            }
+          }
+        }
+      }
+    }
+
+    // Merge consecutive short segments into sentences
+    if (sentences.length > 1) {
+      const merged: { text: string; startTime: number; endTime: number }[] = []
+      let current = { ...sentences[0] }
+
+      for (let i = 1; i < sentences.length; i++) {
+        const next = sentences[i]
+        const gap = next.startTime - current.endTime
+
+        if (gap < 1.5 && current.text.length < 200 && next.text.length < 200) {
+          // Merge: close sentence if current ends without punctuation and next doesn't start a new one
+          const currentEndsSentence = /[.!?,;:]/.test(current.text.trim().slice(-1))
+          const nextStartsCapital = /^[A-Z]/.test(next.text.trim())
+
+          if (currentEndsSentence && nextStartsCapital) {
+            // Push current and start new
+            merged.push(current)
+            current = { ...next }
+          } else {
+            // Merge into current
+            current.text += ' ' + next.text
+            current.endTime = next.endTime
+          }
+        } else {
+          merged.push(current)
+          current = { ...next }
+        }
+      }
+      merged.push(current)
+      sentences.length = 0
+      sentences.push(...merged)
+    }
+
+    return { sentences, language: detectedLanguage }
+  }
+
+  // --- YouTube Subtitles ---
+  ipcMain.handle('content:fetchYouTubeSubtitles', async (_event, videoId: string) => {
+    const langAttempts = ['en', 'en-US', 'en-GB', 'vi', 'auto']
+
+    for (const lang of langAttempts) {
+      const urls = [
+        `https://www.youtube.com/api/timedtext?v=${videoId}&lang=${lang}&type=ttml`,
+        `https://www.youtube.com/api/timedtext?v=${videoId}&lang=${lang}&type=html`,
+        `https://www.youtube.com/api/timedtext?v=${videoId}&lang=${lang}&type=captions`,
+        `https://www.youtube.com/api/timedtext?v=${videoId}&lang=${lang}`,
+      ]
+
+      for (const url of urls) {
+        try {
+          const res = await fetch(url)
+          if (!res.ok) continue
+
+          const xml = await res.text()
+          if (!xml || xml.trim().length < 10) continue
+
+          const result = parseXmlCaptions(xml)
+          if (result.sentences.length > 0) {
+            return result
+          }
+        } catch {
+          continue
+        }
+      }
+    }
+
+    // Fallback: try all caption types without language
+    const types = ['captions', 'manual', 'default', '']
+    for (const type of types) {
+      const typeParam = type ? `&type=${type}` : ''
+      const urls = [
+        `https://www.youtube.com/api/timedtext?v=${videoId}&lang=en${typeParam}`,
+        `https://www.youtube.com/api/timedtext?v=${videoId}&lang=en-US${typeParam}`,
+        `https://www.youtube.com/api/timedtext?v=${videoId}&lang=en-GB${typeParam}`,
+        `https://www.youtube.com/api/timedtext?v=${videoId}${typeParam}`,
+      ]
+
+      for (const url of urls) {
+        try {
+          const res = await fetch(url)
+          if (!res.ok) continue
+
+          const xml = await res.text()
+          if (!xml || xml.trim().length < 10) continue
+
+          const result = parseXmlCaptions(xml)
+          if (result.sentences.length > 0) {
+            return result
+          }
+        } catch {
+          continue
+        }
+      }
+    }
+
+    return { sentences: [], language: 'unknown' }
+  })
+
+  // --- YouTube Subtitles By Language ---
+  ipcMain.handle('content:fetchYouTubeSubtitlesByLang', async (_event, videoId: string, langCode: string) => {
+    const formats = ['ttml', 'html', 'captions']
+
+    for (const format of formats) {
+      const urls = [
+        `https://www.youtube.com/api/timedtext?v=${videoId}&lang=${langCode}&type=${format}`,
+        `https://www.youtube.com/api/timedtext?v=${videoId}&lang=${langCode}`,
+      ]
+
+      for (const url of urls) {
+        try {
+          const res = await fetch(url)
+          if (!res.ok) continue
+
+          const xml = await res.text()
+          if (!xml || xml.trim().length < 10) continue
+
+          const result = parseXmlCaptions(xml)
+          if (result.sentences.length > 0) {
+            return result
+          }
+        } catch {
+          continue
+        }
+      }
+    }
+
+    return { sentences: [], language: 'unknown' }
   })
 
   // --- Parse Manual Transcript ---
@@ -412,5 +656,126 @@ export function registerContentHandlers(): void {
     if (!res.ok) return word
     const data = (await res.json()) as { responseData?: { translatedText?: string } }
     return data.responseData?.translatedText ?? word
+  })
+
+  // --- Generate Podcast Transcript (AI-assisted simulated transcript) ---
+  ipcMain.handle(
+    'content:generatePodcastTranscript',
+    async (_event, title: string, description: string, options?: { apiKey?: string; provider?: string }) => {
+      const provider = options?.provider ?? 'claude'
+      const apiKey = options?.apiKey ?? ''
+      if (!apiKey) {
+        const fallbackSentences = generateFallbackTranscript(title, description)
+        return { sentences: fallbackSentences, totalDuration: fallbackSentences.length * 4 }
+      }
+
+      try {
+        const systemPrompt = `You are a podcast transcript generator. Given a podcast title and description, generate a realistic English learning podcast transcript.
+
+Rules:
+- Write 8-15 sentences appropriate for the described topic
+- Keep sentences at an intermediate English level (B1-B2)
+- Include a mix of short and medium-length sentences
+- Each sentence should be natural and conversational
+- Return ONLY a JSON array of objects with exactly these fields: text (string), startTime (number), endTime (number). Do NOT include any other text, markdown, or explanation.
+- startTime and endTime should be in seconds, incrementing naturally (each sentence ~3-5 seconds)
+- Do NOT wrap the JSON in markdown code blocks`
+
+        const userPrompt = `Podcast Title: ${title}\nDescription: ${description}\n\nGenerate the transcript.`
+
+        let response = ''
+        if (provider === 'claude') {
+          const anthropic = await import('@anthropic-ai/sdk')
+          const client = new anthropic.Anthropic({ apiKey })
+          const res = await client.messages.create({
+            model: 'claude-sonnet-4-6',
+            max_tokens: 2048,
+            system: systemPrompt,
+            messages: [{ role: 'user', content: userPrompt }]
+          })
+          response = res.content[0]?.type === 'text' ? res.content[0].text : ''
+        } else {
+          const res = await fetch('http://localhost:11434/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: 'llama3.2',
+              messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }],
+              stream: false
+            })
+          })
+          if (res.ok) {
+            const data = await res.json() as { message?: { content: string } }
+            response = data.message?.content ?? ''
+          }
+        }
+
+        const cleanJson = response.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
+        const parsed = JSON.parse(cleanJson) as { text: string; startTime: number; endTime: number }[]
+        return { sentences: parsed, totalDuration: parsed.length * 4 }
+      } catch {
+        const fallbackSentences = generateFallbackTranscript(title, description)
+        return { sentences: fallbackSentences, totalDuration: fallbackSentences.length * 4 }
+      }
+    }
+  )
+
+  // --- Fetch Podcast Episodes (BBC LE + DB check) ---
+  ipcMain.handle('content:fetchPodcastEpisodes', async () => {
+    const bbcEpisodes = await fetchJson<any[]>(`https://learningenglish.bbc.com/api/v2/media.json?filter=podcast&limit=20`)
+    if (!bbcEpisodes) return []
+
+    const db = getDb()
+    const savedUrls = new Set(
+      db.prepare('SELECT url FROM saved_podcasts').pluck().all() as string[]
+    )
+
+    const episodes = bbcEpisodes.map((item: any) => {
+      const url = item.url || ''
+      const hasTranscript = !!item.transcript && item.transcript.trim().length > 0
+      const isSaved = savedUrls.has(url)
+      return {
+        id: url,
+        title: item.headlines?.headline || item.title,
+        description: item.summary?.text || '',
+        url,
+        imageUrl: item.image?.image?.url || '',
+        publishedAt: item.publish_date,
+        type: item.type,
+        level: item.level,
+        audioUrl: item.audio?.url || '',
+        transcript: hasTranscript ? item.transcript : '',
+        needsTranscript: !hasTranscript && !isSaved,
+        isSaved,
+      }
+    })
+
+    return episodes
+  })
+}
+
+function generateFallbackTranscript(title: string, description: string): { text: string; startTime: number; endTime: number }[] {
+  const sentences = [
+    `Welcome to today's episode of ${title}.`,
+    description.length > 100 ? description.substring(0, 100) + '...' : description || `Today we'll be discussing an important topic.`,
+    `In this episode, we'll explore some key ideas and examples.`,
+    `Let's start by looking at the main concepts involved.`,
+    `First, it's important to understand the context we're working with.`,
+    `Many people find this topic both interesting and challenging.`,
+    `Now let's look at a practical example to illustrate the point.`,
+    `As you can see, this concept applies in many real-world situations.`,
+    `Moving on, there are several important details to consider here.`,
+    `Let me share another example that might help clarify things.`,
+    `These examples show how the ideas connect together.`,
+    `To summarize what we've covered so far, the key points are clear.`,
+    `Thank you for listening. We hope you found this episode helpful.`,
+  ]
+
+  let currentTime = 0
+  return sentences.map((text) => {
+    const duration = 3 + Math.random() * 2
+    const start = currentTime
+    currentTime += duration
+    return { text, startTime: Math.round(start * 100) / 100, endTime: Math.round(currentTime * 100) / 100 }
   })
 }

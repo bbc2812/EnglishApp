@@ -56,6 +56,43 @@ export function useShadowing(sentences: TranscriptionSentence[]) {
     setLoopCount(0)
   }, [])
 
+  function detectTargetPhonemes(sentenceText: string): { word: string; phoneme: string; difficulty: 'easy' | 'medium' | 'hard' }[] {
+    const words = sentenceText.toLowerCase().replace(/[^a-z\s']/g, '').split(/\s+/)
+    const phonemes: { word: string; phoneme: string; difficulty: 'easy' | 'medium' | 'hard' }[] = []
+
+    const thVoiceless = ['th', 'this', 'that', 'than', 'there', 'think', 'thing', 'through', 'thought', 'three', 'thirteen', 'third', 'theater', 'theme', 'theory', 'thick', 'thief', 'thin', 'thread', 'throat', 'thrill', 'throat']
+    const thVoiced = ['this', 'that', 'they', 'them', 'there', 'these', 'then', 'thus', 'there', 'though', 'those', 'they\'re', 'their', 'they\'ve', 'they\'ll', 'weather', 'father', 'mother', 'brother', 'whether']
+    const rSounds = ['right', 'light', 'very', 'river', 'red', 'run', 'will', 'well', 'room', 'real', 'read', 'rice', 'road', 'roll', 'rain', 'race', 'request', 'result', 'remember', 'really']
+    const lSounds = ['light', 'life', 'like', 'love', 'long', 'look', 'leave', 'let', 'last', 'large', 'little', 'late', 'left', 'learn', 'listen', 'listen', 'listen', 'listen']
+    const vSounds = ['vest', 'very', 'love', 'have', 'live', 'five', 'three', 'give', 'get', 'go', 'good', 'got', 'game', 'girl', 'girl', 'green', 'great', 'grow']
+    const wSounds = ['watch', 'water', 'want', 'week', 'way', 'well', 'what', 'when', 'where', 'which', 'who', 'will', 'with', 'work', 'world', 'woman', 'way', 'wait', 'wake', 'walk']
+
+    for (const word of words) {
+      const cleanWord = word.replace(/[^a-z]/g, '')
+
+      if (thVoiceless.includes(cleanWord) && !phonemes.find(p => p.word === cleanWord)) {
+        phonemes.push({ word: cleanWord, phoneme: '/θ/', difficulty: 'hard' })
+      }
+      if (thVoiced.includes(cleanWord) && !phonemes.find(p => p.word === cleanWord)) {
+        phonemes.push({ word: cleanWord, phoneme: '/ð/', difficulty: 'hard' })
+      }
+      if (rSounds.includes(cleanWord) && !phonemes.find(p => p.word === cleanWord)) {
+        phonemes.push({ word: cleanWord, phoneme: '/r/', difficulty: 'hard' })
+      }
+      if (lSounds.includes(cleanWord) && !phonemes.find(p => p.word === cleanWord)) {
+        phonemes.push({ word: cleanWord, phoneme: '/l/', difficulty: 'medium' })
+      }
+      if (vSounds.includes(cleanWord) && !phonemes.find(p => p.word === cleanWord)) {
+        phonemes.push({ word: cleanWord, phoneme: '/v/', difficulty: 'hard' })
+      }
+      if (wSounds.includes(cleanWord) && !phonemes.find(p => p.word === cleanWord)) {
+        phonemes.push({ word: cleanWord, phoneme: '/w/', difficulty: 'medium' })
+      }
+    }
+
+    return phonemes
+  }
+
   // Simulated scoring based on recording analysis
   const simulateScore = useCallback((recordingDuration: number, sentenceDuration: number, audioBlob: Blob): { score: number; feedback: string } => {
     const durationRatio = recordingDuration / sentenceDuration
@@ -121,47 +158,33 @@ export function useShadowing(sentences: TranscriptionSentence[]) {
 
   // AI scoring (when enabled in settings)
   const getAiScore = useCallback(async (sentenceText: string, recordingDuration: number): Promise<{ score: number; feedback: string }> => {
-    const { chat } = window.api.ai
+    const settings = useSettingsStore.getState()
+    const phonemes = detectTargetPhonemes(sentenceText)
 
-    const systemPrompt = `You are an English pronunciation coach for Vietnamese speakers.
-Analyze the user's pronunciation based on:
-- Sentence they need to say: "${sentenceText}"
-- Their recording duration: ${recordingDuration}s
-
-Consider common Vietnamese speaker issues:
-- /θ/ (th) sounds like /s/ or /z/
-- /ð/ (voiced th) sounds like /z/
-- /r/ confused with /l/
-- /v/ replaced with /w/
-- Final consonants get added vowels (cat → "cat-uh")
-- Sentence stress and intonation patterns
-
-Return ONLY a JSON object: {"score": 0-100, "feedback": "specific phoneme feedback"}`
-
-    const result = await chat(
-      useSettingsStore.getState().activeProvider,
-      [{ role: 'user', content: `Sentence: "${sentenceText}" | Recording duration: ${recordingDuration}s. Analyze pronunciation.` }],
-      systemPrompt,
-      {
-        apiKey: useSettingsStore.getState().activeProvider === 'claude'
-          ? useSettingsStore.getState().claudeApiKey
-          : useSettingsStore.getState().activeProvider === 'gemini'
-            ? useSettingsStore.getState().geminiApiKey
-            : undefined,
-      }
-    )
-
-    // Parse JSON from AI response
     try {
-      const jsonMatch = result.match(/\{[^}]+\}/)
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0])
-        return { score: parsed.score || 70, feedback: parsed.feedback || result }
-      }
-    } catch { /* fallback */ }
+      const result = await window.api.shadowing.analyzePronunciation({
+        sentenceText,
+        targetPhonemes: phonemes,
+        recordingDuration,
+        provider: settings.activeProvider,
+        apiKey: settings.activeProvider === 'claude' ? settings.claudeApiKey : undefined,
+        geminiApiKey: settings.activeProvider === 'gemini' ? settings.geminiApiKey : undefined,
+        ollamaUrl: settings.activeProvider === 'ollama' ? settings.ollamaUrl : undefined,
+        ollamaModel: settings.activeProvider === 'ollama' ? settings.ollamaModel : undefined,
+      })
 
-    return { score: 70, feedback: result }
-  }, [])
+      const phonemeFeedback = result.phoneme_breakdown
+        .filter(b => b.issue)
+        .map(b => `${b.word} (${b.phoneme}): ${b.suggestion}`)
+        .join('\n')
+
+      const feedback = result.overall_feedback + (phonemeFeedback ? `\n\nKey improvements:\n${phonemeFeedback}` : '')
+
+      return { score: result.score, feedback }
+    } catch {
+      return simulateScore(recordingDuration, (currentSentence?.endTime ?? 0) - (currentSentence?.startTime ?? 0), new Blob())
+    }
+  }, [currentSentence, simulateScore])
 
   const startRecording = useCallback(async () => {
     setPhase('recording')
