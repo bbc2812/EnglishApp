@@ -139,7 +139,30 @@ CREATE TABLE IF NOT EXISTS translation_cache (
   fetched_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE TABLE IF NOT EXISTS vocab_sets (
+CREATE TABLE IF NOT EXISTS achievements (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  key TEXT UNIQUE,
+  title TEXT,
+  description TEXT,
+  icon TEXT,
+  unlocked_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS user_xp (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  total_xp INTEGER NOT NULL DEFAULT 0,
+  level INTEGER NOT NULL DEFAULT 1,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS daily_challenges (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  date TEXT UNIQUE,
+  type TEXT NOT NULL,
+  config TEXT,
+  completed INTEGER NOT NULL DEFAULT 0,
+  xp_reward INTEGER NOT NULL DEFAULT 25
+);
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title TEXT NOT NULL,
   topic TEXT NOT NULL,
@@ -185,6 +208,26 @@ INSERT OR IGNORE INTO vocab_sets (id, title, topic, level, description, unit_id)
   (10, 'Environmental Issues',    'science',   'C1', 'Vocabulary for climate and environment topics',    5),
   (11, 'Literary Terms',          'literature','C2', 'Vocabulary for analyzing literature',            11),
   (12, 'Legal & Society',         'law',       'C1', 'Legal terms and social justice vocabulary',       10);
+`
+
+const SEED_ACHIEVEMENTS = `
+INSERT OR IGNORE INTO achievements (id, key, title, description, icon) VALUES
+  (1, 'first_card',      '🔥 First Flame',        'Complete first flashcard session',  '🔥'),
+  (2, 'word_hoarder',    '📚 Word Hoarder',       'Add 100 words to deck',            '📚'),
+  (3, 'sharpshooter',    '🎯 Sharpshooter',       '7-day streak',                     '🎯'),
+  (4, 'mimic_master',    '🗣️ Mimic Master',       'Score 90%+ in shadowing',          '🗣️'),
+  (5, 'essay_writer',    '✍️ Essay Writer',       'Submit 5 writing prompts',         '✍️'),
+  (6, 'b2_graduate',     '🎓 B2 Graduate',        'Complete units 1-4',               '🎓'),
+  (7, 'c1_champion',     '🏆 C1 Champion',        'Complete units 5-8',               '🏆'),
+  (8, 'daily_warrior',   '⚔️ Daily Warrior',      'Complete 7 daily challenges',      '⚔️'),
+  (9, 'tutor_fan',       '💬 Tutor Fan',          'Send 50 messages to AI Tutor',     '💬'),
+  (10, 'speed_reader',   '⚡ Speed Reader',       'Complete 10 reading lessons',      '⚡');
+`
+
+const SEED_DAILY_CHALLENGES = `
+INSERT OR IGNORE INTO daily_challenges (date, type, config, xp_reward) VALUES
+  (date('now'), 'vocab_blitz', '{"limit": 20, "time_limit": 300}', 25),
+  (date('now', '+1 day'), 'vocab_blitz', '{"limit": 20, "time_limit": 300}', 25);
 `
 
 const SEED_LESSONS = `
@@ -238,8 +281,10 @@ export function runMigrations(db: Database.Database): void {
   db.exec(SCHEMA)
   db.exec(SEED_UNITS)
   db.exec(SEED_VOCAB_SETS)
+  db.exec(SEED_ACHIEVEMENTS)
   db.exec(SEED_LESSONS)
   db.exec(SEED_EXERCISES)
+  db.exec(SEED_DAILY_CHALLENGES)
 
   db.exec(`
     INSERT OR IGNORE INTO unit_progress (unit_id, percent_complete)

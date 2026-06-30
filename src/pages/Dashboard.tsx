@@ -275,19 +275,22 @@ export default function Dashboard(): JSX.Element {
   const [loading, setLoading] = useState(true)
   const [vocabSets, setVocabSets] = useState<{ id: number; title: string; topic: string; level: string }[]>([])
   const [lessons, setLessons] = useState<{ id: number; title: string; type: string; locked: number }[]>([])
-  const [stats, setStats] = useState<{ wordsReviewed: number; streak: number; lessonsCompleted: number; totalWords: number }>({
+  const [stats, setStats] = useState<{ wordsReviewed: number; streak: number; lessonsCompleted: number; totalWords: number; totalXp: number }>({
     wordsReviewed: 0,
     streak: 0,
     lessonsCompleted: 0,
     totalWords: 0,
+    totalXp: 0,
   })
+  const [dailyChallenge, setDailyChallenge] = useState<{ type: string; completed: number; xp_reward: number } | null>(null)
+  const [achievementCount, setAchievementCount] = useState(0)
 
   const loadDashboard = useCallback(async () => {
     setLoading(true)
 
     await loadUnits()
 
-    const [dailyStats, vocabSetsData, lessonCount, wordCount, unlockedLessons]: [any[], any[], unknown, unknown, unknown] =
+    const [dailyStats, vocabSetsData, lessonCount, wordCount, unlockedLessons, challenge, achievements]: [any[], any[], unknown, unknown, unknown, unknown, unknown] =
       await Promise.all([
         window.api.db.all(
           `SELECT * FROM daily_stats WHERE date = ? ORDER BY date DESC LIMIT 1`,
@@ -301,6 +304,12 @@ export default function Dashboard(): JSX.Element {
         window.api.db.all(
           `SELECT id, title, type, locked FROM lessons WHERE unit_id IN (SELECT id FROM units WHERE unlocked = 1) AND type IN ('listening', 'reading') ORDER BY unit_id, id`
         ) as Promise<any[]>,
+        window.api.db.all(
+          `SELECT type, completed, xp_reward FROM daily_challenges WHERE date = date('now') ORDER BY date LIMIT 1`
+        ) as Promise<any[]>,
+        window.api.db.all(
+          `SELECT COUNT(*) as count FROM achievements WHERE unlocked_at IS NOT NULL`
+        ) as Promise<unknown>,
       ])
 
     if (dailyStats.length > 0) {
@@ -327,7 +336,17 @@ export default function Dashboard(): JSX.Element {
 
     setVocabSets(vocabSetsData)
     setLessons(unlockedLessons as { id: number; title: string; type: string; locked: number }[])
-    setStats((prev) => ({ ...prev, lessonsCompleted: lessonC, totalWords: wordC }))
+    setStats(prev => ({ ...prev, lessonsCompleted: lessonC, totalWords: wordC }))
+    const challengeResult = challenge as { type?: string; completed?: number; xp_reward?: number }[]
+    if (challengeResult.length > 0) {
+      setDailyChallenge({
+        type: challengeResult[0].type || 'vocab_blitz',
+        completed: challengeResult[0].completed || 0,
+        xp_reward: challengeResult[0].xp_reward || 25,
+      })
+    }
+    const achResult = achievements as { count?: number }[]
+    setAchievementCount(Array.isArray(achResult) ? (achResult[0]?.count || 0) : 0)
     setLoading(false)
   }, [loadUnits, setTodayStats, setTodayXP])
 
@@ -387,6 +406,45 @@ export default function Dashboard(): JSX.Element {
         <StatCard icon="🔥" label="Streak" value={`${stats.streak} days`} />
         <StatCard icon="⭐" label="Today's XP" value={todayXP} subValue={`${stats.lessonsCompleted} lessons`} />
       </div>
+
+      {/* Daily Challenge */}
+      {dailyChallenge && (
+        <div className="card p-4 mb-6 border-brand-900/50 bg-brand-950/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">⚔️</span>
+              <div>
+                <h4 className="text-white font-semibold text-sm">Daily Challenge</h4>
+                <p className="text-gray-400 text-xs">
+                  {dailyChallenge.completed ? '✅ Completed! +25 XP' : '20 flashcards in 5 minutes — +25 XP'}
+                </p>
+              </div>
+            </div>
+            {!dailyChallenge.completed && (
+              <button
+                onClick={() => navigate('/flashcards')}
+                className="btn-primary px-4 py-2 text-xs"
+              >
+                Start
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Achievements */}
+      {achievementCount > 0 && (
+        <div className="flex items-center gap-2 mb-6">
+          <span className="text-sm text-gray-500">🏅 Achievements:</span>
+          <div className="flex gap-1 flex-wrap">
+            {achievementCount > 0 && (
+              <span className="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">
+                {achievementCount} unlocked
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Roadmap */}
       <div className="mb-8">

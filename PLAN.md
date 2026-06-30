@@ -41,7 +41,7 @@ Inspired by best features from: **Memrise, ELSA, MediaDict, TedDict, eJoy, 4Engl
 | Phase 7 — Shadowing + Pronunciation scoring (ELSA-style) | ✅ Done | — |
 | Phase 7b — Writing module + Vietnamese grammar explanations | ✅ Done | — |
 | Phase 8 — AI Tutor (Claude / Gemini / Ollama) | ✅ Done | — |
-| Phase 9 — Settings, XP/Achievements, Daily Challenge, Polish | ⏳ Pending | — |
+| Phase 9 — Settings, XP/Achievements, Daily Challenge, Polish | ✅ Done | — |
 
 ---
 
