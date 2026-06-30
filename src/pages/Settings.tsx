@@ -49,7 +49,10 @@ export default function Settings(): JSX.Element {
     claudeApiKey, ollamaUrl, ollamaModel, geminiApiKey, activeProvider,
     setClaudeApiKey, setOllamaUrl, setOllamaModel, setGeminiApiKey,
     setActiveProvider, dailyNewWords, setDailyNewWords,
-    bilingualGrammar, setBilingualGrammar, theme, setTheme
+    bilingualGrammar, setBilingualGrammar,
+    newsApiKey, setNewsApiKey, systemTray, setSystemTray,
+    clipboardHotkey, setClipboardHotkey, readingGoalMins, setReadingGoalMins,
+    theme, setTheme
   } = useSettingsStore()
 
   const [saved, setSaved] = useState(false)
@@ -74,39 +77,19 @@ export default function Settings(): JSX.Element {
       const writingCount = await window.api.db.all(`SELECT COUNT(*) as c FROM writing_history`) as { c: number }[]
       const convCount = await window.api.db.all(`SELECT COUNT(*) as c FROM conversations`) as { c: number }[]
       const lessonCount = await window.api.db.all(`SELECT COUNT(*) as c FROM lesson_progress WHERE score >= 80`) as { c: number }[]
+      const flashcardCount = await window.api.db.all(`SELECT COUNT(*) as c FROM flashcards`) as { c: number }[]
+      const unlockedUnits = await window.api.db.all(`SELECT COUNT(*) as c FROM units WHERE unlocked = 1`) as { c: number }[]
 
       const newAchievements: string[] = []
 
-      // Check first card (any flashcard exists)
-      const flashcardCount = await window.api.db.all(`SELECT COUNT(*) as c FROM flashcards`) as { c: number }[]
-      if (flashcardCount[0]?.c && flashcardCount[0].c > 0 && !achievements.includes('first_card')) {
-        newAchievements.push('first_card')
-      }
-
-      if (wordCount[0]?.c && wordCount[0].c >= 100 && !achievements.includes('word_hoarder')) {
-        newAchievements.push('word_hoarder')
-      }
-      if (streak[0]?.streak && streak[0].streak >= 7 && !achievements.includes('sharpshooter')) {
-        newAchievements.push('sharpshooter')
-      }
-      if (writingCount[0]?.c && writingCount[0].c >= 5 && !achievements.includes('essay_writer')) {
-        newAchievements.push('essay_writer')
-      }
-      if (convCount[0]?.c && convCount[0].c >= 50 && !achievements.includes('tutor_fan')) {
-        newAchievements.push('tutor_fan')
-      }
-      if (lessonCount[0]?.c && lessonCount[0].c >= 10 && !achievements.includes('speed_reader')) {
-        newAchievements.push('speed_reader')
-      }
-
-      // Check B2/C1 graduate based on unlocked units
-      const unlockedUnits = await window.api.db.all(`SELECT COUNT(*) as c FROM units WHERE unlocked = 1`) as { c: number }[]
-      if (unlockedUnits[0]?.c && unlockedUnits[0].c >= 4 && !achievements.includes('b2_graduate')) {
-        newAchievements.push('b2_graduate')
-      }
-      if (unlockedUnits[0]?.c && unlockedUnits[0].c >= 8 && !achievements.includes('c1_champion')) {
-        newAchievements.push('c1_champion')
-      }
+      if (flashcardCount[0]?.c && flashcardCount[0].c > 0 && !achievements.includes('first_card')) newAchievements.push('first_card')
+      if (wordCount[0]?.c && wordCount[0].c >= 100 && !achievements.includes('word_hoarder')) newAchievements.push('word_hoarder')
+      if (streak[0]?.streak && streak[0].streak >= 7 && !achievements.includes('sharpshooter')) newAchievements.push('sharpshooter')
+      if (writingCount[0]?.c && writingCount[0].c >= 5 && !achievements.includes('essay_writer')) newAchievements.push('essay_writer')
+      if (convCount[0]?.c && convCount[0].c >= 50 && !achievements.includes('tutor_fan')) newAchievements.push('tutor_fan')
+      if (lessonCount[0]?.c && lessonCount[0].c >= 10 && !achievements.includes('speed_reader')) newAchievements.push('speed_reader')
+      if (unlockedUnits[0]?.c && unlockedUnits[0].c >= 4 && !achievements.includes('b2_graduate')) newAchievements.push('b2_graduate')
+      if (unlockedUnits[0]?.c && unlockedUnits[0].c >= 8 && !achievements.includes('c1_champion')) newAchievements.push('c1_champion')
 
       if (newAchievements.length > 0) {
         for (const key of newAchievements) {
@@ -114,7 +97,7 @@ export default function Settings(): JSX.Element {
             `INSERT INTO achievements (key, title, description, icon, unlocked_at)
              VALUES (?, ?, ?, ?, datetime('now'))
              ON CONFLICT(key) DO NOTHING`,
-            [key, ACHIEVEMENTS.find(a => a.key === key)?.title || '', '', '🏅', new Date().toISOString()]
+            [key, ACHIEVEMENTS.find(a => a.key === key)?.title || '', '', '🏅']
           )
         }
         setAchievements(prev => [...prev, ...newAchievements])
@@ -132,7 +115,7 @@ export default function Settings(): JSX.Element {
   return (
     <div className="p-8 flex flex-col h-full overflow-y-auto">
       <h2 className="text-2xl font-bold text-white mb-1">Settings</h2>
-      <p className="text-gray-400 text-sm mb-8">API keys, AI provider, daily limits</p>
+      <p className="text-gray-400 text-sm mb-8">API keys, AI provider, content sources, and preferences</p>
 
       {/* Profile */}
       <div className="card p-5 mb-6">
@@ -154,9 +137,24 @@ export default function Settings(): JSX.Element {
         </div>
       </div>
 
-      {/* API Settings */}
+      {/* Content Sources */}
       <div className="card p-5 mb-6">
-        <h3 className="text-sm font-semibold text-white mb-4">AI Provider Settings</h3>
+        <h3 className="text-sm font-semibold text-white mb-4">📡 Content Sources</h3>
+
+        <SettingRow label="NewsAPI Key">
+          <input type="password" value={newsApiKey} onChange={e => setNewsApiKey(e.target.value)}
+            placeholder="newsapi key" className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white w-48 focus:border-brand-500 focus:outline-none" />
+        </SettingRow>
+
+        <SettingRow label="Reading Goal (mins/day)">
+          <input type="number" value={readingGoalMins} onChange={e => setReadingGoalMins(Number(e.target.value))}
+            className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white w-20 focus:border-brand-500 focus:outline-none" />
+        </SettingRow>
+      </div>
+
+      {/* AI Provider Settings */}
+      <div className="card p-5 mb-6">
+        <h3 className="text-sm font-semibold text-white mb-4">🤖 AI Provider Settings</h3>
 
         <SettingRow label="Active Provider">
           <div className="flex gap-1">
@@ -199,7 +197,7 @@ export default function Settings(): JSX.Element {
 
       {/* Learning Settings */}
       <div className="card p-5 mb-6">
-        <h3 className="text-sm font-semibold text-white mb-4">Learning Preferences</h3>
+        <h3 className="text-sm font-semibold text-white mb-4">📚 Learning Preferences</h3>
 
         <SettingRow label="Daily New Words">
           <input type="number" value={dailyNewWords} onChange={e => setDailyNewWords(Number(e.target.value))}
@@ -212,6 +210,25 @@ export default function Settings(): JSX.Element {
             {bilingualGrammar ? '✅ On' : '❌ Off'}
           </button>
         </SettingRow>
+      </div>
+
+      {/* App Settings */}
+      <div className="card p-5 mb-6">
+        <h3 className="text-sm font-semibold text-white mb-4">⚡ App Settings</h3>
+
+        <SettingRow label="Global Hotkey (Ctrl+Shift+D)">
+          <button onClick={() => setClipboardHotkey(!clipboardHotkey)}
+            className={`px-3 py-1 rounded-md text-xs font-medium ${clipboardHotkey ? 'bg-brand-600 text-white' : 'bg-gray-800 text-gray-400'}`}>
+            {clipboardHotkey ? '✅ On' : '❌ Off'}
+          </button>
+        </SettingRow>
+
+        <SettingRow label="System Tray">
+          <button onClick={() => setSystemTray(!systemTray)}
+            className={`px-3 py-1 rounded-md text-xs font-medium ${systemTray ? 'bg-brand-600 text-white' : 'bg-gray-800 text-gray-400'}`}>
+            {systemTray ? '✅ On' : '❌ Off'}
+          </button>
+        </SettingRow>
 
         <SettingRow label="Theme">
           <div className="flex gap-1">
@@ -219,6 +236,8 @@ export default function Settings(): JSX.Element {
               className={`px-3 py-1 rounded-md text-xs font-medium ${theme === 'dark' ? 'bg-brand-600 text-white' : 'bg-gray-800 text-gray-400'}`}>🌙 Dark</button>
             <button onClick={() => setTheme('light')}
               className={`px-3 py-1 rounded-md text-xs font-medium ${theme === 'light' ? 'bg-brand-600 text-white' : 'bg-gray-800 text-gray-400'}`}>☀️ Light</button>
+            <button onClick={() => setTheme('auto')}
+              className={`px-3 py-1 rounded-md text-xs font-medium ${theme === 'auto' ? 'bg-brand-600 text-white' : 'bg-gray-800 text-gray-400'}`}>🔄 Auto</button>
           </div>
         </SettingRow>
       </div>

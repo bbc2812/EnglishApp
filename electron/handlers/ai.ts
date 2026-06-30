@@ -53,6 +53,20 @@ async function chatWithGemini(
   return result.response.text()
 }
 
+async function adaptArticleToLevel(_articleText: string, level: string, apiKey: string, provider: string, system: string): Promise<string> {
+  const client = provider === 'claude' ? new Anthropic({ apiKey }) : null
+  if (provider === 'claude' && client) {
+    const res = await client.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1024,
+      system: system,
+      messages: [{ role: 'user', content: `Rewrite this article for ${level} level English learners. Use simpler vocabulary and shorter sentences while keeping the main ideas. Return ONLY the rewritten article text.` }]
+    })
+    return res.content[0]?.type === 'text' ? res.content[0].text : ''
+  }
+  return ''
+}
+
 export function registerAiHandlers(): void {
   ipcMain.handle(
     'ai:chat',
@@ -74,6 +88,32 @@ export function registerAiHandlers(): void {
         const model = options?.ollamaModel ?? 'llama3.2'
         return chatWithOllama(baseUrl, model, messages, system)
       }
+    }
+  )
+
+  // --- AI: Adapt article to CEFR level ---
+  ipcMain.handle(
+    'ai:adaptArticle',
+    async (_event, articleText: string, level: string, options?: { apiKey?: string; ollamaUrl?: string; ollamaModel?: string; geminiApiKey?: string; provider?: string }) => {
+      const provider = options?.provider ?? 'claude'
+      const apiKey = options?.apiKey ?? ''
+      if (!apiKey) return articleText
+      return adaptArticleToLevel(articleText, level, apiKey, provider,
+        `You are an expert English language curriculum designer. Rewrite the provided text for ${level} level English learners. Use simpler vocabulary, shorter sentences, and more common structures while preserving the core meaning. Return ONLY the rewritten text with no additional commentary.`
+      )
+    }
+  )
+
+  // --- AI: Summarize content ---
+  ipcMain.handle(
+    'ai:summarizeContent',
+    async (_event, content: string, options?: { apiKey?: string; ollamaUrl?: string; ollamaModel?: string; geminiApiKey?: string; provider?: string }) => {
+      const provider = options?.provider ?? 'claude'
+      const apiKey = options?.apiKey ?? ''
+      if (!apiKey) return 'API key required'
+      return adaptArticleToLevel(content, 'B1', apiKey, provider,
+        `Summarize this text in 5-8 key bullet points. Use C1/C2 vocabulary. Keep each point to 2-3 sentences.`
+      )
     }
   )
 

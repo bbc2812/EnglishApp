@@ -1,9 +1,11 @@
-import { app, shell, BrowserWindow } from 'electron'
+import { app, shell, BrowserWindow, Tray, Menu, globalShortcut, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { registerDbHandlers } from './handlers/db'
 import { registerAiHandlers } from './handlers/ai'
 import { registerContentHandlers } from './handlers/content'
+
+let tray: Tray | null = null
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -36,11 +38,41 @@ function createWindow(): void {
   }
 }
 
+function createTray(window: BrowserWindow): void {
+  tray = new Tray(join(__dirname, '../../renderer/assets/tray-icon.png'))
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'Open WiseRain', click: () => window.show() },
+    { type: 'separator' },
+    { label: 'Quit', click: () => app.quit() }
+  ])
+  tray.setToolTip('WiseRain — English to C1/C2')
+  tray.setContextMenu(contextMenu)
+  tray.on('click', () => window.show())
+}
+
+function registerGlobalShortcuts(): void {
+  // Ctrl+Shift+D — Clipboard capture for dictionary lookup
+  globalShortcut.register('CommandOrControl+Shift+D', () => {
+    const clipboard = require('electron').clipboard
+    const text = clipboard.readText('selection') || clipboard.readText('general')
+    if (text && text.trim().length > 0) {
+      ipcMain.emit('clipboard:capture', {}, text.trim())
+    }
+  })
+}
+
+// Clipboard IPC handler
+ipcMain.handle('clipboard:capture', () => {
+  const clipboard = require('electron').clipboard
+  return clipboard.readText('selection') || clipboard.readText('general') || ''
+})
+
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.wiserain.app')
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
+    createTray(window)
   })
 
   registerDbHandlers()
@@ -49,13 +81,22 @@ app.whenReady().then(() => {
 
   createWindow()
 
+  registerGlobalShortcuts()
+
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
 
+
+
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll()
+})
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
+    tray?.destroy()
     app.quit()
   }
 })

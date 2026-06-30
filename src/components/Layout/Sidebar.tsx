@@ -11,6 +11,8 @@ const NAV = [
   { to: '/writing', icon: '✍️', label: 'Writing' },
   { to: '/news', icon: '📰', label: 'News' },
   { to: '/podcasts', icon: '🎙️', label: 'Podcasts' },
+  { to: '/youtube', icon: '📺', label: 'YouTube' },
+  { to: '/import', icon: '📥', label: 'Import' },
   { to: '/tutor', icon: '🤖', label: 'AI Tutor' },
 ]
 
@@ -45,26 +47,22 @@ export default function Sidebar(): JSX.Element {
     const loadAllXP = async () => {
       let total = 0
 
-      // XP from writing
       try {
         const writing = await window.api.db.all(`SELECT SUM(score || 0) as total_xp FROM writing_history`) as { total_xp?: number }[]
         total += (writing[0]?.total_xp || 0)
       } catch { /* ignore */ }
 
-      // XP from flashcards (2 XP per card)
       try {
         const flashcardCount = await window.api.db.all(`SELECT COUNT(*) as c FROM flashcards`) as { c: number }[]
         total += (flashcardCount[0]?.c || 0) * 2
       } catch { /* ignore */ }
 
-      // XP from daily_stats
       try {
         const today = new Date().toISOString().slice(0, 10)
         const dailyStats = await window.api.db.all(`SELECT xp_earned FROM daily_stats WHERE date = ?`, [today]) as { xp_earned?: number }[]
         total += (dailyStats[0]?.xp_earned || 0)
       } catch { /* ignore */ }
 
-      // XP from user_xp table
       try {
         const userXp = await window.api.db.all(`SELECT total_xp FROM user_xp ORDER BY updated_at DESC LIMIT 1`) as { total_xp?: number }[]
         const storedXp = userXp[0]?.total_xp || 0
@@ -104,6 +102,17 @@ export default function Sidebar(): JSX.Element {
           </NavLink>
         ))}
       </nav>
+
+      {/* Stats link */}
+      <div className="px-2 py-1 border-t border-gray-800">
+        <NavLink
+          to="/stats"
+          className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+        >
+          <span className="text-base leading-none">📊</span>
+          <span>Stats</span>
+        </NavLink>
+      </div>
 
       {/* XP Bar */}
       <XPBar xp={totalXp} level={level} />

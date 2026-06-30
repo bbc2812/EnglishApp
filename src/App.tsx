@@ -15,6 +15,9 @@ import News from './pages/News'
 import Podcasts from './pages/Podcasts'
 import AITutor from './pages/AITutor'
 import Settings from './pages/Settings'
+import YouTube from './pages/YouTube'
+import Import from './pages/Import'
+import Stats from './pages/Stats'
 
 interface Toast {
   id: number
@@ -36,15 +39,24 @@ function SharedToastContainer(): JSX.Element {
   }, [])
 
   useEffect(() => {
+    // Register clipboard hotkey handler
+    if (window.api?.clipboard) {
+      window.api.clipboard.onCapture((text) => {
+        // Open dictionary popup with clipboard text
+        const word = text.trim().split(/\s+/)[0].toLowerCase().replace(/[^a-zA-Z'\-]/g, '').trim()
+        if (word && word.length >= 2) {
+          addToast(`🔍 Dictionary: "${word}"`, '📋')
+        }
+      })
+    }
+
     const checkAchievements = async () => {
-      // Load unlocked achievements
       const unlockedRows = await window.api.db.all(
         `SELECT key FROM achievements WHERE unlocked_at IS NOT NULL`
       ) as { key: string }[]
       const unlockedKeys = unlockedRows.map(r => r.key)
       setAchievements(unlockedKeys)
 
-      // Check for newly unlocked achievements
       const wordCount = await window.api.db.all(`SELECT COUNT(*) as c FROM words`) as { c: number }[]
       const streak = await window.api.db.all(`SELECT streak FROM daily_stats ORDER BY date DESC LIMIT 1`) as { streak: number }[]
       const writingCount = await window.api.db.all(`SELECT COUNT(*) as c FROM writing_history`) as { c: number }[]
@@ -60,7 +72,7 @@ function SharedToastContainer(): JSX.Element {
         { key: 'sharpshooter', condition: (streak[0]?.streak ?? 0) >= 7 && !achievements.includes('sharpshooter'), title: '🎯 Sharpshooter', icon: '🎯' },
         { key: 'mimic_master', condition: (shadowingBest[0]?.best ?? 0) >= 90 && !achievements.includes('mimic_master'), title: '🗣️ Mimic Master', icon: '🗣️' },
         { key: 'essay_writer', condition: (writingCount[0]?.c ?? 0) >= 5 && !achievements.includes('essay_writer'), title: '✍️ Essay Writer', icon: '✍️' },
-        { key: 'daily_warrior', condition: true, title: '⚔️ Daily Warrior', icon: '⚔️' }, // checked separately
+        { key: 'daily_warrior', condition: true, title: '⚔️ Daily Warrior', icon: '⚔️' },
         { key: 'tutor_fan', condition: (convCount[0]?.c ?? 0) >= 50 && !achievements.includes('tutor_fan'), title: '💬 Tutor Fan', icon: '💬' },
         { key: 'speed_reader', condition: (lessonCount[0]?.c ?? 0) >= 10 && !achievements.includes('speed_reader'), title: '⚡ Speed Reader', icon: '⚡' },
         { key: 'b2_graduate', condition: (unlockedUnits[0]?.c ?? 0) >= 4 && !achievements.includes('b2_graduate'), title: '🎓 B2 Graduate', icon: '🎓' },
@@ -69,7 +81,6 @@ function SharedToastContainer(): JSX.Element {
 
       for (const check of checks) {
         if (check.condition && !achievements.includes(check.key)) {
-          // Unlock the achievement
           await window.api.db.run(
             `INSERT INTO achievements (key, title, description, icon, unlocked_at)
              VALUES (?, ?, 'Achievement unlocked!', ?, datetime('now'))
@@ -82,9 +93,8 @@ function SharedToastContainer(): JSX.Element {
       }
     }
 
-    // Check achievements every 5 seconds
     const interval = setInterval(checkAchievements, 5000)
-    checkAchievements() // Initial check
+    checkAchievements()
     return () => clearInterval(interval)
   }, [achievements, addToast])
 
@@ -131,6 +141,9 @@ export default function App(): JSX.Element {
             <Route path="/podcasts" element={<Podcasts />} />
             <Route path="/tutor" element={<AITutor />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/youtube" element={<YouTube />} />
+            <Route path="/import" element={<Import />} />
+            <Route path="/stats" element={<Stats />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

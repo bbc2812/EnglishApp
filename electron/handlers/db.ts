@@ -19,6 +19,8 @@ function getDb(): Database.Database {
   return db
 }
 
+export { getDb }
+
 export function registerDbHandlers(): void {
   ipcMain.handle('db:query', (_event, sql: string, params: unknown[] = []) => {
     return getDb().prepare(sql).get(...params)
@@ -33,5 +35,3 @@ export function registerDbHandlers(): void {
     return getDb().prepare(sql).all(...params)
   })
 }
-
-export { getDb }

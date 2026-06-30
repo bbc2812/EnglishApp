@@ -98,6 +98,9 @@ CREATE TABLE IF NOT EXISTS saved_articles (
   source TEXT,
   level TEXT,
   content TEXT,
+  summary TEXT,
+  reading_mins REAL NOT NULL DEFAULT 0,
+  comprehension_score INTEGER NOT NULL DEFAULT 0,
   saved_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -164,12 +167,35 @@ CREATE TABLE IF NOT EXISTS daily_challenges (
   completed INTEGER NOT NULL DEFAULT 0,
   xp_reward INTEGER NOT NULL DEFAULT 25
 );
+
+CREATE TABLE IF NOT EXISTS youtube_episodes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  video_id TEXT UNIQUE,
   title TEXT NOT NULL,
-  topic TEXT NOT NULL,
-  level TEXT NOT NULL,
-  description TEXT,
-  unit_id INTEGER REFERENCES units(id)
+  channel TEXT,
+  duration TEXT,
+  thumbnail TEXT,
+  published_at TEXT,
+  transcript TEXT,
+  level TEXT NOT NULL DEFAULT 'B1',
+  saved_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS clipboard_history (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  text TEXT NOT NULL,
+  word_count INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS leaderboard_personas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  avatar TEXT,
+  total_xp INTEGER NOT NULL DEFAULT 0,
+  level INTEGER NOT NULL DEFAULT 1,
+  streak INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE TABLE IF NOT EXISTS vocab_set_words (
@@ -234,6 +260,15 @@ INSERT OR IGNORE INTO daily_challenges (date, type, config, xp_reward) VALUES
   (date('now', '+4 day'), 'grammar_gauntlet', '{"questions": 10}', 25);
 `
 
+const SEED_PERSONAS = `
+INSERT OR IGNORE INTO leaderboard_personas (id, name, avatar, total_xp, level, streak) VALUES
+  (1, 'Alice', '👩‍🎓', 340, 4, 5),
+  (2, 'Bob', '👨‍💻', 520, 6, 8),
+  (3, 'Carol', '👩‍🔬', 780, 9, 12),
+  (4, 'David', '🧑‍🏫', 150, 2, 2),
+  (5, 'Eva', '👩‍🎨', 950, 10, 15);
+`
+
 const SEED_LESSONS = `
 INSERT OR IGNORE INTO lessons (id, unit_id, title, type, content_url, transcript, locked) VALUES
   -- Unit 1
@@ -289,6 +324,7 @@ export function runMigrations(db: Database.Database): void {
   db.exec(SEED_LESSONS)
   db.exec(SEED_EXERCISES)
   db.exec(SEED_DAILY_CHALLENGES)
+  db.exec(SEED_PERSONAS)
 
   // Add missing columns for existing databases (idempotent)
   try { db.exec(`ALTER TABLE units ADD COLUMN topic_category TEXT`) } catch {}

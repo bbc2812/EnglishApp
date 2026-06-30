@@ -43,6 +43,7 @@ Inspired by best features from: **Memrise, ELSA, MediaDict, TedDict, eJoy, 4Engl
 | Phase 8 — AI Tutor (Claude / Gemini / Ollama) + Speaking | ✅ Done | — |
 | Phase 9 — Settings, XP/Achievements, Daily Challenge, Polish | ✅ Done | — |
 | Phase 9.1 — Onboarding, Toast Notifications, Streak Bonus | ✅ Done | — |
+| Phase 9.2 — Wide-Range Auto-Feed Resources | ✅ Done | — |
 
 ---
 
@@ -386,6 +387,19 @@ Be concise, specific, and encouraging.
 18. Streak bonus → 7-day daily challenge streak = +100 XP ✅
 19. Quick Read → News page Blinkist-style summaries ✅
 20. XP aggregated from flashcards, listening, reading, writing, daily stats ✅
+21. YouTube channel browser with in-app player (6 channels) ✅
+22. URL Import → fetch + AI summary + 3-level adaptation + reading analytics ✅
+23. Stats page → full analytics dashboard with recharts (line, pie, area, heatmap) ✅
+24. NewsAPI.org integration (all categories: general, tech, science, business, sports) ✅
+25. BBC Learning English API feed ✅
+26. Guardian Open Platform feed ✅
+27. Datamuse + Wiktionary + Cambridge dictionary enrichment ✅
+28. Word of the Day + Quotes pages ✅
+29. Global hotkey (Ctrl+Shift+D) clipboard capture ✅
+30. System tray integration ✅
+31. AI article adaptation (News in Levels style: B1/B2/C1) ✅
+32. Reading speed tracker (WPM) ✅
+33. AI Roleplay mode in AITutor ✅
 
 ---
 

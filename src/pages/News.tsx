@@ -1,326 +1,334 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { useProgressStore } from '../store/progressStore'
+import { useSettingsStore } from '../store/settingsStore'
 
-interface RSSItem {
+interface NewsArticle {
   title: string
-  link: string
   description: string
-  pubDate: string
-  creator?: string
-  'dc:date'?: string
-}
-
-interface Source {
-  name: string
   url: string
-  icon: string
+  urlToImage: string
+  publishedAt: string
+  source: { name: string }
 }
 
-const RSS_SOURCES: Source[] = [
-  { name: 'BBC Learning English', url: 'http://feeds.bbci.co.uk/features/english_as_a_second_language/news.mp3', icon: '🇬🇧' },
-  { name: 'VOA Learning English', url: 'https://learningenglish.voanews.com/api/rss/eng/voxpop', icon: '🇺🇸' },
-  { name: 'BBC 6 Minute English', url: 'http://feeds.bbci.co.uk/modules/feeds/6minuteenglish.xml', icon: '🎙️' },
-]
-
-function LevelBadge({ level }: { level: string }): JSX.Element {
-  const colors: Record<string, string> = {
-    B1: 'bg-blue-900/40 text-blue-300',
-    B2: 'bg-cyan-900/40 text-cyan-300',
-    C1: 'bg-purple-900/40 text-purple-300',
-    C2: 'bg-orange-900/40 text-orange-300',
-  }
-  return (
-    <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${colors[level] || 'bg-gray-700 text-gray-300'}`}>
-      {level}
-    </span>
-  )
-}
-
-function QuickReadSummary({ articleTitle, onClose }: { articleTitle: string; onClose: () => void }): JSX.Element {
-  const [currentIndex, setCurrentIndex] = useState(0)
-
-  const keyIdeas = [
-    `AI is transforming how we consume news — personalized feeds adapt to reader preferences and reading levels.`,
-    `Media literacy has become essential: distinguishing credible sources from misinformation is a core 21st-century skill.`,
-    `Traditional journalism faces disruption as social media algorithms prioritize engagement over accuracy.`,
-    `The rise of citizen journalism means anyone can report breaking news, but verification remains professional journalists\' core value.`,
-    `Subscription fatigue is real — the average internet user now faces over 50 paywalled news sources to choose from.`,
-    `Fact-checking has evolved from post-publication corrections to real-time AI-assisted verification tools.`,
-    `The future of quality journalism depends on finding sustainable business models beyond click-based advertising.`,
-  ]
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="space-y-4"
-    >
-      <div className="card p-6 text-center mb-4 border-brand-900/30 bg-brand-950/5">
-        <p className="text-3xl mb-2">⚡</p>
-        <h3 className="text-lg font-bold text-white">Quick Read Summary</h3>
-        <p className="text-xs text-gray-500 mt-1">{articleTitle}</p>
-        <p className="text-sm text-gray-400 mt-2">7 key ideas · Swipe to explore</p>
-      </div>
-
-      <div className="card p-8 text-center min-h-[200px] flex flex-col items-center justify-center">
-        <div className="mb-4">
-          <span className="text-xs text-gray-500">
-            Key Idea {currentIndex + 1} of {keyIdeas.length}
-          </span>
-        </div>
-        <p className="text-base text-white leading-relaxed max-w-lg">
-          {keyIdeas[currentIndex]}
-        </p>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2">
-          {keyIdeas.map((_, i) => (
-            <div
-              key={i}
-              className={`h-1.5 rounded-full transition-all ${
-                i === currentIndex ? 'w-6 bg-brand-400' : 'w-1.5 bg-gray-700'
-              }`}
-            />
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
-            disabled={currentIndex === 0}
-            className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-40"
-          >
-            ← Prev
-          </button>
-          <button
-            onClick={() => setCurrentIndex(prev => Math.min(keyIdeas.length - 1, prev + 1))}
-            disabled={currentIndex === keyIdeas.length - 1}
-            className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-40"
-          >
-            Next →
-          </button>
-        </div>
-      </div>
-
-      <div className="flex justify-center">
-        <button
-          onClick={onClose}
-          className="btn-primary px-6 py-2 text-sm"
-        >
-          Read Full Article →
-        </button>
-      </div>
-    </motion.div>
-  )
-}
-
-function ArticleCard({
-  item,
-  level,
-  onSave,
-  onQuickRead,
-}: {
-  item: RSSItem
+interface BBCLEItem {
+  title: string
+  description: string
+  url: string
+  imageUrl: string
+  publishedAt: string
+  type: string
   level: string
-  onSave: (item: RSSItem, level: string) => void
-  onQuickRead: () => void
-}): JSX.Element {
-  const [saved, setSaved] = useState(false)
-  const date = new Date(item.pubDate || item['dc:date'] || 0).toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric'
-  })
-
-  const handleSave = async (e: React.MouseEvent) => {
-    e.stopPropagation()
-    await onSave(item, level)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
-  }
-
-  return (
-    <motion.button
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      onClick={() => window.open(item.link, '_blank')}
-      className="card text-left p-5 hover:border-brand-500 transition-colors block w-full"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
-            <LevelBadge level={level} />
-            {item.creator && <span className="text-xs text-gray-500">by {item.creator}</span>}
-          </div>
-          <h4 className="text-white font-semibold text-sm leading-snug mb-2">{item.title}</h4>
-          <p className="text-gray-500 text-xs line-clamp-2">{item.description?.replace(/<[^>]*>/g, '').substring(0, 120)}...</p>
-          <p className="text-xs text-gray-600 mt-2">{date}</p>
-        </div>
-        <div className="flex gap-2 flex-shrink-0">
-          <button
-            onClick={(e) => { e.stopPropagation(); onQuickRead() }}
-            className="text-xs px-3 py-1.5 rounded flex-shrink-0 bg-brand-950/50 text-brand-300 hover:bg-brand-950"
-          >
-            ⚡ Quick Read
-          </button>
-          <button
-            onClick={handleSave}
-            className={`text-xs px-3 py-1.5 rounded flex-shrink-0 ${
-              saved ? 'bg-green-950 text-green-300' : 'bg-gray-800 text-gray-400 hover:text-white'
-            }`}
-          >
-            {saved ? '✅ Saved' : '💾 Save'}
-          </button>
-        </div>
-      </div>
-    </motion.button>
-  )
+  audioUrl: string
+  transcript: string
 }
+
+interface GuardianItem {
+  id: string
+  webTitle: string
+  webUrl: string
+  sectionName: string
+  webPublicationDate: string
+  pillarName: string
+}
+
+type TabType = 'all' | 'bbc' | 'guardian' | 'wotd' | 'quotes'
 
 export default function News(): JSX.Element {
+  const { newsApiKey } = useSettingsStore()
   const navigate = useNavigate()
-  const { setTodayXP: _setTodayXP } = useProgressStore()
-  const [items, setItems] = useState<RSSItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [activeSource, setActiveSource] = useState<string>('all')
-  const [saveCount, setSaveCount] = useState(0)
-  const [showQuickRead, setShowQuickRead] = useState(false)
-  const [quickReadArticle, setQuickReadArticle] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<TabType>('all')
+  const [articles, setArticles] = useState<NewsArticle[]>([])
+  const [bbcItems, setBbcItems] = useState<BBCLEItem[]>([])
+  const [guardianItems, setGuardianItems] = useState<GuardianItem[]>([])
+  const [wotd, setWotd] = useState<{ word: string; url: string } | null>(null)
+  const [quotes, setQuotes] = useState<{ content: string; author: string }[]>([])
+  const [loading, setLoading] = useState(false)
+  const [savedCount, setSavedCount] = useState(0)
 
-
-
-  const fetchAll = useCallback(async () => {
+  const fetchNews = useCallback(async (category?: string) => {
     setLoading(true)
-    const allItems: RSSItem[] = []
+    try {
+      const data = await window.api.content.fetchNewsAPI(category, newsApiKey) as NewsArticle[]
+      setArticles(data)
+    } catch { setArticles([]) }
+    setLoading(false)
+  }, [newsApiKey])
 
-    for (const source of RSS_SOURCES) {
-      try {
-        const feed = await window.api.content.fetchRss(source.url) as { feed?: { title?: string }; items?: RSSItem[] }
-        if (feed?.items) {
-          const filtered = feed.items.filter((_item, i) => i < 10)
-          allItems.push(...filtered)
-        }
-      } catch {
-        // RSS feed unavailable, skip
-      }
-    }
-
-    allItems.sort((a, b) => new Date(b.pubDate || 0).getTime() - new Date(a.pubDate || 0).getTime())
-    setItems(allItems)
+  const fetchBBCLE = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await window.api.content.fetchBBCLE('article') as BBCLEItem[]
+      setBbcItems(data)
+    } catch { setBbcItems([]) }
     setLoading(false)
   }, [])
 
-  useEffect(() => {
-    fetchAll()
-  }, [fetchAll])
-
-  const handleSave = async (item: RSSItem, level: string) => {
+  const fetchGuardian = useCallback(async () => {
+    setLoading(true)
     try {
-      await window.api.db.run(
-        `INSERT INTO saved_articles (url, title, source, level, content, saved_at)
-         VALUES (?, ?, ?, ?, ?, datetime('now'))
-         ON CONFLICT(url) DO UPDATE SET title = ?, source = ?, level = ?`,
-        [item.link, item.title, activeSource === 'all' ? 'Multiple' : activeSource, level, item.description || '', item.title, activeSource === 'all' ? 'Multiple' : activeSource, level]
-      )
-      setSaveCount(prev => prev + 1)
-    } catch { /* ignore */ }
-  }
+      const data = await window.api.content.fetchGuardianArticles() as GuardianItem[]
+      setGuardianItems(data)
+    } catch { setGuardianItems([]) }
+    setLoading(false)
+  }, [])
 
-  const filteredItems = items.filter(item => {
-    if (activeSource !== 'all' && !item.link.toLowerCase().includes(activeSource.toLowerCase())) return false
-    return true
-  })
+  const fetchWOTD = useCallback(async () => {
+    const data = await window.api.content.fetchWordOfTheDay() as { word: string; url: string } | null
+    setWotd(data)
+  }, [])
+
+  const fetchQuotes = useCallback(async () => {
+    const data = await window.api.content.fetchQuotable(10) as { content: string; author: string }[]
+    setQuotes(data)
+  }, [])
+
+  const loadTab = useCallback((tab: TabType) => {
+    setActiveTab(tab)
+    switch (tab) {
+      case 'all':
+        const categories = ['general', 'technology', 'science', 'business', 'sports']
+        categories.forEach((c, i) => setTimeout(() => fetchNews(c), i * 200))
+        break
+      case 'bbc': fetchBBCLE() ; break
+      case 'guardian': fetchGuardian() ; break
+      case 'wotd': fetchWOTD() ; break
+      case 'quotes': fetchQuotes() ; break
+    }
+  }, [fetchNews, fetchBBCLE, fetchGuardian, fetchWOTD, fetchQuotes])
+
+  useEffect(() => { loadTab('all') }, [loadTab])
+
+  const handleSave = async (item: { title: string; url: string; description?: string }) => {
+    await window.api.db.run(
+      `INSERT INTO saved_articles (url, title, source, content, saved_at)
+       VALUES (?, ?, 'News', ?, datetime('now'))
+       ON CONFLICT(url) DO UPDATE SET title = ?`,
+      [item.url, item.title, item.description || '', item.title]
+    ).catch(() => {})
+    setSavedCount(prev => prev + 1)
+  }
 
   return (
     <div className="p-8 flex flex-col h-full overflow-y-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-white">News</h2>
-          <p className="text-gray-400 text-sm mt-1">Real articles from BBC, VOA, and more</p>
+          <h2 className="text-2xl font-bold text-white">News & Resources</h2>
+          <p className="text-gray-400 text-sm mt-1">Auto-updating content from multiple sources</p>
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => { setActiveSource('all'); fetchAll() }} className="btn-secondary px-3 py-1.5 text-xs">All</button>
-          <button onClick={() => { setActiveSource('BBC'); fetchAll() }} className="btn-secondary px-3 py-1.5 text-xs">BBC</button>
-          <button onClick={() => { setActiveSource('VOA'); fetchAll() }} className="btn-secondary px-3 py-1.5 text-xs">VOA</button>
-        </div>
+        <span className="text-xs text-gray-500">{savedCount} saved</span>
       </div>
 
-      {/* Quick actions */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <motion.button
-          onClick={() => navigate('/podcasts')}
-          whileHover={{ y: -2 }}
-          className="card p-4 text-left"
-        >
-          <p className="text-2xl mb-2">🎙️</p>
-          <p className="text-sm font-semibold text-white">Podcasts</p>
-          <p className="text-xs text-gray-500 mt-1">Audio with dual subtitles</p>
-        </motion.button>
-        <motion.button
-          onClick={() => navigate('/flashcards')}
-          whileHover={{ y: -2 }}
-          className="card p-4 text-left"
-        >
-          <p className="text-2xl mb-2">📝</p>
-          <p className="text-sm font-semibold text-white">Saved Articles</p>
-          <p className="text-xs text-gray-500 mt-1">{saveCount} saved this session</p>
-        </motion.button>
-        <motion.button
-          onClick={() => {
-            if (items.length > 0) {
-              setQuickReadArticle(items[0].title)
-              setShowQuickRead(true)
-            }
-          }}
-          whileHover={{ y: -2 }}
-          className="card p-4 text-left"
-        >
-          <p className="text-2xl mb-2">⚡</p>
-          <p className="text-sm font-semibold text-white">Quick Read</p>
-          <p className="text-xs text-gray-500 mt-1">Blinkist-style key ideas</p>
-        </motion.button>
-      </div>
-
-      {/* Quick Read Modal */}
-      {showQuickRead && quickReadArticle && (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-lg"
+      {/* Tabs */}
+      <div className="flex gap-1 mb-6 bg-gray-900 p-1 rounded-lg w-fit">
+        {([
+          { id: 'all', label: '📰 All News' },
+          { id: 'bbc', label: '🇬🇧 BBC LE' },
+          { id: 'guardian', label: '📖 Guardian' },
+          { id: 'wotd', label: '📝 Word of Day' },
+          { id: 'quotes', label: '💬 Quotes' },
+        ] as { id: TabType; label: string }[]).map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => loadTab(tab.id)}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              activeTab === tab.id ? 'bg-brand-600 text-white' : 'text-gray-400 hover:text-white'
+            }`}
           >
-            <QuickReadSummary articleTitle={quickReadArticle} onClose={() => setShowQuickRead(false)} />
-          </motion.div>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        <motion.button onClick={() => navigate('/youtube')} whileHover={{ y: -2 }} className="card p-4 text-left">
+          <p className="text-2xl mb-2">📺</p>
+          <p className="text-sm font-semibold text-white">YouTube</p>
+          <p className="text-xs text-gray-500 mt-1">Video lessons</p>
+        </motion.button>
+        <motion.button onClick={() => navigate('/import')} whileHover={{ y: -2 }} className="card p-4 text-left">
+          <p className="text-2xl mb-2">📥</p>
+          <p className="text-sm font-semibold text-white">Import URL</p>
+          <p className="text-xs text-gray-500 mt-1">AI summary</p>
+        </motion.button>
+        <motion.button onClick={() => navigate('/flashcards')} whileHover={{ y: -2 }} className="card p-4 text-left">
+          <p className="text-2xl mb-2">🃏</p>
+          <p className="text-sm font-semibold text-white">Flashcards</p>
+          <p className="text-xs text-gray-500 mt-1">Study due words</p>
+        </motion.button>
+        <motion.button onClick={() => navigate('/stats')} whileHover={{ y: -2 }} className="card p-4 text-left">
+          <p className="text-2xl mb-2">📊</p>
+          <p className="text-sm font-semibold text-white">Analytics</p>
+          <p className="text-xs text-gray-500 mt-1">Track progress</p>
+        </motion.button>
+      </div>
+
+      {/* Tab Content */}
+      {loading ? (
+        <div className="card flex items-center justify-center h-48 text-gray-500">Loading…</div>
+      ) : activeTab === 'all' && (
+        <div className="space-y-3">
+          {articles.length === 0 ? (
+            <div className="card flex items-center justify-center h-48 text-gray-500">
+              No articles loaded. Check your NewsAPI key in Settings.
+            </div>
+          ) : (
+            articles.slice(0, 20).map((article, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+                <ArticleCard article={article} onSave={handleSave} />
+              </motion.div>
+            ))
+          )}
         </div>
       )}
 
-      {/* Articles */}
-      {loading ? (
-        <div className="card flex items-center justify-center h-48 text-gray-500">Loading articles…</div>
-      ) : (
+      {activeTab === 'bbc' && (
         <div className="space-y-3">
-          {filteredItems.length === 0 ? (
+          {bbcItems.length === 0 ? (
             <div className="card flex items-center justify-center h-48 text-gray-500">
-              No articles found. Try a different source or check your internet connection.
+              Could not load BBC Learning English. Content may be temporarily unavailable.
             </div>
           ) : (
-            filteredItems.map((article, i) => (
-              <ArticleCard
-                key={i}
-                item={article}
-                level={'B2'}
-                onSave={handleSave}
-                onQuickRead={() => {
-                  setQuickReadArticle(article.title)
-                  setShowQuickRead(true)
-                }}
-              />
+            bbcItems.map((item, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+                <BBCLECard item={item} onSave={handleSave} />
+              </motion.div>
+            ))
+          )}
+        </div>
+      )}
+
+      {activeTab === 'guardian' && (
+        <div className="space-y-3">
+          {guardianItems.length === 0 ? (
+            <div className="card flex items-center justify-center h-48 text-gray-500">
+              No Guardian articles found.
+            </div>
+          ) : (
+            guardianItems.map((item, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+                <GuardianCard item={item} onSave={handleSave} />
+              </motion.div>
+            ))
+          )}
+        </div>
+      )}
+
+      {activeTab === 'wotd' && wotd && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card p-8 text-center">
+          <p className="text-5xl mb-4">📝</p>
+          <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Word of the Day</p>
+          <h3 className="text-3xl font-bold text-white mb-2">{wotd.word}</h3>
+          <a
+            href={wotd.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-brand-400 hover:text-brand-300"
+          >
+            🔗 Merriam-Webster Dictionary
+          </a>
+        </motion.div>
+      )}
+
+      {activeTab === 'quotes' && (
+        <div className="space-y-4">
+          {quotes.length === 0 ? (
+            <div className="card flex items-center justify-center h-48 text-gray-500">
+              Could not load quotes.
+            </div>
+          ) : (
+            quotes.map((q, i) => (
+              <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                <div className="card p-5">
+                  <p className="text-gray-300 text-sm leading-relaxed italic mb-2">"{q.content}"</p>
+                  <p className="text-brand-400 text-xs text-right">— {q.author}</p>
+                </div>
+              </motion.div>
             ))
           )}
         </div>
       )}
     </div>
   )
+}
+
+function ArticleCard({ article, onSave }: { article: NewsArticle; onSave: (item: { title: string; url: string; description?: string }) => void }): JSX.Element {
+  const [saved, setSaved] = useState(false)
+
+  return (
+    <motion.button
+      onClick={() => window.open(article.url, '_blank')}
+      className="card text-left p-5 hover:border-brand-500 transition-colors block w-full"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <h4 className="text-white font-semibold text-sm leading-snug mb-2">{article.title}</h4>
+          <p className="text-gray-500 text-xs line-clamp-2">{article.description?.replace(/<[^>]*>/g, '').substring(0, 120)}...</p>
+          <p className="text-xs text-gray-600 mt-2">{new Date(article.publishedAt).toLocaleDateString()}</p>
+          <span className="text-xs text-gray-500">• {article.source.name}</span>
+        </div>
+        <button
+          onClick={(e) => { e.stopPropagation(); onSave(article); setSaved(true); setTimeout(() => setSaved(false), 2000) }}
+          className={`text-xs px-3 py-1.5 rounded flex-shrink-0 ${saved ? 'bg-green-950 text-green-300' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
+        >
+          {saved ? '✅ Saved' : '💾 Save'}
+        </button>
+      </div>
+    </motion.button>
+  )
+}
+
+function BBCLECard({ item, onSave }: { item: BBCLEItem; onSave: (i: { title: string; url: string; description?: string }) => void }): JSX.Element {
+  const [saved, setSaved] = useState(false)
+  return (
+    <div className="card p-5 space-y-3">
+      <div className="flex items-center justify-between">
+        <CEFRLevel level={item.level || 'B1'} />
+        <button onClick={(e) => { e.stopPropagation(); onSave(item); setSaved(true); setTimeout(() => setSaved(false), 2000) }}
+          className={`text-xs px-3 py-1.5 rounded flex-shrink-0 ${saved ? 'bg-green-950 text-green-300' : 'bg-gray-800 text-gray-400'}`}>
+          {saved ? '✅' : '💾'}
+        </button>
+      </div>
+      <h4 className="text-white font-semibold text-sm">{item.title}</h4>
+      <p className="text-gray-400 text-xs">{item.description?.substring(0, 150)}...</p>
+      {item.audioUrl && (
+        <audio src={item.audioUrl} controls className="w-full mt-2" />
+      )}
+      <button onClick={() => window.open(item.url, '_blank')} className="text-xs text-brand-400 hover:text-brand-300">
+        Read full article →
+      </button>
+    </div>
+  )
+}
+
+function GuardianCard({ item, onSave }: { item: GuardianItem; onSave: (i: { title: string; url: string; description?: string }) => void }): JSX.Element {
+  const [saved, setSaved] = useState(false)
+  return (
+    <div className="card p-5">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs text-gray-500">{item.sectionName}</span>
+        <button onClick={(e) => { e.stopPropagation(); onSave({ title: item.webTitle, url: item.webUrl }); setSaved(true); setTimeout(() => setSaved(false), 2000) }}
+          className={`text-xs px-3 py-1.5 rounded flex-shrink-0 ${saved ? 'bg-green-950 text-green-300' : 'bg-gray-800 text-gray-400'}`}>
+          {saved ? '✅' : '💾'}
+        </button>
+      </div>
+      <h4 className="text-white font-semibold text-sm mb-1">{item.webTitle}</h4>
+      <p className="text-xs text-gray-600">{new Date(item.webPublicationDate).toLocaleDateString()}</p>
+      <button onClick={() => window.open(item.webUrl, '_blank')} className="text-xs text-brand-400 hover:text-brand-300 mt-2">
+        Read on The Guardian →
+      </button>
+    </div>
+  )
+}
+
+function CEFRLevel({ level }: { level: string }) {
+  const colors: Record<string, string> = {
+    A1: 'bg-green-900/40 text-green-300', A2: 'bg-blue-900/40 text-blue-300',
+    B1: 'bg-cyan-900/40 text-cyan-300', B2: 'bg-green-900/40 text-green-300',
+    C1: 'bg-purple-900/40 text-purple-300', C2: 'bg-orange-900/40 text-orange-300',
+  }
+  return <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${colors[level] || 'bg-gray-700 text-gray-300'}`}>{level}</span>
 }
