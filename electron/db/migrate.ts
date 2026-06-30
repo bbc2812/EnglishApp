@@ -135,6 +135,21 @@ CREATE TABLE IF NOT EXISTS translation_cache (
   translation TEXT NOT NULL,
   fetched_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS vocab_sets (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  topic TEXT NOT NULL,
+  level TEXT NOT NULL,
+  description TEXT,
+  unit_id INTEGER REFERENCES units(id)
+);
+
+CREATE TABLE IF NOT EXISTS vocab_set_words (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  vocab_set_id INTEGER NOT NULL REFERENCES vocab_sets(id),
+  word_id INTEGER NOT NULL REFERENCES words(id)
+);
 `
 
 const SEED_UNITS = `
@@ -153,7 +168,82 @@ INSERT OR IGNORE INTO units (id, title, cefr_level, unit_order, description, unl
 (12, 'Near-Native Fluency',  'C2', 12, 'Full proficiency, idiomatic mastery',            0);
 `
 
+const SEED_VOCAB_SETS = `
+INSERT OR IGNORE INTO vocab_sets (id, title, topic, level, description, unit_id) VALUES
+  (1,  'Business Meetings',       'business',  'B1', 'Essential vocabulary for meetings and discussions',  3),
+  (2,  'Travel & Tourism',        'travel',    'B1', 'Words and phrases for travel experiences',            2),
+  (3,  'Technology Terms',        'technology','B2', 'Digital world vocabulary and concepts',            4),
+  (4,  'Academic Writing',        'academic',  'C1', 'Formal vocabulary for essays and papers',           6),
+  (5,  'Health & Medicine',       'health',    'B2', 'Medical and wellness vocabulary',                   3),
+  (6,  'Phrasal Verbs',           'idioms',    'B2', 'Common phrasal verbs and their meanings',           7),
+  (7,  'IELTS Academic Word List','ielts',     'C1', 'High-frequency academic words for IELTS',          8),
+  (8,  'News & Current Affairs',  'news',      'C1', 'Vocabulary from world news and politics',          8),
+  (9,  'Negotiations',            'business',  'C1', 'Advanced business negotiation language',           5),
+  (10, 'Environmental Issues',    'science',   'C1', 'Vocabulary for climate and environment topics',    5),
+  (11, 'Literary Terms',          'literature','C2', 'Vocabulary for analyzing literature',            11),
+  (12, 'Legal & Society',         'law',       'C1', 'Legal terms and social justice vocabulary',       10);
+`
+
+const SEED_LESSONS = `
+INSERT OR IGNORE INTO lessons (id, unit_id, title, type, content_url, transcript, locked) VALUES
+  -- Unit 1
+  (1, 1, 'Present Perfect Deep Dive',   'listening',  NULL, NULL, 0),
+  (2, 1, 'Articles & Determiners',      'reading',    NULL, NULL, 0),
+  (3, 1, 'Everyday Expressions',        'speaking',   NULL, NULL, 0),
+  -- Unit 2
+  (4, 2, 'Morning Routines',            'listening',  NULL, NULL, 1),
+  (5, 2, 'At the Restaurant',           'reading',    NULL, NULL, 1),
+  (6, 2, 'Describing Your Day',         'writing',    NULL, NULL, 1),
+  -- Unit 3
+  (7, 3, 'Job Interviews',              'listening',  NULL, NULL, 1),
+  (8, 3, 'Office Vocabulary',           'reading',    NULL, NULL, 1),
+  (9, 3, 'Professional Emails',         'writing',    NULL, NULL, 1),
+  -- Unit 4
+  (10, 4, 'Social Media Debate',       'listening',  NULL, NULL, 1),
+  (11, 4, 'Tech Glossary',             'reading',    NULL, NULL, 1),
+  (12, 4, 'Opinion Writing',           'writing',    NULL, NULL, 1),
+  -- Unit 5
+  (13, 5, 'Hypothetical Situations',   'listening',  NULL, NULL, 1),
+  (14, 5, 'Nuanced Opinions',          'reading',    NULL, NULL, 1),
+  (15, 5, 'Debate Practice',           'speaking',   NULL, NULL, 1),
+  -- Unit 6
+  (16, 6, 'Academic Introductions',    'listening',  NULL, NULL, 1),
+  (17, 6, 'Essay Structure',           'reading',    NULL, NULL, 1),
+  (18, 6, 'Formal Writing',            'writing',    NULL, NULL, 1),
+  -- Unit 7
+  (19, 7, 'Phrasal Verb Stories',      'listening',  NULL, NULL, 1),
+  (20, 7, 'Collocation Patterns',      'reading',    NULL, NULL, 1),
+  (21, 7, 'Natural Speech',            'speaking',   NULL, NULL, 1),
+  -- Unit 8
+  (22, 8, 'Breaking News Analysis',    'listening',  NULL, NULL, 1),
+  (23, 8, 'Opinion Editorials',        'reading',    NULL, NULL, 1),
+  (24, 8, 'Persuasive Writing',        'writing',    NULL, NULL, 1),
+  -- Unit 9
+  (25, 9, 'Inversion & Emphasis',      'listening',  NULL, NULL, 1),
+  (26, 9, 'Complex Sentences',         'reading',    NULL, NULL, 1),
+  (27, 9, 'Grammar Transformation',    'writing',    NULL, NULL, 1),
+  -- Unit 10
+  (28, 10, 'Rhetorical Devices',       'listening',  NULL, NULL, 1),
+  (29, 10, 'Critical Analysis',        'reading',    NULL, NULL, 1),
+  (30, 10, 'Persuasive Speech',        'speaking',   NULL, NULL, 1),
+  -- Unit 11
+  (31, 11, 'Literary Analysis',        'listening',  NULL, NULL, 1),
+  (32, 11, 'Poetry & Prose',           'reading',    NULL, NULL, 1),
+  (33, 11, 'Creative Writing',         'writing',    NULL, NULL, 1),
+  -- Unit 12
+  (34, 12, 'Idiomatic Mastery',        'listening',  NULL, NULL, 1),
+  (35, 12, 'Advanced Discourse',       'reading',    NULL, NULL, 1),
+  (36, 12, 'Final Challenge',          'speaking',   NULL, NULL, 1);
+`
+
 export function runMigrations(db: Database.Database): void {
   db.exec(SCHEMA)
   db.exec(SEED_UNITS)
+  db.exec(SEED_VOCAB_SETS)
+  db.exec(SEED_LESSONS)
+
+  db.exec(`
+    INSERT OR IGNORE INTO unit_progress (unit_id, percent_complete)
+    SELECT id, 0 FROM units WHERE unlocked = 1
+  `)
 }

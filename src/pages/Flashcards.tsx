@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSRS } from '../hooks/useSRS'
 import { useSessionStore, type FlashcardRow } from '../store/sessionStore'
+import { useProgressStore } from '../store/progressStore'
+import { useUnitProgress } from '../hooks/useUnitProgress'
 import type { Rating } from '../lib/srs/fsrs'
 
 const RATING_LABELS: { rating: Rating; label: string; color: string; key: string }[] = [
@@ -74,36 +77,105 @@ function CardBack({ card }: { card: FlashcardRow }): JSX.Element {
   )
 }
 
-function DoneScreen({ total, onRestart }: { total: number; onRestart: () => void }): JSX.Element {
+function DoneScreen({ total, onRestart, onBack, isUnit }: {
+  total: number
+  onRestart: () => void
+  onBack: () => void
+  isUnit: boolean
+}): JSX.Element {
   return (
     <div className="flex flex-col items-center justify-center h-full gap-6 text-center">
       <p className="text-5xl">🎉</p>
       <h3 className="text-2xl font-bold text-white">Session Complete!</h3>
       <p className="text-gray-400">You reviewed <span className="text-white font-semibold">{total}</span> cards.</p>
-      <button onClick={onRestart} className="btn-primary px-8 py-3 text-base">
-        Start New Session
-      </button>
+      <div className="flex gap-3">
+        {isUnit && (
+          <button onClick={onBack} className="btn-primary px-6 py-3 text-sm">
+            Back to Dashboard
+          </button>
+        )}
+        <button onClick={onRestart} className="btn-secondary px-6 py-3 text-sm">
+          Start New Session
+        </button>
+      </div>
     </div>
   )
 }
 
 export default function Flashcards(): JSX.Element {
+  const searchParams = useSearchParams()
+  const navigate = useNavigate()
+  const unitId = searchParams[0].get('unit')
   const { loadDueCards, applyRating } = useSRS()
-  const { queue, currentIndex, isFlipped, setQueue, flip, advance, recordRating, reset } =
+  const { loadUnits } = useProgressStore()
+  const { updateUnitProgress, checkAndUnlockNext } = useUnitProgress()
+  const { queue, currentIndex, isFlipped, setQueue, flip, advance, recordRating, reset, queueId } =
     useSessionStore()
   const [loading, setLoading] = useState(false)
-  const [totalDue, setTotalDue] = useState(0)
+  const [sessionSource, setSessionSource] = useState<'srs' | 'unit'>('srs')
 
   async function startSession(): Promise<void> {
     setLoading(true)
     const cards = await loadDueCards(50)
-    setTotalDue(cards.length)
-    setQueue(cards)
+    setQueue(cards, 'srs', 'flashcards', null)
+    setSessionSource('srs')
+    setLoading(false)
+  }
+
+  async function startUnitSession(uid: number): Promise<void> {
+    setLoading(true)
+    const words = await window.api.db.all(
+      `SELECT w.id as word_id, w.word, w.ipa, w.audio_url, w.definition, w.examples
+       FROM words w WHERE w.unit_id = ?`,
+      [uid]
+    ) as { word_id: number; word: string; ipa: string | null; audio_url: string | null; definition: string | null; examples: string | null }[]
+
+    const cards: FlashcardRow[] = []
+    for (const w of words) {
+      const fc = await window.api.db.all(
+        `SELECT * FROM flashcards WHERE word_id = ?`,
+        [w.word_id]
+      ) as { id: number; due_date: string; stability: number; difficulty: number; reps: number; lapses: number; state: string }[]
+      if (fc.length > 0) {
+        cards.push({ ...fc[0], word: w.word, ipa: w.ipa, audio_url: w.audio_url, definition: w.definition, examples: w.examples } as FlashcardRow)
+      } else {
+        cards.push({
+          id: 0,
+          word_id: w.word_id,
+          word: w.word,
+          ipa: w.ipa,
+          audio_url: w.audio_url,
+          definition: w.definition,
+          examples: w.examples,
+          due_date: new Date().toISOString().slice(0, 10),
+          stability: 0,
+          difficulty: 5,
+          reps: 0,
+          lapses: 0,
+          state: 'new',
+        } as FlashcardRow)
+      }
+    }
+
+    if (cards.length > 0) {
+      setQueue(cards, 'srs', 'flashcards', Number(uid))
+      setSessionSource('unit')
+    }
+    setLoading(false)
+  }
+
+  async function loadFromParams(): Promise<void> {
+    setLoading(true)
+    if (unitId) {
+      await startUnitSession(Number(unitId))
+    } else {
+      await startSession()
+    }
     setLoading(false)
   }
 
   useEffect(() => {
-    startSession()
+    loadFromParams()
     return () => reset()
   }, [])
 
@@ -130,6 +202,19 @@ export default function Flashcards(): JSX.Element {
     advance()
   }
 
+  const isUnitSession = sessionSource === 'unit' && queueId !== null
+
+  const handleSessionDone = async () => {
+    if (isUnitSession && queueId) {
+      await updateUnitProgress(queueId)
+      const unlocked = await checkAndUnlockNext(queueId)
+      if (unlocked) {
+        await loadUnits()
+      }
+    }
+    navigate('/')
+  }
+
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center h-full">
@@ -146,7 +231,14 @@ export default function Flashcards(): JSX.Element {
         <div className="card flex flex-col items-center justify-center h-64 gap-4">
           <p className="text-4xl">✅</p>
           <p className="text-gray-300 font-medium">No cards due today!</p>
-          <p className="text-gray-500 text-sm">Come back tomorrow or add new words from the Dictionary popup.</p>
+          <p className="text-gray-500 text-sm">
+            {isUnitSession ? 'Unit study complete. Go back to the Dashboard to continue your journey.' : 'Come back tomorrow or add new words from the Dictionary popup.'}
+          </p>
+          {!isUnitSession && (
+            <button onClick={startSession} className="btn-primary px-6 py-2.5 text-sm">
+              Study Anyway
+            </button>
+          )}
         </div>
       </div>
     )
@@ -156,7 +248,14 @@ export default function Flashcards(): JSX.Element {
     <div className="p-8 flex flex-col h-full">
       <div className="flex items-baseline justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-white">Flashcards</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold text-white">Flashcards</h2>
+            {isUnitSession && (
+              <span className="text-xs text-brand-400 bg-brand-950 px-2 py-0.5 rounded">
+                Unit Study
+              </span>
+            )}
+          </div>
           <p className="text-gray-400 text-sm">FSRS-4.5 spaced repetition</p>
         </div>
         {!isDone && (
@@ -179,7 +278,7 @@ export default function Flashcards(): JSX.Element {
       {/* Card area */}
       <div className="flex-1 card min-h-0 relative overflow-hidden">
         {isDone ? (
-          <DoneScreen total={queue.length} onRestart={startSession} />
+          <DoneScreen total={queue.length} onRestart={startSession} onBack={handleSessionDone} isUnit={isUnitSession} />
         ) : (
           <AnimatePresence mode="wait">
             <motion.div

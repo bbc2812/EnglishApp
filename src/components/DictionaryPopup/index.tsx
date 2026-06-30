@@ -192,7 +192,6 @@ export default function DictionaryPopup(): JSX.Element | null {
       // Don't trigger inside the popup itself
       if (popupRef.current?.contains(e.target as Node)) return
 
-      const rect = (e.target as Element)?.getBoundingClientRect?.()
       const x = Math.min(e.clientX, window.innerWidth - 300)
       const y = e.clientY + 10
 

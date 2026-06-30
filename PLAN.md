@@ -35,7 +35,7 @@ Inspired by best features from: **Memrise, ELSA, MediaDict, TedDict, eJoy, 4Engl
 | Phase 1+2 — Scaffold + DB schema | ✅ Done | bc3ea1b |
 | Phase 3 — Flashcard engine (FSRS-4.5) | ✅ Done | fe8af27 |
 | Phase 4 — Dictionary popup (EN-EN + EN-VN) | ✅ Done | fe8af27 |
-| Phase 5 — Roadmap + unit unlock | 🔜 Next | — |
+| Phase 5 — Roadmap + unit unlock + Topical Vocab | ✅ Done | — |
 | Phase 6 — Listening & Reading module | ⏳ Pending | — |
 | Phase 6b — Newspaper, Podcast & Summaries | ⏳ Pending | — |
 | Phase 7 — Shadowing + Pronunciation scoring (ELSA-style) | ⏳ Pending | — |
