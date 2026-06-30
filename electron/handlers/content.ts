@@ -278,6 +278,29 @@ export function registerContentHandlers(): void {
     }
   )
 
+  // --- Word Network (synonyms + associations) ---
+  ipcMain.handle('content:fetchWordNetwork', async (_event, word: string) => {
+    try {
+      // Get synonyms
+      const synUrl = `https://api.datamuse.com/words?rel_syn=${encodeURIComponent(word)}&max=15`
+      const synData = await fetchJson<{ word: string; score: number }[]>(synUrl)
+      const synonyms = (synData || []).filter(d => d.word.toLowerCase() !== word.toLowerCase()).map(d => d.word).slice(0, 12)
+
+      // Get associations
+      const assocUrl = `https://api.datamuse.com/words?sp=${encodeURIComponent(word)}&max=12`
+      const assocData = await fetchJson<{ word: string; score: number }[]>(assocUrl)
+      const synonymSet = new Set(synonyms.map(s => s.toLowerCase()))
+      const associations = (assocData || [])
+        .filter(d => d.word.toLowerCase() !== word.toLowerCase() && !synonymSet.has(d.word.toLowerCase()))
+        .map(d => d.word)
+        .slice(0, 8)
+
+      return { synonyms, associations }
+    } catch {
+      return { synonyms: [], associations: [] }
+    }
+  })
+
   // --- YouTube Subtitles ---
   ipcMain.handle('content:fetchYouTubeSubtitles', async (_event, videoId: string) => {
     // Try to fetch auto-generated subtitles from YouTube

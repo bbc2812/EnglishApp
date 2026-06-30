@@ -1,10 +1,30 @@
 import { useCallback } from 'react'
 
+export interface Pronunciation {
+  region: 'US' | 'UK'
+  ipa: string
+  audio: string | null
+}
+
+export interface DefinitionItem {
+  definition: string
+  example: string | null
+  synonyms: string[]
+  antonyms: string[]
+}
+
+export interface Meaning {
+  pos: string
+  definitions: DefinitionItem[]
+}
+
 export interface DictEntry {
   word: string
+  phonetics: { region: 'US' | 'UK'; ipa: string; audio: string | null }[]
   phonetic: string | null
-  audio: string | null
-  meanings: { pos: string; definition: string; example: string | null }[]
+  meanings: Meaning[]
+  allSynonyms: string[]
+  allAntonyms: string[]
 }
 
 function parseDictResponse(data: unknown[]): DictEntry | null {
@@ -12,26 +32,68 @@ function parseDictResponse(data: unknown[]): DictEntry | null {
   const entry = data[0] as {
     word: string
     phonetic?: string
-    phonetics?: { text?: string; audio?: string }[]
+    phonetics?: { text?: string; audio?: string; region?: string }[]
     meanings?: {
       partOfSpeech: string
-      definitions: { definition: string; example?: string }[]
+      definitions: { definition: string; example?: string; synonyms?: string[]; antonyms?: string[] }[]
     }[]
   }
 
-  const phonetics = entry.phonetics ?? []
-  const audio = phonetics.find((p) => p.audio)?.audio ?? null
-  const phonetic = entry.phonetic ?? phonetics.find((p) => p.text)?.text ?? null
+  // Extract US and UK pronunciations
+  const phonetics = entry.phonetics || []
+  const usPronunciation = phonetics.find(p => {
+    if (!p.audio) return false
+    const audio = p.audio.toLowerCase()
+    return audio.includes('us') || audio.includes('ameri') || audio.includes('general')
+  })
+  const ukPronunciation = phonetics.find(p => {
+    if (!p.audio) return false
+    const audio = p.audio.toLowerCase()
+    return audio.includes('uk') || audio.includes('gb') || audio.includes('brit') || audio.includes('non_us')
+  })
 
-  const meanings = (entry.meanings ?? []).flatMap((m) =>
-    m.definitions.slice(0, 2).map((d) => ({
-      pos: m.partOfSpeech,
-      definition: d.definition,
-      example: d.example ?? null
-    }))
-  ).slice(0, 5)
+  const phoneticsResult: DictEntry['phonetics'] = []
+  if (usPronunciation?.audio) {
+    phoneticsResult.push({ region: 'US', ipa: usPronunciation.text || '', audio: usPronunciation.audio })
+  } else if (phonetics[0]?.audio) {
+    phoneticsResult.push({ region: 'US', ipa: phonetics[0].text || '', audio: phonetics[0].audio })
+  }
+  if (ukPronunciation?.audio) {
+    phoneticsResult.push({ region: 'UK', ipa: ukPronunciation.text ?? '', audio: ukPronunciation.audio })
+  } else if (phonetics.find(p => p.text)) {
+    const nonUs = phonetics.find(p => !phoneticsResult.some(r => r.audio === p.audio))
+    if (nonUs) {
+      phoneticsResult.push({ region: 'UK', ipa: nonUs.text ?? '', audio: nonUs.audio ?? null })
+    }
+  }
 
-  return { word: entry.word, phonetic, audio, meanings }
+  const phonetic = entry.phonetic ?? phonetics.find(p => p.text)?.text ?? null
+
+  const allSynonyms: string[] = []
+  const allAntonyms: string[] = []
+
+  const meanings = (entry.meanings ?? []).flatMap((m) => ({
+    pos: m.partOfSpeech,
+    definitions: m.definitions.map((d) => {
+      if (d.synonyms) allSynonyms.push(...d.synonyms.filter(s => s.toLowerCase() !== entry.word.toLowerCase()))
+      if (d.antonyms) allAntonyms.push(...d.antonyms.filter(a => a.toLowerCase() !== entry.word.toLowerCase()))
+      return {
+        definition: d.definition,
+        example: d.example ?? null,
+        synonyms: d.synonyms || [],
+        antonyms: d.antonyms || []
+      }
+    })
+  }))
+
+  return {
+    word: entry.word,
+    phonetics: phoneticsResult,
+    phonetic,
+    meanings,
+    allSynonyms: [...new Set(allSynonyms)].slice(0, 15),
+    allAntonyms: [...new Set(allAntonyms)].slice(0, 10)
+  }
 }
 
 export function useDictionary() {
@@ -84,5 +146,23 @@ export function useDictionary() {
     return translation
   }, [])
 
-  return { lookup, translate }
+  const fetchWordNetwork = useCallback(async (word: string): Promise<{ synonyms: string[]; associations: string[] }> => {
+    const clean = word.trim().toLowerCase()
+    if (!clean) return { synonyms: [], associations: [] }
+
+    const result = await window.api.content.fetchDatamuse(clean, 'rel_syn') as { word: string; score: number }[]
+    if (!result) return { synonyms: [], associations: [] }
+
+    const synonyms = result.filter(d => d.word !== clean).slice(0, 12).map(d => d.word)
+
+    const assocResult = await window.api.content.fetchDatamuse(clean) as { word: string; score: number }[]
+    const associations = (assocResult || [])
+      .filter(d => d.word !== clean && !synonyms.includes(d.word))
+      .slice(0, 8)
+      .map(d => d.word)
+
+    return { synonyms, associations }
+  }, [])
+
+  return { lookup, translate, fetchWordNetwork }
 }

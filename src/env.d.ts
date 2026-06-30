@@ -36,6 +36,7 @@ interface ContentApi {
   fetchWordOfTheDay: () => Promise<{ word: string; url: string } | null>
   scrapeUrl: (url: string) => Promise<{ title: string; description: string; content: string }>
   saveYouTubeEpisode: (data: { videoId: string; title: string; channel: string; duration?: string; thumbnail?: string; publishedAt: string; level?: string }) => Promise<boolean>
+  fetchWordNetwork: (word: string) => Promise<{ synonyms: string[]; associations: string[] }>
 }
 
 interface ShadowingApi {

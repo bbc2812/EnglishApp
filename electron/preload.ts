@@ -57,7 +57,9 @@ const api = {
     scrapeUrl: (url: string): Promise<{ title: string; description: string; content: string }> =>
       ipcRenderer.invoke('content:scrapeUrl', url),
     saveYouTubeEpisode: (data: { videoId: string; title: string; channel: string; duration?: string; thumbnail?: string; publishedAt: string; level?: string }): Promise<boolean> =>
-      ipcRenderer.invoke('content:saveYouTubeEpisode', data)
+      ipcRenderer.invoke('content:saveYouTubeEpisode', data),
+    fetchWordNetwork: (word: string): Promise<{ synonyms: string[]; associations: string[] }> =>
+      ipcRenderer.invoke('content:fetchWordNetwork', word)
   },
   shadowing: {
     save: (attempt: {
