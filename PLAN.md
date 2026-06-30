@@ -37,7 +37,7 @@ Inspired by best features from: **Memrise, ELSA, MediaDict, TedDict, eJoy, 4Engl
 | Phase 4 — Dictionary popup (EN-EN + EN-VN) | ✅ Done | fe8af27 |
 | Phase 5 — Roadmap + unit unlock + Topical Vocab | ✅ Done | — |
 | Phase 6 — Listening & Reading module | ✅ Done | — |
-| Phase 6b — Newspaper, Podcast & Summaries | ⏳ Pending | — |
+| Phase 6b — Newspaper, Podcast & Summaries | ✅ Done | — |
 | Phase 7 — Shadowing + Pronunciation scoring (ELSA-style) | ⏳ Pending | — |
 | Phase 7b — Writing module + Vietnamese grammar explanations | ⏳ Pending | — |
 | Phase 8 — AI Tutor (Claude / Gemini / Ollama) | ⏳ Pending | — |

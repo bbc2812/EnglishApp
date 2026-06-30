@@ -326,7 +326,7 @@ export default function Dashboard(): JSX.Element {
     setTodayXP(xpEarned)
 
     setVocabSets(vocabSetsData)
-    setLessons(unlockedLessons)
+    setLessons(unlockedLessons as { id: number; title: string; type: string; locked: number }[])
     setStats((prev) => ({ ...prev, lessonsCompleted: lessonC, totalWords: wordC }))
     setLoading(false)
   }, [loadUnits, setTodayStats, setTodayXP])
@@ -474,7 +474,7 @@ export default function Dashboard(): JSX.Element {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
                 onClick={() => navigate(`/${lesson.type}?lesson=${lesson.id}`)}
-                disabled={lesson.locked}
+                disabled={lesson.locked === 1}
                 className="card text-left p-4 hover:border-brand-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <div className="flex items-center gap-2 mb-2">
