@@ -212,6 +212,51 @@ export default function Settings(): JSX.Element {
         </SettingRow>
       </div>
 
+      {/* Shadowing Settings */}
+      <div className="card p-5 mb-6">
+        <h3 className="text-sm font-semibold text-white mb-4">🎤 Shadowing & Pronunciation</h3>
+
+        <SettingRow label="Scoring Method">
+          <div className="flex gap-1">
+            {(['simulated', 'ai'] as const).map(s => (
+              <button key={s}
+                onClick={() => window.api.db.all(`SELECT name FROM pragma_table_info('shadowing_sessions')`).then(() => useSettingsStore.getState().setShadowingScoring(s)).catch(() => {})}
+                className={`px-3 py-1 rounded-md text-xs font-medium capitalize ${
+                  useSettingsStore.getState().shadowingScoring === s
+                    ? 'bg-brand-600 text-white'
+                    : 'bg-gray-800 text-gray-400'
+                }`}>
+                {s === 'simulated' ? '⚡ Simulated' : '🤖 AI'}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-gray-600 mt-1">Simulated = instant & free, AI = needs API key but more accurate</p>
+        </SettingRow>
+
+        <SettingRow label="Target Score (to pass)">
+          <input type="range" min="50" max="95" step="5" defaultValue="80"
+            onChange={e => useSettingsStore.getState().setShadowingTargetScore(Number(e.target.value))}
+            className="w-32" />
+          <span className="text-sm text-white w-12 text-right">80%</span>
+        </SettingRow>
+
+        <SettingRow label="Subtitle Language">
+          <div className="flex gap-1">
+            {(['en', 'vn', 'both'] as const).map(l => (
+              <button key={l}
+                onClick={() => useSettingsStore.getState().setShadowingFeedbackLang(l)}
+                className={`px-3 py-1 rounded-md text-xs font-medium ${
+                  useSettingsStore.getState().shadowingFeedbackLang === l
+                    ? 'bg-brand-600 text-white'
+                    : 'bg-gray-800 text-gray-400'
+                }`}>
+                {l === 'both' ? 'EN+VN' : l.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </SettingRow>
+      </div>
+
       {/* App Settings */}
       <div className="card p-5 mb-6">
         <h3 className="text-sm font-semibold text-white mb-4">⚡ App Settings</h3>

@@ -40,6 +40,10 @@ const api = {
       ipcRenderer.invoke('content:fetchYouTubeRSS', channelId),
     fetchYouTubeChannel: (channelId?: string): Promise<unknown[]> =>
       ipcRenderer.invoke('content:fetchYouTubeChannel', channelId),
+    fetchYouTubeSubtitles: (videoId: string): Promise<{ text: string; startTime: number; endTime: number }[]> =>
+      ipcRenderer.invoke('content:fetchYouTubeSubtitles', videoId),
+    parseManualTranscript: (text: string): Promise<{ text: string; startTime: number; endTime: number }[]> =>
+      ipcRenderer.invoke('content:parseManualTranscript', text),
     fetchDatamuse: (query: string, relSyn?: string): Promise<{ word: string; score: number }[]> =>
       ipcRenderer.invoke('content:fetchDatamuse', query, relSyn),
     fetchWiktionary: (word: string): Promise<unknown> =>
@@ -54,6 +58,67 @@ const api = {
       ipcRenderer.invoke('content:scrapeUrl', url),
     saveYouTubeEpisode: (data: { videoId: string; title: string; channel: string; duration?: string; thumbnail?: string; publishedAt: string; level?: string }): Promise<boolean> =>
       ipcRenderer.invoke('content:saveYouTubeEpisode', data)
+  },
+  shadowing: {
+    save: (attempt: {
+      episodeType: 'podcast' | 'youtube' | 'imported_article'
+      episodeId: string
+      sentenceIndex: number
+      sentenceText: string
+      sentenceTranslation?: string
+      nativeAudioUrl?: string
+      matchScore: number
+      phonemeFeedback: string
+      attempts: number
+      passed: number
+      mode: 'learn' | 'free'
+    }): Promise<boolean> =>
+      ipcRenderer.invoke('shadowing:save', attempt),
+    saveBatch: (attempts: {
+      episodeType: 'podcast' | 'youtube' | 'imported_article'
+      episodeId: string
+      sentenceIndex: number
+      sentenceText: string
+      sentenceTranslation?: string
+      nativeAudioUrl?: string
+      matchScore: number
+      phonemeFeedback: string
+      attempts: number
+      passed: number
+      mode: 'learn' | 'free'
+    }[]): Promise<number> =>
+      ipcRenderer.invoke('shadowing:saveBatch', attempts),
+    getProgress: (episodeType: string, episodeId: string): Promise<{
+      sentence_index: number
+      best_score: number
+      best_attempts: number
+      passed: number
+    }[]> =>
+      ipcRenderer.invoke('shadowing:getProgress', episodeType, episodeId),
+    getStats: (days?: number): Promise<{
+      totalSessions: number
+      avgScore: number
+      sentencesCompleted: number
+      totalAttempts: number
+    }> =>
+      ipcRenderer.invoke('shadowing:getStats', days),
+    getWeakSentences: (episodeType: string, episodeId: string, threshold?: number): Promise<{
+      sentence_index: number
+      sentence_text: string
+      sentence_translation: string
+      best_score: number
+      best_attempts: number
+    }[]> =>
+      ipcRenderer.invoke('shadowing:getWeakSentences', episodeType, episodeId, threshold),
+    getHistory: (limit?: number): Promise<{
+      episode_type: string
+      episode_id: string
+      sentence_text: string
+      match_score: number
+      mode: string
+      created_at: string
+    }[]> =>
+      ipcRenderer.invoke('shadowing:getHistory', limit)
   },
   clipboard: {
     capture: (): Promise<string> =>

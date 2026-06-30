@@ -4,6 +4,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { registerDbHandlers } from './handlers/db'
 import { registerAiHandlers } from './handlers/ai'
 import { registerContentHandlers } from './handlers/content'
+import { registerShadowingHandlers } from './handlers/shadowing'
 
 let tray: Tray | null = null
 
@@ -78,6 +79,7 @@ app.whenReady().then(() => {
   registerDbHandlers()
   registerAiHandlers()
   registerContentHandlers()
+  registerShadowingHandlers()
 
   createWindow()
 

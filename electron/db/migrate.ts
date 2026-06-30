@@ -198,6 +198,23 @@ CREATE TABLE IF NOT EXISTS leaderboard_personas (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS shadowing_sessions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  episode_type TEXT NOT NULL CHECK(episode_type IN ('podcast','youtube','imported_article')),
+  episode_id TEXT NOT NULL,
+  sentence_index INTEGER NOT NULL,
+  sentence_text TEXT NOT NULL,
+  sentence_translation TEXT,
+  native_audio_url TEXT,
+  user_audio_blob BLOB,
+  match_score INTEGER,
+  phoneme_feedback TEXT,
+  attempts INTEGER NOT NULL DEFAULT 1,
+  passed INTEGER NOT NULL DEFAULT 0,
+  mode TEXT NOT NULL DEFAULT 'learn' CHECK(mode IN ('learn','free')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS vocab_set_words (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   vocab_set_id INTEGER NOT NULL REFERENCES vocab_sets(id),
@@ -331,6 +348,7 @@ export function runMigrations(db: Database.Database): void {
   try { db.exec(`ALTER TABLE daily_stats ADD COLUMN xp_earned INTEGER NOT NULL DEFAULT 0`) } catch {}
   try { db.exec(`ALTER TABLE saved_articles ADD COLUMN summary TEXT`) } catch {}
   try { db.exec(`ALTER TABLE words ADD COLUMN source_context TEXT`) } catch {}
+  try { db.exec(`ALTER TABLE youtube_episodes ADD COLUMN transcript TEXT`) } catch {}
 
   db.exec(`
     INSERT OR IGNORE INTO unit_progress (unit_id, percent_complete)

@@ -3,6 +3,8 @@ import { persist } from 'zustand/middleware'
 
 export type AiProvider = 'claude' | 'ollama' | 'gemini'
 export type ThemeMode = 'dark' | 'light' | 'auto'
+export type ShadowingScoring = 'simulated' | 'ai'
+export type ShadowingFeedbackLang = 'en' | 'vn' | 'both'
 
 interface SettingsState {
   claudeApiKey: string
@@ -18,6 +20,9 @@ interface SettingsState {
   clipboardHotkey: boolean
   readingGoalMins: number
   theme: ThemeMode
+  shadowingScoring: ShadowingScoring
+  shadowingFeedbackLang: ShadowingFeedbackLang
+  shadowingTargetScore: number
   setClaudeApiKey: (key: string) => void
   setOllamaUrl: (url: string) => void
   setOllamaModel: (model: string) => void
@@ -31,6 +36,9 @@ interface SettingsState {
   setClipboardHotkey: (enable: boolean) => void
   setReadingGoalMins: (n: number) => void
   setTheme: (t: ThemeMode) => void
+  setShadowingScoring: (s: ShadowingScoring) => void
+  setShadowingFeedbackLang: (l: ShadowingFeedbackLang) => void
+  setShadowingTargetScore: (n: number) => void
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -49,6 +57,9 @@ export const useSettingsStore = create<SettingsState>()(
       clipboardHotkey: true,
       readingGoalMins: 15,
       theme: 'dark',
+      shadowingScoring: 'simulated',
+      shadowingFeedbackLang: 'both',
+      shadowingTargetScore: 80,
       setClaudeApiKey: (claudeApiKey) => set({ claudeApiKey }),
       setOllamaUrl: (ollamaUrl) => set({ ollamaUrl }),
       setOllamaModel: (ollamaModel) => set({ ollamaModel }),
@@ -61,7 +72,10 @@ export const useSettingsStore = create<SettingsState>()(
       setSystemTray: (systemTray) => set({ systemTray }),
       setClipboardHotkey: (clipboardHotkey) => set({ clipboardHotkey }),
       setReadingGoalMins: (readingGoalMins) => set({ readingGoalMins }),
-      setTheme: (theme) => set({ theme })
+      setTheme: (theme) => set({ theme }),
+      setShadowingScoring: (shadowingScoring) => set({ shadowingScoring }),
+      setShadowingFeedbackLang: (shadowingFeedbackLang) => set({ shadowingFeedbackLang }),
+      setShadowingTargetScore: (shadowingTargetScore) => set({ shadowingTargetScore })
     }),
     { name: 'wiserain-settings' }
   )

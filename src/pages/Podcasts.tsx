@@ -2,6 +2,8 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Howl } from 'howler'
 import { useNavigate } from 'react-router-dom'
+import { ShadowingPlayer } from '../components/ShadowingPlayer'
+import { TranscriptionSentence } from '../hooks/useShadowing'
 
 interface PodcastEpisode {
   id: number
@@ -233,9 +235,9 @@ export default function Podcasts(): JSX.Element {
   const [selectedEpisode, setSelectedEpisode] = useState<PodcastEpisode | null>(null)
   const [loading, setLoading] = useState(true)
   const [episodeList, setEpisodeList] = useState<PodcastEpisode[]>([])
+  const [showShadowing, setShowShadowing] = useState(false)
 
   const handleWordClick = useCallback((word: string) => {
-    // Dispatch a simulated selection event for the DictionaryPopup
     const el = document.createElement('span')
     el.textContent = word
     document.body.appendChild(el)
@@ -248,12 +250,20 @@ export default function Podcasts(): JSX.Element {
   }, [])
 
   useEffect(() => {
-    // Simulate loading
     setTimeout(() => {
       setEpisodeList(MOCK_EPISODES)
       setLoading(false)
     }, 500)
   }, [])
+
+  const shadowingSentences: TranscriptionSentence[] = selectedEpisode
+    ? selectedEpisode.transcript.map(t => ({
+        text: t.sentence,
+        translation: t.translation,
+        startTime: t.startTime,
+        endTime: t.endTime
+      }))
+    : []
 
   return (
     <div className="p-8 flex flex-col h-full overflow-y-auto">
@@ -263,13 +273,23 @@ export default function Podcasts(): JSX.Element {
           <h2 className="text-2xl font-bold text-white">Podcasts</h2>
           <p className="text-gray-400 text-sm mt-1">Listen with dual subtitles (EN / VN)</p>
         </div>
-        {!selectedEpisode && (
+        {!selectedEpisode && !showShadowing && (
           <button onClick={() => navigate('/')} className="btn-secondary px-4 py-2 text-sm">← Back</button>
         )}
       </div>
 
       <AnimatePresence mode="wait">
-        {!selectedEpisode ? (
+        {showShadowing ? (
+          <motion.div key="shadowing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+            <ShadowingPlayer
+              sentences={shadowingSentences}
+              episodeType="podcast"
+              episodeId={selectedEpisode?.id.toString() || ''}
+              audioUrl={selectedEpisode?.audioUrl}
+              onClose={() => setShowShadowing(false)}
+            />
+          </motion.div>
+        ) : !selectedEpisode ? (
           <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
             {loading ? (
               <div className="card flex items-center justify-center h-48 text-gray-500">Loading episodes…</div>
@@ -304,9 +324,6 @@ export default function Podcasts(): JSX.Element {
             <div className="card p-5">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-sm font-semibold text-gray-300">Full Transcript</h4>
-                <button onClick={() => navigate('/shadowing')} className="text-xs text-brand-400 hover:text-brand-300">
-                  🎤 Shadow this →
-                </button>
               </div>
               <div className="space-y-2">
                 {selectedEpisode.transcript.map((t, i) => (
@@ -325,7 +342,7 @@ export default function Podcasts(): JSX.Element {
             {/* Actions */}
             <div className="flex gap-3">
               <button onClick={() => setSelectedEpisode(null)} className="btn-secondary px-5 py-2.5 text-sm">← All Episodes</button>
-              <button onClick={() => navigate('/shadowing')} className="btn-primary px-5 py-2.5 text-sm">🎤 Start Shadowing</button>
+              <button onClick={() => setShowShadowing(true)} className="btn-primary px-5 py-2.5 text-sm">🎤 Shadow This (Learn/Free Mode)</button>
             </div>
           </motion.div>
         )}

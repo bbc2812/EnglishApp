@@ -278,6 +278,101 @@ export function registerContentHandlers(): void {
     }
   )
 
+  // --- YouTube Subtitles ---
+  ipcMain.handle('content:fetchYouTubeSubtitles', async (_event, videoId: string) => {
+    // Try to fetch auto-generated subtitles from YouTube
+    const url = `https://www.youtube.com/api/timedtext?v=${videoId}&type=captions`
+    try {
+      const res = await fetch(url)
+      if (!res.ok) return []
+
+      const xml = await res.text()
+
+      // Parse XML captions (YouTube returns in XML format)
+      const sentences: { text: string; startTime: number; endTime: number }[] = []
+
+      // Simple XML parser for YouTube captions
+      const tags = xml.match(/<text[^>]*>(.*?)<\/text>/g) || []
+      for (const tag of tags) {
+        const startTimeMatch = tag.match(/start="([^"]+)"/)
+        const durationMatch = tag.match(/dur="([^"]+)"/)
+        const textMatch = tag.match(/<text[^>]*>(.*?)<\/text>/)
+
+        if (startTimeMatch && durationMatch && textMatch) {
+          sentences.push({
+            text: textMatch[1].replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim(),
+            startTime: parseFloat(startTimeMatch[1]),
+            endTime: parseFloat(startTimeMatch[1]) + parseFloat(durationMatch[1])
+          })
+        }
+      }
+
+      return sentences
+    } catch {
+      return []
+    }
+  })
+
+  // --- Parse Manual Transcript ---
+  ipcMain.handle('content:parseManualTranscript', async (_event, text: string) => {
+    // Parse manually pasted transcript into sentences
+    const lines = text.split('\n').filter(line => line.trim().length > 0)
+    const sentences: { text: string; startTime: number; endTime: number }[] = []
+
+    let currentTime = 0
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (!trimmed) continue
+
+      // Check if line has a timestamp
+      const tsMatch = trimmed.match(/(\d{1,2}):(\d{2})(?:\.(\d{3}))?\s*[-–>]\s*/)
+      if (tsMatch) {
+        const mins = parseInt(tsMatch[1])
+        const secs = parseInt(tsMatch[2])
+        const ms = tsMatch[3] ? parseInt(tsMatch[3].padEnd(3, '0')) : 0
+        currentTime = mins * 60 + secs + ms / 1000
+
+        const textAfterArrow = trimmed.split(/[-–>]\s*/).slice(1).join(' ').trim()
+        if (textAfterArrow) {
+          sentences.push({
+            text: textAfterArrow,
+            startTime: currentTime,
+            endTime: currentTime + 3 // default 3s per sentence
+          })
+        }
+      } else {
+        // No timestamp, just treat as a sentence
+        if (trimmed.length > 3) {
+          sentences.push({
+            text: trimmed,
+            startTime: currentTime,
+            endTime: currentTime + 3
+          })
+          currentTime += 3
+        }
+      }
+    }
+
+    // If no timestamps found, split by period/question/exclamation + space
+    if (sentences.length === 0 && text.includes('. ')) {
+      const parts = text.split(/(?<=[.!?])\s+/)
+      let time = 0
+      for (const part of parts) {
+        const trimmed = part.trim()
+        if (trimmed.length > 3) {
+          sentences.push({
+            text: trimmed,
+            startTime: time,
+            endTime: time + 3
+          })
+          time += 3
+        }
+      }
+    }
+
+    return sentences
+  })
+
   // --- Dictionary ---
   ipcMain.handle('content:fetchDictionary', async (_event, word: string) => {
     const res = await fetch(

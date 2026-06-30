@@ -122,6 +122,11 @@ export default function Shadowing(): JSX.Element {
 
   const current = DRILLS[drillIndex]
 
+  const handleNewShadowing = () => {
+    // Navigate to Podcasts where users can do sentence-by-sentence shadowing
+    window.location.hash = '#/podcasts'
+  }
+
   useEffect(() => {
     if (nativeWsRef.current) { nativeWsRef.current.destroy(); nativeWsRef.current = null }
   }, [drillIndex])
@@ -225,6 +230,9 @@ export default function Shadowing(): JSX.Element {
           <h2 className="text-2xl font-bold text-white">Shadowing</h2>
           <p className="text-gray-400 text-sm mt-1">Listen, record, and compare your pronunciation</p>
         </div>
+        <button onClick={handleNewShadowing} className="btn-primary px-4 py-2 text-sm">
+          📝 Sentence-by-Sentence Shadowing →
+        </button>
       </div>
 
       <AnimatePresence mode="wait">
