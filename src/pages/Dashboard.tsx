@@ -274,6 +274,7 @@ export default function Dashboard(): JSX.Element {
   const { unlockUnit } = useUnitProgress()
   const [loading, setLoading] = useState(true)
   const [vocabSets, setVocabSets] = useState<{ id: number; title: string; topic: string; level: string }[]>([])
+  const [lessons, setLessons] = useState<{ id: number; title: string; type: string; locked: number }[]>([])
   const [stats, setStats] = useState<{ wordsReviewed: number; streak: number; lessonsCompleted: number; totalWords: number }>({
     wordsReviewed: 0,
     streak: 0,
@@ -286,7 +287,7 @@ export default function Dashboard(): JSX.Element {
 
     await loadUnits()
 
-    const [dailyStats, vocabSetsData, lessonCount, wordCount]: [any[], any[], unknown, unknown] =
+    const [dailyStats, vocabSetsData, lessonCount, wordCount, unlockedLessons]: [any[], any[], unknown, unknown, unknown] =
       await Promise.all([
         window.api.db.all(
           `SELECT * FROM daily_stats WHERE date = ? ORDER BY date DESC LIMIT 1`,
@@ -297,6 +298,9 @@ export default function Dashboard(): JSX.Element {
         ) as Promise<any[]>,
         window.api.db.all(`SELECT COUNT(*) as count FROM lesson_progress WHERE completed_at LIKE ?`, [`${new Date().toISOString().slice(0, 10)}%`]) as Promise<unknown>,
         window.api.db.all(`SELECT COUNT(*) as count FROM words`) as Promise<unknown>,
+        window.api.db.all(
+          `SELECT id, title, type, locked FROM lessons WHERE unit_id IN (SELECT id FROM units WHERE unlocked = 1) AND type IN ('listening', 'reading') ORDER BY unit_id, id`
+        ) as Promise<any[]>,
       ])
 
     if (dailyStats.length > 0) {
@@ -322,6 +326,7 @@ export default function Dashboard(): JSX.Element {
     setTodayXP(xpEarned)
 
     setVocabSets(vocabSetsData)
+    setLessons(unlockedLessons)
     setStats((prev) => ({ ...prev, lessonsCompleted: lessonC, totalWords: wordC }))
     setLoading(false)
   }, [loadUnits, setTodayStats, setTodayXP])
@@ -456,6 +461,37 @@ export default function Dashboard(): JSX.Element {
           <p className="text-xs text-gray-500 mt-1">Chat and get personalized help</p>
         </motion.button>
       </div>
+
+      {/* Active Lessons */}
+      {lessons.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold text-white mb-3">Your Lessons</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {lessons.map((lesson, i) => (
+              <motion.button
+                key={lesson.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                onClick={() => navigate(`/${lesson.type}?lesson=${lesson.id}`)}
+                disabled={lesson.locked}
+                className="card text-left p-4 hover:border-brand-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xl">{lesson.type === 'listening' ? '🎧' : '📖'}</span>
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                    lesson.type === 'listening' ? 'bg-blue-950 text-blue-300' : 'bg-green-950 text-green-300'
+                  }`}>
+                    {lesson.type === 'listening' ? 'Listening' : 'Reading'}
+                  </span>
+                  {lesson.locked && <span className="text-xs text-gray-500 ml-auto">🔒</span>}
+                </div>
+                <p className="text-sm font-semibold text-white truncate">{lesson.title}</p>
+              </motion.button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Vocab Sets */}
       <VocabSetsSection vocabSets={vocabSets} onSetClick={handleVocabSetClick} />

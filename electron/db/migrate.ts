@@ -187,53 +187,48 @@ INSERT OR IGNORE INTO vocab_sets (id, title, topic, level, description, unit_id)
 const SEED_LESSONS = `
 INSERT OR IGNORE INTO lessons (id, unit_id, title, type, content_url, transcript, locked) VALUES
   -- Unit 1
-  (1, 1, 'Present Perfect Deep Dive',   'listening',  NULL, NULL, 0),
+  (1, 1, 'Present Perfect Deep Dive',   'listening',  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', 'I have lived in Hanoi for five years. She has just finished her homework. They have never eaten Vietnamese pho before.', 0),
   (2, 1, 'Articles & Determiners',      'reading',    NULL, NULL, 0),
   (3, 1, 'Everyday Expressions',        'speaking',   NULL, NULL, 0),
   -- Unit 2
-  (4, 2, 'Morning Routines',            'listening',  NULL, NULL, 1),
+  (4, 2, 'Morning Routines',            'listening',  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', 'Every morning I wake up at six. Then I brush my teeth and have a quick breakfast. My brother always takes a shower before breakfast.', 1),
   (5, 2, 'At the Restaurant',           'reading',    NULL, NULL, 1),
   (6, 2, 'Describing Your Day',         'writing',    NULL, NULL, 1),
   -- Unit 3
-  (7, 3, 'Job Interviews',              'listening',  NULL, NULL, 1),
+  (7, 3, 'Job Interviews',              'listening',  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', 'Can you tell me about your experience? I have worked in marketing for ten years. My greatest strength is problem solving.', 1),
   (8, 3, 'Office Vocabulary',           'reading',    NULL, NULL, 1),
   (9, 3, 'Professional Emails',         'writing',    NULL, NULL, 1),
   -- Unit 4
-  (10, 4, 'Social Media Debate',       'listening',  NULL, NULL, 1),
+  (10, 4, 'Social Media Debate',       'listening',  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3', 'Social media has changed the way we communicate. Some people say it brings us closer, but others argue it makes us more isolated.', 1),
   (11, 4, 'Tech Glossary',             'reading',    NULL, NULL, 1),
-  (12, 4, 'Opinion Writing',           'writing',    NULL, NULL, 1),
-  -- Unit 5
-  (13, 5, 'Hypothetical Situations',   'listening',  NULL, NULL, 1),
-  (14, 5, 'Nuanced Opinions',          'reading',    NULL, NULL, 1),
-  (15, 5, 'Debate Practice',           'speaking',   NULL, NULL, 1),
-  -- Unit 6
-  (16, 6, 'Academic Introductions',    'listening',  NULL, NULL, 1),
-  (17, 6, 'Essay Structure',           'reading',    NULL, NULL, 1),
-  (18, 6, 'Formal Writing',            'writing',    NULL, NULL, 1),
-  -- Unit 7
-  (19, 7, 'Phrasal Verb Stories',      'listening',  NULL, NULL, 1),
-  (20, 7, 'Collocation Patterns',      'reading',    NULL, NULL, 1),
-  (21, 7, 'Natural Speech',            'speaking',   NULL, NULL, 1),
-  -- Unit 8
-  (22, 8, 'Breaking News Analysis',    'listening',  NULL, NULL, 1),
-  (23, 8, 'Opinion Editorials',        'reading',    NULL, NULL, 1),
-  (24, 8, 'Persuasive Writing',        'writing',    NULL, NULL, 1),
-  -- Unit 9
-  (25, 9, 'Inversion & Emphasis',      'listening',  NULL, NULL, 1),
-  (26, 9, 'Complex Sentences',         'reading',    NULL, NULL, 1),
-  (27, 9, 'Grammar Transformation',    'writing',    NULL, NULL, 1),
-  -- Unit 10
-  (28, 10, 'Rhetorical Devices',       'listening',  NULL, NULL, 1),
-  (29, 10, 'Critical Analysis',        'reading',    NULL, NULL, 1),
-  (30, 10, 'Persuasive Speech',        'speaking',   NULL, NULL, 1),
-  -- Unit 11
-  (31, 11, 'Literary Analysis',        'listening',  NULL, NULL, 1),
-  (32, 11, 'Poetry & Prose',           'reading',    NULL, NULL, 1),
-  (33, 11, 'Creative Writing',         'writing',    NULL, NULL, 1),
-  -- Unit 12
-  (34, 12, 'Idiomatic Mastery',        'listening',  NULL, NULL, 1),
-  (35, 12, 'Advanced Discourse',       'reading',    NULL, NULL, 1),
-  (36, 12, 'Final Challenge',          'speaking',   NULL, NULL, 1);
+  (12, 4, 'Opinion Writing',           'writing',    NULL, NULL, 1);
+`
+
+const SEED_EXERCISES = `
+INSERT OR IGNORE INTO exercises (id, lesson_id, question, options, answer, type) VALUES
+  -- Lesson 1: Present Perfect (listening)
+  (1,  1,  'How long has the speaker lived in Hanoi?',  NULL,       '5 years',  'mcq'),
+  (2,  1,  'What has she just finished?',              NULL,       'Homework', 'mcq'),
+  (3,  1,  'Have they eaten Vietnamese pho before?',   NULL,       'No',       'mcq'),
+  (4,  1,  'She has _____ finished her homework.',     'just/already/yet/even', 'just', 'fill'),
+  -- Lesson 2: Articles (reading)
+  (5,  2,  'The sun is ___ star.',                     NULL,       'a',        'mcq'),
+  (6,  2,  'It is about 150 million km from ___.',     NULL,       'Earth',    'mcq'),
+  (7,  2,  'Without ___ sun, life on Earth would not exist.', 'a/the/nothing', 'the', 'fill'),
+  (8,  2,  'The sun gives us ___ and heat.',           NULL,       'light',    'fill'),
+  -- Lesson 4: Morning Routines (listening)
+  (9,  4,  'What time does the speaker wake up?',      NULL,       'Six',      'mcq'),
+  (10, 4,  'What does he have before breakfast?',      NULL,       'Nothing',  'mcq'),
+  (11, 4,  'Who takes a shower before breakfast?',     NULL,       'Brother',  'mcq'),
+  (12, 4,  'Every morning she/he ___ at six.',         'wakes up/wake up/woke up/waking', 'wakes up', 'fill'),
+  -- Lesson 7: Job Interviews (listening)
+  (13, 7,  'How many years of experience does the speaker have?', NULL, '10 years', 'mcq'),
+  (14, 7,  'What is the field of work?',               NULL,       'Marketing', 'mcq'),
+  (15, 7,  'My greatest ___ is problem solving.',      NULL,       'strength', 'fill'),
+  -- Lesson 10: Social Media (listening)
+  (16, 10, 'How has social media changed us?',         NULL,       'The way we communicate', 'mcq'),
+  (17, 10, 'Some say it brings us ___.',               NULL,       'Closer',   'mcq'),
+  (18, 10, 'Others argue it makes us more ___.',       NULL,       'Isolated', 'mcq');
 `
 
 export function runMigrations(db: Database.Database): void {
@@ -241,6 +236,7 @@ export function runMigrations(db: Database.Database): void {
   db.exec(SEED_UNITS)
   db.exec(SEED_VOCAB_SETS)
   db.exec(SEED_LESSONS)
+  db.exec(SEED_EXERCISES)
 
   db.exec(`
     INSERT OR IGNORE INTO unit_progress (unit_id, percent_complete)
