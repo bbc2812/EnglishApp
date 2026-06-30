@@ -34,8 +34,8 @@ function MessageBubble({ message }: { message: Message }): JSX.Element {
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
       <div className={`max-w-[80%] px-4 py-3 rounded-2xl ${
         isUser
-          ? 'bg-brand-600 text-white rounded-br-sm'
-          : 'bg-gray-800 text-gray-200 rounded-bl-sm'
+          ? 'bg-brand-600 text-white rounded-br-sm shadow-lg shadow-brand-900/20'
+          : 'bg-gray-800/80 text-gray-200 rounded-bl-sm border border-gray-700/50'
       }`}>
         <p className="text-sm leading-relaxed selectable">{renderContent(message.content)}</p>
       </div>
@@ -43,15 +43,15 @@ function MessageBubble({ message }: { message: Message }): JSX.Element {
   )
 }
 
-function ProviderBadge({ provider }: { provider: AiProvider | 'gemini' }) {
+function ProviderBadge({ provider }: { provider: AiProvider }) {
   const icons: Record<string, string> = {
     claude: '🟣',
     ollama: '🤖',
     gemini: '🟡',
   }
   return (
-    <span className="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded flex items-center gap-1">
-      {icons[provider] || '🤖'} {provider}
+    <span className="text-xs bg-gray-800/80 text-gray-400 px-2 py-0.5 rounded border border-gray-700/50 flex items-center gap-1">
+      {icons[provider]} {provider}
     </span>
   )
 }
@@ -156,30 +156,38 @@ export default function AITutor(): JSX.Element {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="p-4 border-b border-gray-800 flex-shrink-0">
+      <div className="p-4 border-b border-gray-800/50 flex-shrink-0">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xl font-bold text-white">🤖 AI Tutor</h2>
-          <div className="flex gap-1 bg-gray-900 p-1 rounded-lg">
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl font-bold text-white">AI Tutor</h2>
+            <span className="text-xs text-gray-500 bg-gray-800/80 px-2 py-0.5 rounded border border-gray-700/50">
+              {activeProvider === 'claude' ? 'Claude' : activeProvider === 'gemini' ? 'Gemini' : 'Ollama'}
+            </span>
+          </div>
+          <div className="flex gap-1 bg-gray-900/80 p-1 rounded-xl border border-gray-800/50">
             {PROVIDER_LIST.map(p => (
               <button
                 key={p}
                 onClick={() => setActiveProvider(p)}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-                  activeProvider === p ? 'bg-brand-600 text-white' : 'text-gray-400 hover:text-white'
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  activeProvider === p ? 'bg-brand-600 text-white shadow-lg shadow-brand-900/30' : 'text-gray-400 hover:text-white'
                 }`}
               >
-                {p === 'claude' ? '🟣 Claude' : p === 'gemini' ? '🟡 Gemini' : '🤖 Ollama'}
+                {p === 'claude' ? 'Claude' : p === 'gemini' ? 'Gemini' : 'Ollama'}
               </button>
             ))}
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap items-center">
           <ProviderBadge provider={activeProvider} />
           {available[activeProvider] === false && (
             <span className="text-xs text-amber-400">⚠️ Not available</span>
           )}
           {activeProvider === 'claude' && !claudeApiKey && (
             <span className="text-xs text-red-400">⚠️ No API key</span>
+          )}
+          {activeProvider === 'ollama' && !available[activeProvider] && (
+            <span className="text-xs text-amber-400">⚠️ Check Ollama is running</span>
           )}
         </div>
       </div>
@@ -188,20 +196,21 @@ export default function AITutor(): JSX.Element {
       <div className="flex-1 overflow-y-auto p-4">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <p className="text-5xl mb-4">🤖</p>
-            <h3 className="text-xl font-bold text-white mb-2">AI Tutor</h3>
-            <p className="text-gray-400 text-sm mb-6 max-w-md">
+            <p className="text-5xl mb-4 opacity-70">🤖</p>
+            <h3 className="text-xl font-bold text-white mb-2">How can I help?</h3>
+            <p className="text-gray-400 text-sm mb-8 max-w-md">
               Ask me anything about English grammar, vocabulary, or pronunciation.
               I'll explain in both English and Vietnamese.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-w-lg">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-w-lg w-full">
               {quickPrompts.map((p, i) => (
                 <button
                   key={i}
                   onClick={() => setInput(p)}
-                  className="text-left text-xs text-gray-400 bg-gray-800/50 hover:bg-gray-800 px-3 py-2 rounded-lg transition-colors"
+                  className="text-left text-xs text-gray-400 bg-gray-800/50 hover:bg-gray-800 hover:text-gray-200 px-4 py-3 rounded-xl transition-all border border-gray-700/30 hover:border-gray-600/50"
                 >
-                  "{p}"
+                  {p.length > 50 ? p.slice(0, 50) + '...' : p}
+                  <span className="block text-[10px] text-gray-600 mt-1">Click to use</span>
                 </button>
               ))}
             </div>
@@ -213,8 +222,8 @@ export default function AITutor(): JSX.Element {
             ))}
             {loading && (
               <div className="flex justify-start mb-4">
-                <div className="bg-gray-800 px-4 py-3 rounded-2xl rounded-bl-sm">
-                  <div className="flex gap-1">
+                <div className="bg-gray-800/80 border border-gray-700/50 px-4 py-3 rounded-2xl rounded-bl-sm">
+                  <div className="flex gap-1.5">
                     <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                     <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                     <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -228,27 +237,27 @@ export default function AITutor(): JSX.Element {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-gray-800 flex-shrink-0">
+      <div className="p-4 border-t border-gray-800/50 flex-shrink-0 bg-gray-900/50">
         <div className="flex gap-2">
           <input
             type="text"
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-            placeholder="Ask about English grammar, vocabulary, or pronunciation..."
+            placeholder="Ask about grammar, vocabulary, or pronunciation..."
             disabled={loading}
-            className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-brand-500 focus:outline-none disabled:opacity-50"
+            className="flex-1 input-default"
           />
           <button
             onClick={sendMessage}
             disabled={loading || !input.trim()}
             className="btn-primary px-6 py-3 text-sm disabled:opacity-40"
           >
-            Send
+            {loading ? '...' : 'Send'}
           </button>
         </div>
-        <p className="text-xs text-gray-600 mt-2 text-center">
-          Bilingual mode on by default · AI explains grammar in English + Vietnamese
+        <p className="text-[10px] text-gray-600 mt-2 text-center">
+          Bilingual mode on · AI explains grammar in English + Vietnamese · Press Enter to send
         </p>
       </div>
     </div>

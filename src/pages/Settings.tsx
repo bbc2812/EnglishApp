@@ -52,7 +52,10 @@ export default function Settings(): JSX.Element {
     bilingualGrammar, setBilingualGrammar,
     newsApiKey, setNewsApiKey, systemTray, setSystemTray,
     clipboardHotkey, setClipboardHotkey, readingGoalMins, setReadingGoalMins,
-    theme, setTheme
+    theme, setTheme,
+    shadowingScoring, setShadowingScoring,
+    shadowingFeedbackLang, setShadowingFeedbackLang,
+    shadowingTargetScore, setShadowingTargetScore
   } = useSettingsStore()
 
   const [saved, setSaved] = useState(false)
@@ -220,9 +223,9 @@ export default function Settings(): JSX.Element {
           <div className="flex gap-1">
             {(['simulated', 'ai'] as const).map(s => (
               <button key={s}
-                onClick={() => window.api.db.all(`SELECT name FROM pragma_table_info('shadowing_sessions')`).then(() => useSettingsStore.getState().setShadowingScoring(s)).catch(() => {})}
+                onClick={() => setShadowingScoring(s)}
                 className={`px-3 py-1 rounded-md text-xs font-medium capitalize ${
-                  useSettingsStore.getState().shadowingScoring === s
+                  shadowingScoring === s
                     ? 'bg-brand-600 text-white'
                     : 'bg-gray-800 text-gray-400'
                 }`}>
@@ -234,19 +237,19 @@ export default function Settings(): JSX.Element {
         </SettingRow>
 
         <SettingRow label="Target Score (to pass)">
-          <input type="range" min="50" max="95" step="5" defaultValue="80"
-            onChange={e => useSettingsStore.getState().setShadowingTargetScore(Number(e.target.value))}
+          <input type="range" min="50" max="95" step="5" value={shadowingTargetScore}
+            onChange={e => setShadowingTargetScore(Number(e.target.value))}
             className="w-32" />
-          <span className="text-sm text-white w-12 text-right">80%</span>
+          <span className="text-sm text-white w-12 text-right">{shadowingTargetScore}%</span>
         </SettingRow>
 
         <SettingRow label="Subtitle Language">
           <div className="flex gap-1">
             {(['en', 'vn', 'both'] as const).map(l => (
               <button key={l}
-                onClick={() => useSettingsStore.getState().setShadowingFeedbackLang(l)}
+                onClick={() => setShadowingFeedbackLang(l)}
                 className={`px-3 py-1 rounded-md text-xs font-medium ${
-                  useSettingsStore.getState().shadowingFeedbackLang === l
+                  shadowingFeedbackLang === l
                     ? 'bg-brand-600 text-white'
                     : 'bg-gray-800 text-gray-400'
                 }`}>

@@ -4,17 +4,16 @@ import { motion } from 'framer-motion'
 import { useProgressStore, type UnitProgress } from '../store/progressStore'
 import { useSessionStore } from '../store/sessionStore'
 import { useSRS } from '../hooks/useSRS'
-import { useUnitProgress } from '../hooks/useUnitProgress'
 
 function CEFRBadge({ level }: { level: string }): JSX.Element {
   const colorMap: Record<string, string> = {
-    B1: 'bg-blue-600 text-blue-100',
-    B2: 'bg-cyan-600 text-cyan-100',
-    C1: 'bg-amber-600 text-amber-100',
-    C2: 'bg-purple-600 text-purple-100',
+    B1: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+    B2: 'bg-sky-500/10 text-sky-400 border border-sky-500/20',
+    C1: 'bg-violet-500/10 text-violet-400 border border-violet-500/20',
+    C2: 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
   }
   return (
-    <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${colorMap[level] || 'bg-gray-600 text-gray-200'}`}>
+    <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg ${colorMap[level] || 'bg-gray-500/10 text-gray-400'}`}>
       {level}
     </span>
   )
@@ -26,7 +25,7 @@ function CompletionRing({ percent, size = 40, strokeWidth = 3, unlocked }: {
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
   const offset = circumference - (percent / 100) * circumference
-  const strokeColor = percent >= 80 ? '#22c55e' : percent >= 40 ? '#eab308' : '#3b82f6'
+  const strokeColor = percent >= 80 ? '#22c55e' : percent >= 40 ? '#eab308' : '#0ea5e9'
 
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
@@ -47,7 +46,7 @@ function CompletionRing({ percent, size = 40, strokeWidth = 3, unlocked }: {
         )}
       </svg>
       {!unlocked && (
-        <span className="absolute text-gray-500 text-xs" title="Locked">
+        <span className="absolute text-gray-600 text-xs" title="Locked">
           🔒
         </span>
       )}
@@ -99,14 +98,14 @@ function RoadmapSVG({
   const unlockedCount = units.filter((u) => u.unlocked).length
 
   return (
-    <div className="card overflow-x-auto pb-2">
+    <div className="card overflow-x-auto pb-3">
       <div className="min-w-[700px]">
         <svg width="1480" height="200" className="overflow-visible">
           {/* Background path */}
           <path
             d={pathD}
             fill="none"
-            stroke="#1f2937"
+            stroke="#111827"
             strokeWidth="4"
             strokeLinecap="round"
           />
@@ -174,7 +173,7 @@ function RoadmapSVG({
                 <text
                   x={pos.x} y={pos.y + 62}
                   textAnchor="middle"
-                  fill={isUnlocked ? '#e5e7eb' : '#6b7280'}
+                  fill={isUnlocked ? '#e5e7eb' : '#4b5563'}
                   fontSize="11"
                   fontWeight={isUnlocked ? 600 : 400}
                   className="select-none pointer-events-none"
@@ -185,7 +184,7 @@ function RoadmapSVG({
                 <text
                   x={pos.x} y={pos.y + 76}
                   textAnchor="middle"
-                  fill="#9ca3af"
+                  fill={isUnlocked ? '#9ca3af' : '#374151'}
                   fontSize="9"
                   className="select-none pointer-events-none"
                 >
@@ -266,16 +265,34 @@ function VocabSetsSection({
   )
 }
 
+function SkeletonDashboard(): JSX.Element {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="h-8 w-48 skeleton" />
+      <div className="grid grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map(i => <div key={i} className="skeleton-card" />)}
+      </div>
+      <div className="skeleton-card h-48" />
+    </div>
+  )
+}
+
 export default function Dashboard(): JSX.Element {
   const navigate = useNavigate()
   const { units, loadUnits, setTodayStats, setTodayXP, todayXP } = useProgressStore()
   const { setQueue } = useSessionStore()
   const { loadVocabSetCards, loadDueCards } = useSRS()
-  const { unlockUnit } = useUnitProgress()
   const [loading, setLoading] = useState(true)
   const [vocabSets, setVocabSets] = useState<{ id: number; title: string; topic: string; level: string }[]>([])
   const [lessons, setLessons] = useState<{ id: number; title: string; type: string; locked: number }[]>([])
-  const [stats, setStats] = useState<{ wordsReviewed: number; streak: number; lessonsCompleted: number; totalWords: number; totalXp: number; challengeStreak: number }>({
+  const [stats, setStats] = useState<{
+    wordsReviewed: number;
+    streak: number;
+    lessonsCompleted: number;
+    totalWords: number;
+    totalXp: number;
+    challengeStreak: number;
+  }>({
     wordsReviewed: 0,
     streak: 0,
     lessonsCompleted: 0,
@@ -283,16 +300,22 @@ export default function Dashboard(): JSX.Element {
     totalXp: 0,
     challengeStreak: 0,
   })
-    const [dailyChallenge, setDailyChallenge] = useState<{ type: string; completed: number; xp_reward: number } | null>(null)
-    const [challengeStreak, setChallengeStreak] = useState(0)
+  const [dailyChallenge, setDailyChallenge] = useState<{ type: string; completed: number; xp_reward: number } | null>(null)
   const [achievementCount, setAchievementCount] = useState(0)
+
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'Good morning'
+    if (hour < 17) return 'Good afternoon'
+    return 'Good evening'
+  }, [])
 
   const loadDashboard = useCallback(async () => {
     setLoading(true)
 
     await loadUnits()
 
-    const [dailyStats, vocabSetsData, lessonCount, wordCount, unlockedLessons, challenge, achievements, streakData]: [any[], any[], unknown, unknown, unknown, unknown, unknown, unknown] =
+    const [dailyStats, vocabSetsData, lessonCount, wordCount, unlockedLessons, challenge, achievements]: [any[], any[], unknown, unknown, unknown, unknown, unknown] =
       await Promise.all([
         window.api.db.all(
           `SELECT * FROM daily_stats WHERE date = ? ORDER BY date DESC LIMIT 1`,
@@ -312,12 +335,6 @@ export default function Dashboard(): JSX.Element {
         window.api.db.all(
           `SELECT COUNT(*) as count FROM achievements WHERE unlocked_at IS NOT NULL`
         ) as Promise<unknown>,
-        window.api.db.all(
-          `SELECT COUNT(*) as streak FROM (
-            SELECT date, completed FROM daily_challenges WHERE completed = 1
-            ORDER BY date DESC LIMIT 7
-          )`
-        ) as Promise<{ streak: number }[]>,
       ])
 
     if (dailyStats.length > 0) {
@@ -352,31 +369,13 @@ export default function Dashboard(): JSX.Element {
         completed: challengeResult[0].completed || 0,
         xp_reward: challengeResult[0].xp_reward || 25,
       })
+    } else {
+      setDailyChallenge(null)
     }
     const achResult = achievements as { count?: number }[]
     setAchievementCount(Array.isArray(achResult) ? (achResult[0]?.count || 0) : 0)
 
-    // Load challenge streak
-    const streakResult = streakData as { streak?: number }[] | undefined
-    if (streakResult && Array.isArray(streakResult)) {
-      setChallengeStreak(streakResult[0]?.streak || 0)
-    }
 
-    // Check for 7-day streak bonus
-    if (challengeStreak >= 7 && !achievements) {
-      window.api.db.run(
-        `INSERT INTO achievements (key, title, description, icon, unlocked_at)
-         VALUES ('daily_warrior', '⚔️ Daily Warrior', 'Complete 7 daily challenges', '⚔️', datetime('now'))
-         ON CONFLICT(key) DO NOTHING`
-      ).then(() => {}).catch(() => {})
-      // Add streak bonus XP
-      window.api.db.run(
-        `INSERT INTO daily_stats (date, xp_earned, streak)
-         VALUES (?, 100, (SELECT COALESCE(streak, 0) FROM daily_stats WHERE date = ?))
-         ON CONFLICT(date) DO UPDATE SET xp_earned = xp_earned + 100`,
-        [new Date().toISOString().slice(0, 10), new Date().toISOString().slice(0, 10)]
-      ).then(() => {}).catch(() => {})
-    }
 
     setLoading(false)
   }, [loadUnits, setTodayStats, setTodayXP])
@@ -410,11 +409,7 @@ export default function Dashboard(): JSX.Element {
   }
 
   if (loading) {
-    return (
-      <div className="p-8 flex items-center justify-center h-full">
-        <p className="text-gray-500">Loading dashboard…</p>
-      </div>
-    )
+    return <SkeletonDashboard />
   }
 
   return (
@@ -422,7 +417,7 @@ export default function Dashboard(): JSX.Element {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-bold text-white">Dashboard</h2>
+          <h2 className="text-2xl font-bold text-white">{greeting} 👋</h2>
           <p className="text-gray-400 text-sm mt-1">Your learning roadmap and daily progress</p>
         </div>
         <button onClick={handleStartFlashcards} className="btn-primary px-5 py-2.5 text-sm flex items-center gap-2">
@@ -440,7 +435,7 @@ export default function Dashboard(): JSX.Element {
 
       {/* Daily Challenge */}
       {dailyChallenge && (
-        <div className="card p-4 mb-6 border-brand-900/50 bg-brand-950/10">
+        <div className="card p-4 mb-6 border-brand-900/50 bg-brand-950/10 card-glow">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="text-2xl">⚔️</span>
@@ -479,13 +474,9 @@ export default function Dashboard(): JSX.Element {
       {achievementCount > 0 && (
         <div className="flex items-center gap-2 mb-6">
           <span className="text-sm text-gray-500">🏅 Achievements:</span>
-          <div className="flex gap-1 flex-wrap">
-            {achievementCount > 0 && (
-              <span className="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">
-                {achievementCount} unlocked
-              </span>
-            )}
-          </div>
+          <span className="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">
+            {achievementCount} unlocked
+          </span>
         </div>
       )}
 
@@ -501,50 +492,6 @@ export default function Dashboard(): JSX.Element {
         <p className="text-xs text-gray-600 mt-3 text-center">
           Complete 80% of a unit's lessons to unlock the next one. Click a unit to study.
         </p>
-
-        {/* All Modules Built — Phase Complete Banner */}
-        <div className="mt-4 p-4 border border-brand-800/30 bg-brand-950/10 rounded-lg">
-          <p className="text-sm font-semibold text-white mb-2">🎉 All Phases Complete</p>
-          <div className="flex flex-wrap gap-2">
-            {['🃏 Flashcards', '🎧 Listening', '📖 Reading', '🎤 Shadowing', '💬 Speaking', '✍️ Writing', '📰 News', '🎙️ Podcasts', '📺 YouTube', '📥 Import', '🤖 AI Tutor', '📊 Stats'].map((mod, i) => (
-              <span key={i} className="text-xs bg-gray-800 text-gray-300 px-2 py-1 rounded">
-                ✅ {mod}
-              </span>
-            ))}
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            15 pages · 12 CEFR units · 6 content sources · AI-powered features
-          </p>
-        </div>
-      </div>
-
-      {/* Debug: unlock next unit button */}
-      <div className="flex gap-2 mb-6">
-        <button
-          onClick={async () => {
-            const next = units.find((u) => !u.unlocked)
-            if (next) {
-              await unlockUnit(next.id)
-              await loadDashboard()
-            }
-          }}
-          className="text-xs text-gray-600 hover:text-gray-400 transition-colors px-3 py-1.5 rounded border border-gray-800"
-        >
-          Unlock Next Unit
-        </button>
-        <button
-          onClick={async () => {
-            for (const unit of units) {
-              if (!unit.unlocked) {
-                await unlockUnit(unit.id)
-              }
-            }
-            await loadDashboard()
-          }}
-          className="text-xs text-gray-600 hover:text-gray-400 transition-colors px-3 py-1.5 rounded border border-gray-800"
-        >
-          Unlock All Units
-        </button>
       </div>
 
       {/* Quick Actions */}
@@ -596,7 +543,7 @@ export default function Dashboard(): JSX.Element {
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xl">{lesson.type === 'listening' ? '🎧' : '📖'}</span>
                   <span className={`text-xs font-bold px-2 py-0.5 rounded ${
-                    lesson.type === 'listening' ? 'bg-blue-950 text-blue-300' : 'bg-green-950 text-green-300'
+                    lesson.type === 'listening' ? 'bg-sky-500/10 text-sky-400' : 'bg-emerald-500/10 text-emerald-400'
                   }`}>
                     {lesson.type === 'listening' ? 'Listening' : 'Reading'}
                   </span>
