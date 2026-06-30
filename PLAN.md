@@ -370,10 +370,10 @@ Be concise, specific, and encouraging.
 ## To-Do / Next Steps
 
 ### High Priority
-- [ ] Real AI pronunciation scoring — integrate with Claude/Gemini API for phoneme-level analysis (currently simulated)
-- [ ] YouTube CC subtitle parsing — improve `fetchYouTubeSubtitles` to handle multiple languages and formats
-- [ ] Import page shadowing — add ShadowingPlayer integration for imported articles
-- [ ] Podcast AI-generated transcripts — use AI to generate transcripts for podcasts without existing ones
+- [x] Real AI pronunciation scoring — `shadowing:analyzePronunciation` IPC with phoneme-level Claude/Gemini analysis, scoring rubric (phoneme 40%, stress 15%, rhythm 15%, intonation 15%, intelligibility 15%), word-by-word `phoneme_breakdown`
+- [x] YouTube CC subtitle parsing — multi-language (en/en-US/en-GB/vi), ttml/html/captions formats, `<p>`/`<transcript>`/`<text>` tags, sentence merging, `fetchYouTubeSubtitlesByLang`
+- [x] Import page shadowing — ShadowingPlayer with Original/B1/B2/C1 level switching, `parseSentences()` sentence splitter
+- [ ] Podcast AI-generated transcripts — IPC handler added (`content:generatePodcastTranscript`, `content:fetchPodcastEpisodes`), needs Podcasts.tsx wiring to use live data + AI transcripts instead of mocks
 
 ### Medium Priority
 - [ ] Sentence-level vocabulary highlighting in shadowing — highlight difficult C1/C2 words in each sentence
@@ -395,7 +395,7 @@ Be concise, specific, and encouraging.
 
 ## Resume Trigger
 
-**Current state:** All planned phases complete (1-9.4). App is feature-complete with polished UI.
+**Current state:** All planned phases complete (1-9.4). App is feature-complete with polished UI. High-priority To-Do items (AI pronunciation, YouTube CC, Import shadowing) implemented and pushed. Podcast AI transcript IPC handler added but needs UI wiring.
 
 **To continue in a new session:**
 
@@ -405,9 +405,9 @@ For architecture questions: **"Review WiseRAIN architecture — check PLAN.md Bu
 
 **Before any work:**
 1. Read `PLAN.md` for full context
-2. Run `npm run typecheck` to verify current state
-3. Read `electron/handlers/shadowing.ts` for latest IPC patterns
-4. Check `src/components/Layout/Sidebar.tsx` for latest UI patterns
+2. Run `npm run typecheck` to verify current state (node + web separately)
+3. Check `electron/handlers/shadowing.ts` for latest IPC patterns (includes `analyzePronunciation`)
+4. Check `electron/handlers/content.ts` for content handlers (includes `fetchYouTubeSubtitlesByLang`, `generatePodcastTranscript`)
 
 **Node.js setup required in WSL before any npm commands:**
 ```bash
