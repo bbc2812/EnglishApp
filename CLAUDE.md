@@ -46,21 +46,24 @@ The preload wraps these as:
 
 **Raw SQL only** — `drizzle-orm` is in `package.json` but **unused**. Schema is in `electron/db/migrate.ts` via `CREATE TABLE IF NOT EXISTS` + `INSERT OR IGNORE` for seeding. DB file is at `%APPDATA%/wiserain/data/wiserain.db` on Windows. SQLite is opened with WAL mode + foreign keys enabled.
 
-**17 tables:** `units`, `lessons`, `exercises`, `words`, `flashcards`, `lesson_progress`, `unit_progress`, `daily_stats`, `grammar_mistakes`, `vocab_sets`, `vocab_set_words`, `dictionary_cache`, `translation_cache`, `saved_articles`, `saved_podcasts`, `conversations`, `writing_history`.
+**21 tables:** `units`, `lessons`, `exercises`, `words`, `flashcards`, `lesson_progress`, `unit_progress`, `daily_stats`, `grammar_mistakes`, `learning_progress`, `vocab_sets`, `vocab_set_words`, `dictionary_cache`, `translation_cache`, `saved_articles`, `saved_podcasts`, `youtube_episodes`, `clipboard_history`, `conversations`, `writing_history`, `achievements`, `user_xp`, `daily_challenges`, `leaderboard_personas`, `shadowing_sessions`.
 
-**Seed data:** 12 CEFR units (B1→C2), 36 pre-seeded lessons (3 per unit), 12 topical vocab sets. `unit_progress` rows auto-created for unlocked units.
+**Seed data:** 12 CEFR units (B1→C2), 12 pre-seeded lessons (4 units × 3), 12 topical vocab sets, 10 achievements, 5 leaderboard personas, 5 daily challenge types. `unit_progress` rows auto-created for unlocked units.
 
 ### AI Providers (Implemented)
 
-Only **Claude** and **Ollama** are coded. Gemini is in PLAN.md but **not implemented**.
+All **three** providers are coded: Claude, Gemini, and Ollama.
 
 - `electron/handlers/ai.ts` routes `ai:chat` IPC:
-  - **Claude:** `@anthropic-ai/sdk`, model `claude-sonnet-4-6`, max 2048 tokens (paid, key from env or `settingsStore`)
+  - **Claude:** `@anthropic-ai/sdk`, model `claude-sonnet-4-6` (paid, key from env or `settingsStore`)
+  - **Gemini:** `@google/generative-ai`, model `gemini-2.0-flash` (free tier available)
   - **Ollama:** HTTP POST to `localhost:11434/api/chat`, stream=false (free, local, default model `llama3.2`)
+
+Additional AI handlers: `ai:adaptArticle` (CEFR level adaptation), `ai:summarizeContent`, `ai:isAvailable`.
 
 > Claude Pro (claude.ai subscription) ≠ API access. API keys are separate from console.anthropic.com.
 
-Active provider (`'claude'` | `'ollama'`) is stored in `settingsStore`. All AI calls in the renderer go through `window.api.ai.chat(...)`.
+Active provider (`'claude'` | `'ollama'` | `'gemini'`) is stored in `settingsStore`. All AI calls in the renderer go through `window.api.ai.chat(...)`.
 
 ### SRS (Spaced Repetition)
 
@@ -70,18 +73,21 @@ Hooks: `src/hooks/useSRS.ts` — `loadDueCards()`, `loadVocabSetCards()`, `apply
 
 ### UI Components
 
-- **DictionaryPopup** (`src/components/DictionaryPopup/`) — global `mouseup` listener, 3 tabs: Pronounce (IPA+audio), EN-EN (definition), EN-VN (translation via MyMemory API). "Add to Flashcards" button. Caches results in `dictionary_cache` / `translation_cache`.
+- **DictionaryPopup** (`src/components/DictionaryPopup/`) — global `mouseup` listener, 3 tabs: Pronounce (IPA+audio), EN-EN (definition), EN-VN (translation via MyMemory API). "Add to Flashcards" button. Caches results in `dictionary_cache` / `translation_cache`. Word network (synonyms/associations) via Datamuse/Wiktionary.
+- **ShadowingPlayer** (`src/components/ShadowingPlayer/`) — 701 lines, most complex component. 3 view modes (Learn, Free, Review). Audio waveform visualizer, speed selector, subtitle toggles (EN/VN/Both), advanced C1/C2 vocabulary highlighting (amber/rose), keyboard shortcuts. Supports podcast, YouTube, and imported article content.
+- **LearningBadge** (`src/components/LearningBadge/`) — Toggle "Mark as Learnt" badge.
+- **OnboardingModal** (`src/components/OnboardingModal/`) — 3-step wizard for first-launch setup.
 - **Tailwind classes:** `.card`, `.btn-primary`, `.btn-secondary`, `.sidebar-link.active`, `.badge-b1`/`.badge-b2`/`.badge-c1`/`.badge-c2`
 - **Brand palette:** `brand-400` = `#38bdf8` (sky blue), body bg = `bg-gray-950`
 - **Fonts:** Inter (sans-serif), JetBrains Mono (monospace)
 - **Vite alias:** `@renderer/*` → `src/*`
-- **Router:** React Router `HashRouter` — 11 routes, all in `src/App.tsx`
+- **Router:** React Router `HashRouter` — 15 routes, all in `src/App.tsx`
 - **Custom component classes in:** `src/index.css`
 
 ### State Management
 
 Zustand stores in `src/store/`:
-- `settingsStore` — **persisted** (localStorage `wiserain-settings`): API keys, active AI provider, Ollama URL/model, daily word limit, theme
+- `settingsStore` — **persisted** (localStorage `wiserain-settings`): API keys (Claude/Gemini/Ollama), active AI provider, Ollama URL/model, daily word limit, theme, shadowing scoring mode, onboarding flag, notification settings
 - `progressStore` — units array (from DB via `loadUnits()`), daily stats, today's XP
 - `sessionStore` — active flashcard session: queue, currentIndex, results, isFlipped, queueSource/type/id
 

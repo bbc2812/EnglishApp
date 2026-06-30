@@ -46,6 +46,7 @@ Inspired by best features from: **Memrise, ELSA, MediaDict, TedDict, eJoy, 4Engl
 | Phase 9.2 — Wide-Range Auto-Feed Resources | ✅ Done | — |
 | Phase 9.3 — Sentence-by-Sentence Shadowing (Learn/Free/Review) | ✅ Done | 6f522c2 |
 | Phase 9.4 — UI Polish (Global CSS, Dashboard, Sidebar, AITutor) | ✅ Done | b3f9824 |
+| Phase 9.5 — Podcast AI transcripts with VN translations + C1/C2 vocab highlighting + Shadowing streak tracking | ✅ Done | f78a9b4 |
 
 ---
 
@@ -296,49 +297,54 @@ Be concise, specific, and encouraging.
 
 ## Verification Checklist
 
-1. `npm run dev` → app opens, all 11 sidebar pages load ✅
+1. `npm run dev` → app opens, all 15 sidebar pages load ✅
 2. Flashcard back shows mnemonic + "first seen in" source sentence ✅
 3. Generate mnemonic button → AI returns memory story, saved to DB ✅
 4. Click any word → popup shows Pronounce / EN-EN / EN-VN tabs ✅
 5. Podcast player → dual subtitles toggle works (EN / EN+VN / VN) ✅
 6. Podcast subtitles → clickable words trigger dictionary lookup ✅
-7. Long article → "Quick Read" summary shows 5-8 key ideas ✅
-8. Complete a lesson → unit unlocks on roadmap ✅
-9. Shadowing → pronunciation match % shown, phoneme feedback panel displayed ✅
-10. Writing page → corrections include Vietnamese explanation + top mistakes panel ✅
-11. AI Tutor → Claude, Gemini, Ollama all respond; grammar replies are bilingual ✅
-12. Speaking module → debate/opinion/role-play prompts with 60s timer ✅
-13. Complete any activity → XP earned, sidebar XP bar updates ✅
-14. Unlock an achievement → toast notification appears ✅
-15. Daily challenge card on Dashboard, completes correctly, +25 XP ✅
-16. Settings → API keys save, bilingual toggle persists across sessions ✅
-17. Onboarding → first-launch modal sets level, AI provider, daily goal ✅
-18. Streak bonus → 7-day daily challenge streak = +100 XP ✅
-19. Quick Read → News page Blinkist-style summaries ✅
-20. XP aggregated from flashcards, listening, reading, writing, daily stats ✅
-21. YouTube channel browser with in-app player (6 channels) ✅
-22. URL Import → fetch + AI summary + 3-level adaptation + reading analytics ✅
-23. Stats page → full analytics dashboard with recharts (line, pie, area, heatmap) ✅
-24. NewsAPI.org integration (all categories: general, tech, science, business, sports) ✅
-25. BBC Learning English API feed ✅
-26. Guardian Open Platform feed ✅
-27. Datamuse + Wiktionary + Cambridge dictionary enrichment ✅
-28. Word of the Day + Quotes pages ✅
-29. Global hotkey (Ctrl+Shift+D) clipboard capture ✅
-30. System tray integration ✅
-31. AI article adaptation (News in Levels style: B1/B2/C1) ✅
-32. Reading speed tracker (WPM) ✅
-33. AI Roleplay mode in AITutor ✅
-34. Sentence-by-sentence shadowing with Learn/Free/Review modes ✅
-35. Podcast ShadowingPlayer integration ✅
-36. YouTube auto-subtitle fetching + manual transcript paste ✅
-37. Shadowing scoring: Simulated (default) + AI toggle in Settings ✅
-38. Loop mode (A-B repeat 1-5x) in shadowing ✅
-39. Per-sentence progress tracking with pass/fail badges ✅
-40. Review mode for weak sentences ✅
-41. Keyboard shortcuts (Space/Arrows/R) in shadowing ✅
-42. Modern global CSS (glassmorphism, skeleton loading, transitions) ✅
-43. Shared utility helpers (`selectWord`, `formatDuration`, `truncate`) ✅
+7. Podcast AI-generated transcripts include Vietnamese translations ✅
+8. Podcast episodes → batch translation via MyMemory API with SQLite cache ✅
+9. Long article → "Quick Read" summary shows 5-8 key ideas ✅
+10. Complete a lesson → unit unlocks on roadmap ✅
+11. Shadowing → pronunciation match % shown, phoneme feedback panel displayed ✅
+12. Shadowing → C1/C2 vocabulary highlighting (amber for C1, rose for C2) ✅
+13. Shadowing → streak tracking (consecutive practice days) ✅
+14. Writing page → corrections include Vietnamese explanation + top mistakes panel ✅
+15. AI Tutor → Claude, Gemini, Ollama all respond; grammar replies are bilingual ✅
+16. Speaking module → debate/opinion/role-play prompts with 60s timer ✅
+17. Complete any activity → XP earned, sidebar XP bar updates ✅
+18. Unlock an achievement → toast notification appears ✅
+19. Daily challenge card on Dashboard, completes correctly, +25 XP ✅
+20. Settings → API keys save, bilingual toggle persists across sessions ✅
+21. Onboarding → first-launch modal sets level, AI provider, daily goal ✅
+22. Streak bonus → 7-day daily challenge streak = +100 XP ✅
+23. Quick Read → News page Blinkist-style summaries ✅
+24. XP aggregated from flashcards, listening, reading, writing, daily stats ✅
+25. YouTube channel browser with in-app player (6 channels) ✅
+26. URL Import → fetch + AI summary + 3-level adaptation + reading analytics ✅
+27. Import page → ShadowingPlayer integration with Original/B1/B2/C1 level switching ✅
+28. Stats page → full analytics dashboard with recharts (line, pie, area, heatmap) ✅
+29. NewsAPI.org integration (all categories: general, tech, science, business, sports) ✅
+30. BBC Learning English API feed ✅
+31. Guardian Open Platform feed ✅
+32. Datamuse + Wiktionary + Cambridge dictionary enrichment ✅
+33. Word of the Day + Quotes pages ✅
+34. Global hotkey (Ctrl+Shift+D) clipboard capture ✅
+35. System tray integration ✅
+36. AI article adaptation (News in Levels style: B1/B2/C1) ✅
+37. Reading speed tracker (WPM) ✅
+38. AI Roleplay mode in AITutor ✅
+39. Sentence-by-sentence shadowing with Learn/Free/Review modes ✅
+40. Podcast ShadowingPlayer integration ✅
+41. YouTube auto-subtitle fetching + manual transcript paste ✅
+42. Shadowing scoring: Simulated (default) + AI toggle in Settings ✅
+43. Loop mode (A-B repeat 1-5x) in shadowing ✅
+44. Per-sentence progress tracking with pass/fail badges ✅
+45. Review mode for weak sentences ✅
+46. Keyboard shortcuts (Space/Arrows/R) in shadowing ✅
+47. Modern global CSS (glassmorphism, skeleton loading, transitions) ✅
+48. Shared utility helpers (`selectWord`, `formatDuration`, `truncate`) ✅
 
 ---
 
@@ -370,14 +376,9 @@ Be concise, specific, and encouraging.
 ## To-Do / Next Steps
 
 ### High Priority
-- [ ] Real AI pronunciation scoring — `shadowing:analyzePronunciation` IPC with phoneme-level Claude/Gemini analysis, scoring rubric (phoneme 40%, stress 15%, rhythm 15%, intonation 15%, intelligibility 15%), word-by-word `phoneme_breakdown`
 - [ ] YouTube CC subtitle parsing — multi-language (en/en-US/en-GB/vi), ttml/html/captions formats, `<p>`/`<transcript>`/`<text>` tags, sentence merging, `fetchYouTubeSubtitlesByLang`
-- [ ] Import page shadowing — ShadowingPlayer with Original/B1/B2/C1 level switching, `parseSentences()` sentence splitter
-- [ ] Podcast AI-generated transcripts — IPC handler added (`content:generatePodcastTranscript`, `content:fetchPodcastEpisodes`), needs Podcasts.tsx wiring to use live data + AI transcripts instead of mocks
 
 ### Medium Priority
-- [ ] Sentence-level vocabulary highlighting in shadowing — highlight difficult C1/C2 words in each sentence
-- [ ] Shadowing streak tracking — track consecutive days of shadowing practice in `daily_stats`
 - [ ] Export shadowing progress — CSV/PDF export of shadowing sessions for review
 - [ ] Dark/light theme toggle — implement theme switching in Settings
 - [ ] Offline-first content caching — cache YouTube RSS, news, dictionary results for offline use
@@ -395,19 +396,19 @@ Be concise, specific, and encouraging.
 
 ## Resume Trigger
 
-**Current state:** All planned phases complete (1-9.4). App is feature-complete with polished UI. High-priority To-Do items (AI pronunciation, YouTube CC, Import shadowing) implemented and pushed. Podcast AI transcript IPC handler added but needs UI wiring.
+**Current state:** All planned phases complete (1-9.5). App is feature-complete with polished UI. Remaining To-Do: YouTube CC subtitle parsing (high), export shadowing progress, dark/light theme, offline caching, flashcard import (medium).
 
 **To continue in a new session:**
 
 For any new feature work: **"Continue building WiseRain — check PLAN.md To-Do list for next items"**
 
-For architecture questions: **"Review WiseRAIN architecture — check PLAN.md Build Status and Key npm Packages"**
+For architecture questions: **"Review WiseRain architecture — check PLAN.md Build Status and Key npm Packages"**
 
 **Before any work:**
 1. Read `PLAN.md` for full context
 2. Run `npm run typecheck` to verify current state (node + web separately)
-3. Check `electron/handlers/shadowing.ts` for latest IPC patterns (includes `analyzePronunciation`)
-4. Check `electron/handlers/content.ts` for content handlers (includes `fetchYouTubeSubtitlesByLang`, `generatePodcastTranscript`)
+3. Check `electron/handlers/shadowing.ts` for IPC patterns (8 handlers: save, saveBatch, getProgress, getStats, getWeakSentences, getHistory, getStreak, analyzePronunciation)
+4. Check `electron/handlers/content.ts` for content handlers (22 handlers including translateBatch, fetchYouTubeSubtitlesByLang, generatePodcastTranscript)
 
 **Node.js setup required in WSL before any npm commands:**
 ```bash
@@ -416,7 +417,7 @@ export NVM_DIR="$HOME/.nvm" && \. "$NVM_DIR/nvm.sh"
 
 **Key patterns to follow:**
 - DB changes: edit `electron/db/migrate.ts` only (raw SQL, `CREATE TABLE IF NOT EXISTS`)
-- New IPC: add to `electron/handlers/`, `electron/preload.ts`, `src/env.d.ts`
+- New IPC: add to `electron/handlers/`, `electron/main.ts`, `electron/preload.ts`, `src/env.d.ts`
 - New page: `src/pages/Name.tsx` + route in `src/App.tsx` + sidebar link in `src/components/Layout/Sidebar.tsx`
 - New store: `src/store/nameStore.ts` (use Zustand with `persist()`)
 - Never import Node/Electron in `src/` — always IPC via `window.api`

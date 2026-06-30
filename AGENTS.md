@@ -36,11 +36,11 @@ npm run build:win     # Build + NSIS installer
 
 **Process split:** `electron/` = Node.js (OS access). `src/` = React (browser sandbox). **Always use IPC via `window.api`** — never `import` Node/Electron in `src/`.
 
-**IPC channel naming:** `ipcMain.handle('db:query', ...)` ↔ `ipcRenderer.invoke('db:query', ...)`. The preload wraps as `window.api.db.query/run/all`, `window.api.ai.chat/isAvailable`, `window.api.content.fetchRss/fetchDictionary/fetchTranslation`.
+**IPC channel naming:** `ipcMain.handle('channel:name', ...)` ↔ `ipcRenderer.invoke('channel:name', ...)`. 40 handlers total across 5 modules. Preload wraps as `window.api.db.query/run/all`, `window.api.ai.chat/isAvailable/adaptArticle/summarizeContent`, `window.api.content.fetchRss/fetchDictionary/fetchTranslation/translateBatch/fetchPodcastEpisodes/generatePodcastTranscript/fetchYouTubeSubtitlesByLang`, `window.api.shadowing/save/saveBatch/getStreak/analyzePronunciation`, `window.api.learning/mark/getHistory/getStats`.
 
-**DB:** `better-sqlite3` with **raw SQL queries** — `drizzle-orm` is in `package.json` but **unused**. Schema in `electron/db/migrate.ts`. DB file at `%APPDATA%/wiserain/data/wiserain.db` (Windows).
+**DB:** `better-sqlite3` with **raw SQL queries** — `drizzle-orm` is in `package.json` but **unused**. Schema in `electron/db/migrate.ts`. 21 tables. DB file at `%APPDATA%/wiserain/data/wiserain.db` (Windows).
 
-**AI providers:** `electron/handlers/ai.ts` — only Claude (`@anthropic-ai/sdk`) and Ollama (HTTP) are **implemented**. Gemini is in PLAN.md but not coded.
+**AI providers:** `electron/handlers/ai.ts` — all three are **implemented**: Claude (`@anthropic-ai/sdk`, `claude-sonnet-4-6`), Gemini (`@google/generative-ai`, `gemini-2.0-flash`), Ollama (HTTP, `llama3.2`).
 
 ## Key Conventions
 
@@ -52,7 +52,7 @@ npm run build:win     # Build + NSIS installer
 - **Unit unlock:** `≥80%` of lessons in a unit → next unit unlocks automatically
 - **Zustand stores:** `settingsStore` is persisted to localStorage (`wiserain-settings`)
 - **Dictionary caching:** `dictionary_cache` + `translation_cache` tables, checked before API calls
-- **Router:** `HashRouter`, 11 routes in `src/App.tsx`
+- **Router:** `HashRouter`, 15 routes in `src/App.tsx`
 
 ## Adding Features
 
