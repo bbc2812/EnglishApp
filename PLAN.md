@@ -38,7 +38,7 @@ Inspired by best features from: **Memrise, ELSA, MediaDict, TedDict, eJoy, 4Engl
 | Phase 5 — Roadmap + unit unlock + Topical Vocab | ✅ Done | — |
 | Phase 6 — Listening & Reading module | ✅ Done | — |
 | Phase 6b — Newspaper, Podcast & Summaries | ✅ Done | — |
-| Phase 7 — Shadowing + Pronunciation scoring (ELSA-style) | ⏳ Pending | — |
+| Phase 7 — Shadowing + Pronunciation scoring (ELSA-style) | ✅ Done | — |
 | Phase 7b — Writing module + Vietnamese grammar explanations | ⏳ Pending | — |
 | Phase 8 — AI Tutor (Claude / Gemini / Ollama) | ⏳ Pending | — |
 | Phase 9 — Settings, XP/Achievements, Daily Challenge, Polish | ⏳ Pending | — |
