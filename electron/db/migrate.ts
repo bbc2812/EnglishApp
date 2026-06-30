@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS daily_stats (
   listening_mins INTEGER NOT NULL DEFAULT 0,
   speaking_mins INTEGER NOT NULL DEFAULT 0,
   writing_mins INTEGER NOT NULL DEFAULT 0,
+  xp_earned INTEGER NOT NULL DEFAULT 0,
   streak INTEGER NOT NULL DEFAULT 0
 );
 
@@ -227,7 +228,10 @@ INSERT OR IGNORE INTO achievements (id, key, title, description, icon) VALUES
 const SEED_DAILY_CHALLENGES = `
 INSERT OR IGNORE INTO daily_challenges (date, type, config, xp_reward) VALUES
   (date('now'), 'vocab_blitz', '{"limit": 20, "time_limit": 300}', 25),
-  (date('now', '+1 day'), 'vocab_blitz', '{"limit": 20, "time_limit": 300}', 25);
+  (date('now', '+1 day'), 'listening_dictation', '{"duration": 60}', 25),
+  (date('now', '+2 day'), 'shadow_master', '{"sentences": 3, "target_score": 80}', 25),
+  (date('now', '+3 day'), 'writing_sprint', '{"word_count": 150, "time_limit": 600}', 25),
+  (date('now', '+4 day'), 'grammar_gauntlet', '{"questions": 10}', 25);
 `
 
 const SEED_LESSONS = `
@@ -285,6 +289,12 @@ export function runMigrations(db: Database.Database): void {
   db.exec(SEED_LESSONS)
   db.exec(SEED_EXERCISES)
   db.exec(SEED_DAILY_CHALLENGES)
+
+  // Add missing columns for existing databases (idempotent)
+  try { db.exec(`ALTER TABLE units ADD COLUMN topic_category TEXT`) } catch {}
+  try { db.exec(`ALTER TABLE daily_stats ADD COLUMN xp_earned INTEGER NOT NULL DEFAULT 0`) } catch {}
+  try { db.exec(`ALTER TABLE saved_articles ADD COLUMN summary TEXT`) } catch {}
+  try { db.exec(`ALTER TABLE words ADD COLUMN source_context TEXT`) } catch {}
 
   db.exec(`
     INSERT OR IGNORE INTO unit_progress (unit_id, percent_complete)

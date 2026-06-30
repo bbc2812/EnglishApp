@@ -22,13 +22,23 @@ const TOP_MISTAKES = [
   { id: 1, type: 'Missing Articles', description: 'I go to school → I go to **the** school', vn: 'Tiếng Việt không có mạo từ. Nhưng tiếng Anh cần a/an/the trước danh từ đếm được số ít.' },
   { id: 2, type: 'Verb Tense', description: 'I go to school yesterday → I **went** to school yesterday', vn: 'Trong tiếng Việt, động từ không thay đổi theo thì. Tiếng Anh bắt buộc dùng quá khứ đơn (went) khi nói về hành động đã hoàn thành.' },
   { id: 3, type: 'Subject-Verb Agreement', description: 'He play football → He **plays** football', vn: 'Ngôi thứ 3 số ít (he/she/it) cần thêm -s/-es vào động từ ở hiện tại đơn.' },
-  { id: 4, type: 'Word Order', description: 'I very like coffee → I **like coffee very much**', vn: 'Trạng ngữ chỉ mức độ (very, quite, quite) đứng sau động từ hoặc trước tính từ, không đứng trước động từ.' },
+  { id: 4, type: 'Word Order', description: 'I very like coffee → I **like coffee very much**', vn: 'Trạng ngữ chỉ mức độ (very, quite) đứng sau động từ hoặc trước tính từ, không đứng trước động từ.' },
   { id: 5, type: 'Preposition', description: 'I am good in English → I am good **at** English', vn: 'Giới từ trong tiếng Anh không dịch trực tiếp từ tiếng Việt. "Good at" = giỏi về một kỹ năng.' },
   { id: 6, type: 'Missing Progressive', description: 'I eat dinner now → I **am eating** dinner now', vn: 'Thì tiếp diễn (be + V-ing) cần khi hành động đang xảy ra tại thời điểm nói.' },
   { id: 7, type: 'Overuse of "Very"', description: 'very good → **excellent**, very big → **enormous**', vn: 'Thay vì dùng "very + adj", hãy dùng tính từ mạnh hơn để diễn đạt tự nhiên hơn.' },
   { id: 8, type: 'Literal Translation', description: 'I agree with you on → I **agree with you**', vn: '"Đồng ý với bạn" dịch word-by-word sai. Tiếng Anh: "agree with someone" (không có "on").' },
-  { id: 9, type: 'Double Negatives', description: 'I don\'t know nothing → I **don\'t know anything** / I know **nothing**', vn: 'Tiếng Anh không dùng phủ định kép. Chọn một trong hai: don\'t + anything HOẶC know + nothing.' },
+  { id: 9, type: 'Double Negatives', description: 'I don\'t know nothing → I **don\'t know anything**', vn: 'Tiếng Anh không dùng phủ định kép. Chọn một trong hai: don\'t + anything HOẶC know + nothing.' },
   { id: 10, type: 'Missing Plural -s', description: 'I have two book → I have two book**s**', vn: 'Danh từ đếm được sau số từ (>1) phải ở dạng số nhiều (thêm -s/-es).' },
+  { id: 11, type: 'Missing Articles (a/an)', description: 'I am teacher → I am **a** teacher', vn: 'Danh từ đếm được số ít không bao giờ đứng một mình trong tiếng Anh.' },
+  { id: 12, type: 'Wrong Tense Form', description: 'I have seen him yesterday → I **saw** him yesterday', vn: '"Yesterday" yêu cầu quá khứ đơn, không phải hiện tại hoàn thành.' },
+  { id: 13, type: 'SVO Word Order', description: 'I love you very much → I **love you very much**', vn: 'Tiếng Việt: "Tôi yêu bạn rất nhiều". Tiếng Anh: S-V-O + trạng ngữ sau tân ngữ.' },
+  { id: 14, type: 'Missing "to be"', description: 'She very beautiful → She **is** very beautiful', vn: 'Tiếng Việt không cần động từ "to be" trước tính từ. Tiếng Anh bắt buộc.' },
+  { id: 15, type: 'Wrong Preposition', description: 'I listen music → I listen **to** music', vn: '"Listen" luôn cần "to" trước tân ngữ. "Hear" thì không cần.' },
+  { id: 16, type: 'Missing Pronoun', description: 'Is raining → **It** is raining', vn: 'Tiếng Việt có thể bỏ chủ ngữ. Tiếng Anh bắt buộc có chủ ngữ (It is raining).' },
+  { id: 17, type: 'Wrong Plural Form', description: 'childrens → **children**, infos → **information**', vn: 'Một số danh từ bất quy tắc (child→children, info→information) không thêm -s.' },
+  { id: 18, type: 'Confusing "say/talk/speak/tell"', description: 'He said me → He **told** me / He **said** to me', vn: '"Tell" + someone, "say" + (to someone). Không dùng "say me".' },
+  { id: 19, type: 'Confusing "make/do"', description: 'I make homework → I **do** homework', vn: '"Do" = thực hiện hành động. "Make" = tạo ra/cái gì đó mới.' },
+  { id: 20, type: 'Confusing "borrow/lend"', description: 'Can you borrow me your pen? → Can you **lend** me your pen?', vn: '"Borrow" = mượn vào. "Lend" = cho mượn ra. Hướng ngược nhau.' },
 ]
 
 const PROMPTS = [
@@ -141,7 +151,19 @@ export default function Writing(): JSX.Element {
        VALUES (?, ?, ?, datetime('now'))`,
       [prompt, essay, fakeScore]
     ).then(() => {
-      setTodayXP(fakeScore >= 80 ? 15 : 10)
+      const xpEarned = fakeScore >= 80 ? 15 : 10
+      setTodayXP(xpEarned)
+
+      // Update daily stats with XP
+      const today = new Date().toISOString().slice(0, 10)
+      window.api.db.run(
+        `INSERT INTO daily_stats (date, xp_earned, writing_mins)
+         VALUES (?, ?, 1)
+         ON CONFLICT(date) DO UPDATE SET
+           xp_earned = xp_earned + ?,
+           writing_mins = writing_mins + 1`,
+        [today, xpEarned, xpEarned]
+      ).catch(() => {})
     }).catch(() => {})
 
     // Update grammar mistakes

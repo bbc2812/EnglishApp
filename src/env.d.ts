@@ -11,7 +11,7 @@ interface AiApi {
     provider: string,
     messages: { role: string; content: string }[],
     system?: string,
-    options?: { apiKey?: string; ollamaUrl?: string; ollamaModel?: string }
+    options?: { apiKey?: string; ollamaUrl?: string; ollamaModel?: string; geminiApiKey?: string }
   ) => Promise<string>
   isAvailable: (provider: string, options?: { ollamaUrl?: string }) => Promise<boolean>
 }

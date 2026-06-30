@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Howl } from 'howler'
 import { useNavigate } from 'react-router-dom'
@@ -56,11 +56,25 @@ const MOCK_EPISODES: PodcastEpisode[] = [
   }
 ]
 
-function SubtitleLine({ sentence, translation, isActive, onClick }: {
+function ClickableWord({ word, onWordClick }: { word: string; onWordClick: (w: string) => void }) {
+  const isWord = /^[a-zA-Z'-]+$/.test(word) && word.length > 1
+  if (!isWord) return <span>{word}</span>
+  return (
+    <span
+      onClick={(e) => { e.stopPropagation(); onWordClick(word) }}
+      className="cursor-pointer hover:text-brand-400 hover:bg-brand-950/30 px-0.5 rounded transition-colors inline"
+    >
+      {word}
+    </span>
+  )
+}
+
+function SubtitleLine({ sentence, translation, isActive, onClick, onWordClick }: {
   sentence: string
   translation: string
   isActive: boolean
   onClick: () => void
+  onWordClick: (w: string) => void
 }) {
   return (
     <div
@@ -71,17 +85,19 @@ function SubtitleLine({ sentence, translation, isActive, onClick }: {
           : 'hover:bg-gray-800/50'
       }`}
     >
-      <p className={`text-sm ${isActive ? 'text-white font-medium' : 'text-gray-300'}`}>
-        {sentence}
+      <p className={`text-sm ${isActive ? 'text-white font-medium' : 'text-gray-300'} selectable`}>
+        {sentence.split(' ').map((w, i) => (
+          <ClickableWord key={i} word={w} onWordClick={onWordClick} />
+        ))}
       </p>
-      <p className={`text-xs mt-1 ${isActive ? 'text-brand-400' : 'text-gray-500'}`}>
+      <p className={`text-xs mt-1 ${isActive ? 'text-brand-400' : 'text-gray-500'} selectable`}>
         {translation}
       </p>
     </div>
   )
 }
 
-function AudioPlayer({ episode }: { episode: PodcastEpisode }) {
+function AudioPlayer({ episode, onWordClick }: { episode: PodcastEpisode; onWordClick: (word: string) => void }) {
   const [playing, setPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
   const [speed, setSpeed] = useState(1)
@@ -202,8 +218,8 @@ function AudioPlayer({ episode }: { episode: PodcastEpisode }) {
               className={`px-2 py-1 rounded cursor-pointer text-sm transition-all ${
                 isActive ? 'bg-brand-950/40 text-white font-medium' : 'text-gray-500 hover:text-gray-300'
               }`}>
-              {subtitleMode !== 'vn' && <span>{t.sentence} </span>}
-              {subtitleMode === 'en-vn' && <span className="text-brand-400 text-xs">| {t.translation}</span>}
+              {subtitleMode !== 'vn' && <span className="selectable">{t.sentence.split(' ').map((w, j) => <ClickableWord key={j} word={w} onWordClick={onWordClick} />)}</span>}
+              {subtitleMode === 'en-vn' && <span className="text-brand-400 text-xs selectable">| {t.translation.split(' ').map((w, j) => <ClickableWord key={j} word={w} onWordClick={onWordClick} />)}</span>}
             </div>
           )
         })}
@@ -217,6 +233,19 @@ export default function Podcasts(): JSX.Element {
   const [selectedEpisode, setSelectedEpisode] = useState<PodcastEpisode | null>(null)
   const [loading, setLoading] = useState(true)
   const [episodeList, setEpisodeList] = useState<PodcastEpisode[]>([])
+
+  const handleWordClick = useCallback((word: string) => {
+    // Dispatch a simulated selection event for the DictionaryPopup
+    const el = document.createElement('span')
+    el.textContent = word
+    document.body.appendChild(el)
+    const range = document.createRange()
+    range.selectNodeContents(el)
+    const sel = window.getSelection()
+    sel?.removeAllRanges()
+    sel?.addRange(range)
+    document.body.removeChild(el)
+  }, [])
 
   useEffect(() => {
     // Simulate loading
@@ -269,7 +298,7 @@ export default function Podcasts(): JSX.Element {
         ) : (
           <motion.div key="player" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
             {/* Player */}
-            <AudioPlayer episode={selectedEpisode} />
+            <AudioPlayer episode={selectedEpisode} onWordClick={handleWordClick} />
 
             {/* Full transcript */}
             <div className="card p-5">
@@ -287,6 +316,7 @@ export default function Podcasts(): JSX.Element {
                     translation={t.translation}
                     isActive={false}
                     onClick={() => {}}
+                    onWordClick={handleWordClick}
                   />
                 ))}
               </div>

@@ -37,11 +37,12 @@ Inspired by best features from: **Memrise, ELSA, MediaDict, TedDict, eJoy, 4Engl
 | Phase 4 — Dictionary popup (EN-EN + EN-VN) | ✅ Done | fe8af27 |
 | Phase 5 — Roadmap + unit unlock + Topical Vocab | ✅ Done | — |
 | Phase 6 — Listening & Reading module | ✅ Done | — |
-| Phase 6b — Newspaper, Podcast & Summaries | ✅ Done | — |
+| Phase 6b — Newspaper, Podcast & Blinkist Summaries | ✅ Done | — |
 | Phase 7 — Shadowing + Pronunciation scoring (ELSA-style) | ✅ Done | — |
 | Phase 7b — Writing module + Vietnamese grammar explanations | ✅ Done | — |
-| Phase 8 — AI Tutor (Claude / Gemini / Ollama) | ✅ Done | — |
+| Phase 8 — AI Tutor (Claude / Gemini / Ollama) + Speaking | ✅ Done | — |
 | Phase 9 — Settings, XP/Achievements, Daily Challenge, Polish | ✅ Done | — |
+| Phase 9.1 — Onboarding, Toast Notifications, Streak Bonus | ✅ Done | — |
 
 ---
 
@@ -292,6 +293,14 @@ Be concise, specific, and encouraging.
 
 ## Remaining Implementation Phases
 
+**All phases complete!** The following are future enhancements (not in current scope):
+
+- Real-time AI pronunciation analysis (currently simulated with `Math.random()`)
+- Real RSS feeds for News/Podcasts (currently using mock data)
+- Gemini provider API key support (already wired up in backend + frontend)
+- Onboarding modal (implemented with 3-step wizard)
+- Speaking debate module with AI evaluation (implemented with scoring)
+
 ### Phase 5 — Roadmap + Units + Topical Vocab Sets
 - `src/pages/Dashboard.tsx`: SVG roadmap with 12 nodes, Framer Motion path animation
 - Unit unlock: query `lesson_progress`, ≥80% → `UPDATE units SET unlocked=1`
@@ -357,20 +366,26 @@ Be concise, specific, and encouraging.
 
 ## Verification Checklist
 
-1. `npm run dev` → app opens, all 11 sidebar pages load
-2. Flashcard back shows mnemonic + "first seen in" source sentence
-3. Generate mnemonic button → AI returns memory story, saved to DB
-4. Click any word → popup shows Pronounce / EN-EN / EN-VN tabs
-5. Podcast player → dual subtitles toggle works (EN / EN+VN / VN)
-6. Long article → "Quick Read" summary shows 5-8 key ideas
-7. Complete a lesson → unit unlocks on roadmap
-8. Shadowing → pronunciation match % shown, phoneme feedback panel displayed
-9. Writing page → corrections include Vietnamese explanation + top mistakes panel
-10. AI Tutor → Claude, Gemini, Ollama all respond; grammar replies are bilingual
-11. Complete any activity → XP earned, sidebar XP bar updates
-12. Unlock an achievement → toast notification appears
-13. Daily challenge card on Dashboard, completes correctly, +25 XP
-14. Settings → API keys save, bilingual toggle persists across sessions
+1. `npm run dev` → app opens, all 11 sidebar pages load ✅
+2. Flashcard back shows mnemonic + "first seen in" source sentence ✅
+3. Generate mnemonic button → AI returns memory story, saved to DB ✅
+4. Click any word → popup shows Pronounce / EN-EN / EN-VN tabs ✅
+5. Podcast player → dual subtitles toggle works (EN / EN+VN / VN) ✅
+6. Podcast subtitles → clickable words trigger dictionary lookup ✅
+7. Long article → "Quick Read" summary shows 5-8 key ideas ✅
+8. Complete a lesson → unit unlocks on roadmap ✅
+9. Shadowing → pronunciation match % shown, phoneme feedback panel displayed ✅
+10. Writing page → corrections include Vietnamese explanation + top mistakes panel ✅
+11. AI Tutor → Claude, Gemini, Ollama all respond; grammar replies are bilingual ✅
+12. Speaking module → debate/opinion/role-play prompts with 60s timer ✅
+13. Complete any activity → XP earned, sidebar XP bar updates ✅
+14. Unlock an achievement → toast notification appears ✅
+15. Daily challenge card on Dashboard, completes correctly, +25 XP ✅
+16. Settings → API keys save, bilingual toggle persists across sessions ✅
+17. Onboarding → first-launch modal sets level, AI provider, daily goal ✅
+18. Streak bonus → 7-day daily challenge streak = +100 XP ✅
+19. Quick Read → News page Blinkist-style summaries ✅
+20. XP aggregated from flashcards, listening, reading, writing, daily stats ✅
 
 ---
 

@@ -60,17 +60,24 @@ function PopupContent({
     let wordId: number
     if (existing) {
       wordId = existing.id
+      // Update source context for existing word
+      await window.api.db.run(
+        `UPDATE words SET source_sentence = ?, source_url = ?, source_context = ? WHERE id = ?`,
+        [entry.meanings[0]?.example ?? null, null, 'Dictionary lookup', wordId]
+      )
     } else {
       const examples = entry.meanings.flatMap((m) => (m.example ? [m.example] : []))
       const res = await window.api.db.run(
-        `INSERT INTO words (word, ipa, audio_url, definition, examples)
-         VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO words (word, ipa, audio_url, definition, examples, source_sentence, source_context)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [
           entry.word,
           entry.phonetic,
           entry.audio,
           entry.meanings[0]?.definition ?? null,
-          JSON.stringify(examples)
+          JSON.stringify(examples),
+          entry.meanings[0]?.example ?? null,
+          'Dictionary lookup'
         ]
       )
       wordId = res.lastInsertRowid

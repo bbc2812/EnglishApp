@@ -23,7 +23,22 @@ interface Lesson {
   locked: number
 }
 
-type Phase = 'intro' | 'reading' | 'exercises' | 'results'
+type Phase = 'intro' | 'reading' | 'quickread' | 'exercises' | 'results'
+
+interface QuickReadCard {
+  idea: string
+  vocab: string[]
+}
+
+const MOCK_QUICK_READ: QuickReadCard[] = [
+  { idea: 'AI-powered personalized learning adapts to each student\'s pace, but educators warn against complete automation.', vocab: ['personalized', 'automation'] },
+  { idea: 'The key insight is not whether technology should be used, but how it\'s integrated into pedagogical frameworks.', vocab: ['pedagogical', 'integrated'] },
+  { idea: 'Digital literacy has become as fundamental as reading and writing in the 21st century curriculum.', vocab: ['literacy', 'fundamental'] },
+  { idea: 'Human teachers provide empathy and moral guidance that algorithms simply cannot replicate.', vocab: ['empathy', 'algorithm', 'replicate'] },
+  { idea: 'The most successful classrooms use a hybrid model: technology for practice, humans for inspiration.', vocab: ['hybrid', 'inspiration'] },
+  { idea: 'Student engagement increases by 40% when lessons incorporate interactive digital tools vs traditional methods.', vocab: ['engagement', 'incorporate'] },
+  { idea: 'Critical thinking skills must be prioritized over rote memorization in an age of instant information access.', vocab: ['critical thinking', 'rote memorization', 'instant'] },
+]
 
 function WordHighlight({ text, onWordClick }: { text: string; onWordClick: (word: string) => void }) {
   const words = text.split(/(\s+)/)
@@ -193,6 +208,7 @@ export default function Reading(): JSX.Element {
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [loading, setLoading] = useState(true)
   const [phase, setPhase] = useState<Phase>('intro')
+  const [quickReadIndex, setQuickReadIndex] = useState(0)
   const [answers, setAnswers] = useState<(boolean | null)[]>([])
   const [completedAt, setCompletedAt] = useState<number>(0)
 
@@ -256,6 +272,18 @@ export default function Reading(): JSX.Element {
     setCompletedAt(Date.now())
     const xpEarned = score >= 80 ? 20 : 10
     setTodayXP(xpEarned)
+
+    // Track XP in daily_stats
+    const today = new Date().toISOString().slice(0, 10)
+    try {
+      await window.api.db.run(
+        `INSERT INTO daily_stats (date, xp_earned)
+         VALUES (?, ?)
+         ON CONFLICT(date) DO UPDATE SET xp_earned = xp_earned + ?`,
+        [today, xpEarned, xpEarned]
+      )
+    } catch { /* ignore */ }
+
     await loadUnits()
     if (score >= 80) {
       const unlocked = await checkAndUnlockNext(lesson.unit_id)
@@ -324,12 +352,98 @@ export default function Reading(): JSX.Element {
                 Read the article carefully. Click any highlighted word to look up its definition.
                 Then answer {exercises.length} comprehension questions.
               </p>
-              <p className="text-xs text-gray-500">💡 Tip: Click unknown words to see definitions instantly.</p>
+              <p className="text-xs text-gray-500">💡 Tip: Try the Quick Read summary first for key ideas!</p>
+              <div className="flex gap-3 justify-center mt-4">
+                <button
+                  onClick={() => { setPhase('quickread'); setQuickReadIndex(0) }}
+                  className="btn-secondary px-6 py-2.5 text-sm"
+                >
+                  ⚡ Quick Read Summary
+                </button>
+                <button
+                  onClick={() => setPhase('reading')}
+                  className="btn-primary px-8 py-3 text-base"
+                >
+                  Start Reading
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {phase === 'quickread' && (
+          <motion.div
+            key="quickread"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="space-y-6"
+          >
+            <div className="card p-6 text-center mb-4">
+              <p className="text-3xl mb-2">⚡</p>
+              <h3 className="text-lg font-bold text-white">Quick Read Summary</h3>
+              <p className="text-gray-400 text-sm">5-8 key ideas · Swipe to explore</p>
+            </div>
+
+            <div className="card p-8 text-center min-h-[280px] flex flex-col items-center justify-center">
+              <div className="mb-4">
+                <span className="text-xs text-gray-500">
+                  Key Idea {quickReadIndex + 1} of {MOCK_QUICK_READ.length}
+                </span>
+              </div>
+              <p className="text-lg text-white leading-relaxed max-w-lg">
+                {MOCK_QUICK_READ[quickReadIndex].idea}
+              </p>
+              <div className="flex flex-wrap justify-center gap-2 mt-4">
+                {MOCK_QUICK_READ[quickReadIndex].vocab.map((v, i) => (
+                  <span key={i} className="text-xs bg-brand-950/30 text-brand-300 px-2 py-0.5 rounded">
+                    {v}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex gap-2">
+                {MOCK_QUICK_READ.map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-1.5 rounded-full transition-all ${
+                      i === quickReadIndex ? 'w-6 bg-brand-400' : 'w-1.5 bg-gray-700'
+                    }`}
+                  />
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setQuickReadIndex(prev => Math.max(0, prev - 1))}
+                  disabled={quickReadIndex === 0}
+                  className="btn-secondary px-4 py-2 text-sm disabled:opacity-40"
+                >
+                  ← Prev
+                </button>
+                <button
+                  onClick={() => setQuickReadIndex(prev => Math.min(MOCK_QUICK_READ.length - 1, prev + 1))}
+                  disabled={quickReadIndex === MOCK_QUICK_READ.length - 1}
+                  className="btn-secondary px-4 py-2 text-sm disabled:opacity-40"
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-center">
               <button
-                onClick={() => setPhase('reading')}
-                className="btn-primary px-8 py-3 text-base mt-4"
+                onClick={() => setPhase('intro')}
+                className="btn-secondary px-6 py-2.5 text-sm"
               >
-                Start Reading
+                ← Back
+              </button>
+              <button
+                onClick={() => { setPhase('reading'); setQuickReadIndex(0) }}
+                className="btn-primary px-6 py-2.5 text-sm"
+              >
+                Read Full Article →
               </button>
             </div>
           </motion.div>

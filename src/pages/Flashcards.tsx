@@ -5,7 +5,10 @@ import { useSRS } from '../hooks/useSRS'
 import { useSessionStore, type FlashcardRow } from '../store/sessionStore'
 import { useProgressStore } from '../store/progressStore'
 import { useUnitProgress } from '../hooks/useUnitProgress'
+import { useSettingsStore } from '../store/settingsStore'
 import type { Rating } from '../lib/srs/fsrs'
+
+const XP_PER_CARD = 2
 
 const RATING_LABELS: { rating: Rating; label: string; color: string; key: string }[] = [
   { rating: 1, label: 'Again', color: 'bg-red-600 hover:bg-red-500', key: '1' },
@@ -51,10 +54,30 @@ function CardBack({ card }: { card: FlashcardRow }): JSX.Element {
   })()
   const [generating, setGenerating] = useState(false)
   const { generateMnemonic, saveMnemonic } = useSRS()
+  const { activeProvider } = useSettingsStore()
 
   const handleGenerateMnemonic = async () => {
     setGenerating(true)
-    const mnemonic = await generateMnemonic(card.word)
+    let mnemonic: string
+
+    // Try AI first if API key available, fallback to local
+    if ((activeProvider === 'claude' || activeProvider === 'gemini') && card.word.length > 2) {
+      try {
+        const provider = activeProvider === 'claude' ? 'claude' : 'gemini'
+        const response = await window.api.ai.chat(
+          provider,
+          [{ role: 'user', content: `Generate a vivid, memorable mnemonic (memory trick) for the English word "${card.word}". Keep it to 1-2 sentences. Format: "WORD — memory story connecting the word's sound to its meaning."` }],
+          'You are a creative memory coach. Generate vivid, unusual, and memorable mnemonics that connect the sound/visual appearance of a word to its meaning. Be creative and humorous.'
+        )
+        mnemonic = response
+      } catch {
+        // Fallback to local generation
+        mnemonic = await generateMnemonic(card.word)
+      }
+    } else {
+      mnemonic = await generateMnemonic(card.word)
+    }
+
     await saveMnemonic(card.word_id, mnemonic)
     card.mnemonic = mnemonic
     setGenerating(false)
@@ -128,17 +151,19 @@ function CardBack({ card }: { card: FlashcardRow }): JSX.Element {
   )
 }
 
-function DoneScreen({ total, onRestart, onBack, isUnit }: {
+function DoneScreen({ total, onRestart, onBack, isUnit, sessionXp }: {
   total: number
   onRestart: () => void
   onBack: () => void
   isUnit: boolean
+  sessionXp: number
 }): JSX.Element {
   return (
     <div className="flex flex-col items-center justify-center h-full gap-6 text-center">
       <p className="text-5xl">🎉</p>
       <h3 className="text-2xl font-bold text-white">Session Complete!</h3>
       <p className="text-gray-400">You reviewed <span className="text-white font-semibold">{total}</span> cards.</p>
+      <p className="text-brand-400 font-medium">+{sessionXp} XP earned ({sessionXp > 0 ? `${Math.floor(sessionXp / XP_PER_CARD)} cards × ${XP_PER_CARD} XP` : '0 cards'})</p>
       <div className="flex gap-3">
         {isUnit && (
           <button onClick={onBack} className="btn-primary px-6 py-3 text-sm">
@@ -164,9 +189,11 @@ export default function Flashcards(): JSX.Element {
     useSessionStore()
   const [loading, setLoading] = useState(false)
   const [sessionSource, setSessionSource] = useState<'srs' | 'unit'>('srs')
+  const [sessionXp, setSessionXp] = useState(0)
 
   async function startSession(): Promise<void> {
     setLoading(true)
+    setSessionXp(0)
     const cards = await loadDueCards(50)
     setQueue(cards, 'srs', 'flashcards', null)
     setSessionSource('srs')
@@ -250,12 +277,28 @@ export default function Flashcards(): JSX.Element {
     if (!currentCard) return
     recordRating(currentCard.id, rating)
     await applyRating(currentCard, rating)
+    setSessionXp(prev => prev + XP_PER_CARD)
     advance()
   }
 
   const isUnitSession = sessionSource === 'unit' && queueId !== null
 
   const handleSessionDone = async () => {
+    // Save session XP
+    if (sessionXp > 0) {
+      const today = new Date().toISOString().slice(0, 10)
+      try {
+        await window.api.db.run(
+          `INSERT INTO daily_stats (date, xp_earned, streak)
+           VALUES (?, ?, (SELECT COALESCE(streak, 0) FROM daily_stats WHERE date = ?))
+           ON CONFLICT(date) DO UPDATE SET
+             xp_earned = xp_earned + ?,
+             streak = CASE WHEN date('now', '-1 day') = (SELECT date FROM daily_stats WHERE date = date('now', '-1 day')) THEN streak + 1 ELSE 1 END`,
+          [today, sessionXp, today, sessionXp, today]
+        )
+      } catch { /* ignore */ }
+    }
+
     if (isUnitSession && queueId) {
       await updateUnitProgress(queueId)
       const unlocked = await checkAndUnlockNext(queueId)
@@ -329,7 +372,7 @@ export default function Flashcards(): JSX.Element {
       {/* Card area */}
       <div className="flex-1 card min-h-0 relative overflow-hidden">
         {isDone ? (
-          <DoneScreen total={queue.length} onRestart={startSession} onBack={handleSessionDone} isUnit={isUnitSession} />
+          <DoneScreen total={queue.length} onRestart={startSession} onBack={handleSessionDone} isUnit={isUnitSession} sessionXp={sessionXp} />
         ) : (
           <AnimatePresence mode="wait">
             <motion.div

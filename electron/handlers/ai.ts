@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron'
 import Anthropic from '@anthropic-ai/sdk'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
 type Message = { role: 'user' | 'assistant'; content: string }
 
@@ -40,6 +41,18 @@ async function chatWithOllama(
   return data.message?.content ?? ''
 }
 
+async function chatWithGemini(
+  apiKey: string,
+  messages: Message[],
+  system?: string
+): Promise<string> {
+  const genAI = new GoogleGenerativeAI(apiKey)
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash', systemInstruction: system ?? '' })
+  const chat = model.startChat({ history: messages.map(m => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.content }] }) as unknown as any) })
+  const result = await chat.sendMessage(messages[messages.length - 1]?.content ?? '')
+  return result.response.text()
+}
+
 export function registerAiHandlers(): void {
   ipcMain.handle(
     'ai:chat',
@@ -48,11 +61,14 @@ export function registerAiHandlers(): void {
       provider: string,
       messages: Message[],
       system?: string,
-      options?: { apiKey?: string; ollamaUrl?: string; ollamaModel?: string }
+      options?: { apiKey?: string; ollamaUrl?: string; ollamaModel?: string; geminiApiKey?: string }
     ) => {
       if (provider === 'claude') {
         const apiKey = options?.apiKey ?? process.env.ANTHROPIC_API_KEY ?? ''
         return chatWithClaude(apiKey, messages, system)
+      } else if (provider === 'gemini') {
+        const apiKey = options?.geminiApiKey ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY ?? ''
+        return chatWithGemini(apiKey, messages, system)
       } else {
         const baseUrl = options?.ollamaUrl ?? 'http://localhost:11434'
         const model = options?.ollamaModel ?? 'llama3.2'

@@ -46,9 +46,10 @@ function XPBar({ xp, level }: { xp: number; level: number }): JSX.Element {
 
 export default function Settings(): JSX.Element {
   const {
-    claudeApiKey, ollamaUrl, ollamaModel, activeProvider,
-    setClaudeApiKey, setOllamaUrl, setOllamaModel,
-    setActiveProvider, dailyNewWords, setDailyNewWords, theme, setTheme
+    claudeApiKey, ollamaUrl, ollamaModel, geminiApiKey, activeProvider,
+    setClaudeApiKey, setOllamaUrl, setOllamaModel, setGeminiApiKey,
+    setActiveProvider, dailyNewWords, setDailyNewWords,
+    bilingualGrammar, setBilingualGrammar, theme, setTheme
   } = useSettingsStore()
 
   const [saved, setSaved] = useState(false)
@@ -57,11 +58,9 @@ export default function Settings(): JSX.Element {
   const [level, setLevel] = useState(1)
 
   useEffect(() => {
-    // Load achievements from DB
     window.api.db.all(`SELECT key, unlocked_at FROM achievements WHERE unlocked_at IS NOT NULL`)
       .then(rows => setAchievements((rows as { key: string }[]).map(r => r.key)))
 
-    // Calculate XP and level
     window.api.db.all(`SELECT SUM(score || 0) as total_xp FROM writing_history`)
       .then(rows => {
         const xp = (rows as { total_xp?: number }[])[0]?.total_xp || 0
@@ -69,7 +68,6 @@ export default function Settings(): JSX.Element {
         setLevel(Math.floor(xp / 100) + 1)
       }).catch(() => {})
 
-    // Check achievements
     const checkAchievements = async () => {
       const wordCount = await window.api.db.all(`SELECT COUNT(*) as c FROM words`) as { c: number }[]
       const streak = await window.api.db.all(`SELECT streak FROM daily_stats ORDER BY date DESC LIMIT 1`) as { streak: number }[]
@@ -79,11 +77,36 @@ export default function Settings(): JSX.Element {
 
       const newAchievements: string[] = []
 
-      if (wordCount[0]?.c && wordCount[0].c >= 100 && !achievements.includes('word_hoarder')) newAchievements.push('word_hoarder')
-      if (streak[0]?.streak && streak[0].streak >= 7 && !achievements.includes('sharpshooter')) newAchievements.push('sharpshooter')
-      if (writingCount[0]?.c && writingCount[0].c >= 5 && !achievements.includes('essay_writer')) newAchievements.push('essay_writer')
-      if (convCount[0]?.c && convCount[0].c >= 50 && !achievements.includes('tutor_fan')) newAchievements.push('tutor_fan')
-      if (lessonCount[0]?.c && lessonCount[0].c >= 10 && !achievements.includes('speed_reader')) newAchievements.push('speed_reader')
+      // Check first card (any flashcard exists)
+      const flashcardCount = await window.api.db.all(`SELECT COUNT(*) as c FROM flashcards`) as { c: number }[]
+      if (flashcardCount[0]?.c && flashcardCount[0].c > 0 && !achievements.includes('first_card')) {
+        newAchievements.push('first_card')
+      }
+
+      if (wordCount[0]?.c && wordCount[0].c >= 100 && !achievements.includes('word_hoarder')) {
+        newAchievements.push('word_hoarder')
+      }
+      if (streak[0]?.streak && streak[0].streak >= 7 && !achievements.includes('sharpshooter')) {
+        newAchievements.push('sharpshooter')
+      }
+      if (writingCount[0]?.c && writingCount[0].c >= 5 && !achievements.includes('essay_writer')) {
+        newAchievements.push('essay_writer')
+      }
+      if (convCount[0]?.c && convCount[0].c >= 50 && !achievements.includes('tutor_fan')) {
+        newAchievements.push('tutor_fan')
+      }
+      if (lessonCount[0]?.c && lessonCount[0].c >= 10 && !achievements.includes('speed_reader')) {
+        newAchievements.push('speed_reader')
+      }
+
+      // Check B2/C1 graduate based on unlocked units
+      const unlockedUnits = await window.api.db.all(`SELECT COUNT(*) as c FROM units WHERE unlocked = 1`) as { c: number }[]
+      if (unlockedUnits[0]?.c && unlockedUnits[0].c >= 4 && !achievements.includes('b2_graduate')) {
+        newAchievements.push('b2_graduate')
+      }
+      if (unlockedUnits[0]?.c && unlockedUnits[0].c >= 8 && !achievements.includes('c1_champion')) {
+        newAchievements.push('c1_champion')
+      }
 
       if (newAchievements.length > 0) {
         for (const key of newAchievements) {
@@ -117,7 +140,7 @@ export default function Settings(): JSX.Element {
           <div className="w-14 h-14 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-2xl">
             🧠
           </div>
-          <div>
+          <div className="flex-1">
             <p className="text-white font-bold">Learner</p>
             <XPBar xp={totalXp} level={level} />
           </div>
@@ -137,48 +160,38 @@ export default function Settings(): JSX.Element {
 
         <SettingRow label="Active Provider">
           <div className="flex gap-1">
-            <button onClick={() => setActiveProvider('claude')}
-              className={`px-3 py-1 rounded-md text-xs font-medium ${activeProvider === 'claude' ? 'bg-brand-600 text-white' : 'bg-gray-800 text-gray-400'}`}>
-              Claude
-            </button>
-            <button onClick={() => setActiveProvider('ollama')}
-              className={`px-3 py-1 rounded-md text-xs font-medium ${activeProvider === 'ollama' ? 'bg-brand-600 text-white' : 'bg-gray-800 text-gray-400'}`}>
-              Ollama
-            </button>
+            {(['claude', 'ollama', 'gemini'] as const).map(p => (
+              <button key={p} onClick={() => setActiveProvider(p)}
+                className={`px-3 py-1 rounded-md text-xs font-medium ${activeProvider === p ? 'bg-brand-600 text-white' : 'bg-gray-800 text-gray-400'}`}>
+                {p === 'claude' ? '🟣 Claude' : p === 'gemini' ? '🟡 Gemini' : '🤖 Ollama'}
+              </button>
+            ))}
           </div>
         </SettingRow>
 
         {activeProvider === 'claude' && (
           <SettingRow label="Claude API Key">
-            <input
-              type="password"
-              value={claudeApiKey}
-              onChange={e => setClaudeApiKey(e.target.value)}
-              placeholder="sk-ant-..."
-              className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white w-48 focus:border-brand-500 focus:outline-none"
-            />
+            <input type="password" value={claudeApiKey} onChange={e => setClaudeApiKey(e.target.value)}
+              placeholder="sk-ant-..." className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white w-48 focus:border-brand-500 focus:outline-none" />
+          </SettingRow>
+        )}
+
+        {activeProvider === 'gemini' && (
+          <SettingRow label="Gemini API Key">
+            <input type="password" value={geminiApiKey} onChange={e => setGeminiApiKey(e.target.value)}
+              placeholder="AIza..." className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white w-48 focus:border-brand-500 focus:outline-none" />
           </SettingRow>
         )}
 
         {activeProvider === 'ollama' && (
           <>
             <SettingRow label="Ollama URL">
-              <input
-                type="text"
-                value={ollamaUrl}
-                onChange={e => setOllamaUrl(e.target.value)}
-                placeholder="http://localhost:11434"
-                className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white w-48 focus:border-brand-500 focus:outline-none"
-              />
+              <input type="text" value={ollamaUrl} onChange={e => setOllamaUrl(e.target.value)}
+                placeholder="http://localhost:11434" className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white w-48 focus:border-brand-500 focus:outline-none" />
             </SettingRow>
             <SettingRow label="Ollama Model">
-              <input
-                type="text"
-                value={ollamaModel}
-                onChange={e => setOllamaModel(e.target.value)}
-                placeholder="llama3.2"
-                className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white w-48 focus:border-brand-500 focus:outline-none"
-              />
+              <input type="text" value={ollamaModel} onChange={e => setOllamaModel(e.target.value)}
+                placeholder="llama3.2" className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white w-48 focus:border-brand-500 focus:outline-none" />
             </SettingRow>
           </>
         )}
@@ -189,29 +202,27 @@ export default function Settings(): JSX.Element {
         <h3 className="text-sm font-semibold text-white mb-4">Learning Preferences</h3>
 
         <SettingRow label="Daily New Words">
-          <input
-            type="number"
-            value={dailyNewWords}
-            onChange={e => setDailyNewWords(Number(e.target.value))}
-            className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white w-20 focus:border-brand-500 focus:outline-none"
-          />
+          <input type="number" value={dailyNewWords} onChange={e => setDailyNewWords(Number(e.target.value))}
+            className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white w-20 focus:border-brand-500 focus:outline-none" />
+        </SettingRow>
+
+        <SettingRow label="Bilingual Grammar Explanations">
+          <button onClick={() => setBilingualGrammar(!bilingualGrammar)}
+            className={`px-3 py-1 rounded-md text-xs font-medium ${bilingualGrammar ? 'bg-brand-600 text-white' : 'bg-gray-800 text-gray-400'}`}>
+            {bilingualGrammar ? '✅ On' : '❌ Off'}
+          </button>
         </SettingRow>
 
         <SettingRow label="Theme">
           <div className="flex gap-1">
             <button onClick={() => setTheme('dark')}
-              className={`px-3 py-1 rounded-md text-xs font-medium ${theme === 'dark' ? 'bg-brand-600 text-white' : 'bg-gray-800 text-gray-400'}`}>
-              🌙 Dark
-            </button>
+              className={`px-3 py-1 rounded-md text-xs font-medium ${theme === 'dark' ? 'bg-brand-600 text-white' : 'bg-gray-800 text-gray-400'}`}>🌙 Dark</button>
             <button onClick={() => setTheme('light')}
-              className={`px-3 py-1 rounded-md text-xs font-medium ${theme === 'light' ? 'bg-brand-600 text-white' : 'bg-gray-800 text-gray-400'}`}>
-              ☀️ Light
-            </button>
+              className={`px-3 py-1 rounded-md text-xs font-medium ${theme === 'light' ? 'bg-brand-600 text-white' : 'bg-gray-800 text-gray-400'}`}>☀️ Light</button>
           </div>
         </SettingRow>
       </div>
 
-      {/* Save */}
       <div className="flex justify-end">
         <button onClick={handleSave}
           className={`btn-primary px-6 py-2.5 text-sm ${saved ? '!bg-green-600' : ''}`}>

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 
 const NAV = [
@@ -13,7 +14,70 @@ const NAV = [
   { to: '/tutor', icon: '🤖', label: 'AI Tutor' },
 ]
 
+function XPBar({ xp, level }: { xp: number; level: number }): JSX.Element {
+  const nextLevelXp = level * 100
+  const prevLevelXp = Math.max(0, (level - 1) * 100)
+  const progress = Math.min(100, Math.max(0, ((xp - prevLevelXp) / (nextLevelXp - prevLevelXp)) * 100))
+
+  return (
+    <div className="px-2 py-3 border-t border-gray-800">
+      <div className="space-y-1">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold text-white">Lvl {level}</span>
+          <span className="text-xs text-gray-500">{xp}/{nextLevelXp} XP</span>
+        </div>
+        <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-brand-600 to-brand-400 rounded-full transition-all"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Sidebar(): JSX.Element {
+  const [totalXp, setTotalXp] = useState(0)
+  const [level, setLevel] = useState(1)
+
+  useEffect(() => {
+    const loadAllXP = async () => {
+      let total = 0
+
+      // XP from writing
+      try {
+        const writing = await window.api.db.all(`SELECT SUM(score || 0) as total_xp FROM writing_history`) as { total_xp?: number }[]
+        total += (writing[0]?.total_xp || 0)
+      } catch { /* ignore */ }
+
+      // XP from flashcards (2 XP per card)
+      try {
+        const flashcardCount = await window.api.db.all(`SELECT COUNT(*) as c FROM flashcards`) as { c: number }[]
+        total += (flashcardCount[0]?.c || 0) * 2
+      } catch { /* ignore */ }
+
+      // XP from daily_stats
+      try {
+        const today = new Date().toISOString().slice(0, 10)
+        const dailyStats = await window.api.db.all(`SELECT xp_earned FROM daily_stats WHERE date = ?`, [today]) as { xp_earned?: number }[]
+        total += (dailyStats[0]?.xp_earned || 0)
+      } catch { /* ignore */ }
+
+      // XP from user_xp table
+      try {
+        const userXp = await window.api.db.all(`SELECT total_xp FROM user_xp ORDER BY updated_at DESC LIMIT 1`) as { total_xp?: number }[]
+        const storedXp = userXp[0]?.total_xp || 0
+        if (storedXp > total) total = storedXp
+      } catch { /* ignore */ }
+
+      setTotalXp(total)
+      setLevel(Math.floor(total / 100) + 1)
+    }
+
+    loadAllXP()
+  }, [])
+
   return (
     <aside className="w-52 flex-shrink-0 bg-gray-900 border-r border-gray-800 flex flex-col h-full">
       {/* Logo */}
@@ -40,6 +104,9 @@ export default function Sidebar(): JSX.Element {
           </NavLink>
         ))}
       </nav>
+
+      {/* XP Bar */}
+      <XPBar xp={totalXp} level={level} />
 
       {/* Settings at bottom */}
       <div className="px-2 py-3 border-t border-gray-800">

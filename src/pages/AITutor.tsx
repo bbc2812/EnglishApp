@@ -2,6 +2,8 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { useSettingsStore } from '../store/settingsStore'
 import type { AiProvider } from '../store/settingsStore'
 
+const PROVIDER_LIST: AiProvider[] = ['claude', 'ollama', 'gemini']
+
 interface Message {
   id: number
   role: 'user' | 'assistant'
@@ -55,7 +57,7 @@ function ProviderBadge({ provider }: { provider: AiProvider | 'gemini' }) {
 }
 
 export default function AITutor(): JSX.Element {
-  const { claudeApiKey, ollamaUrl, ollamaModel, activeProvider, setActiveProvider } = useSettingsStore()
+  const { claudeApiKey, ollamaUrl, ollamaModel, geminiApiKey, activeProvider, setActiveProvider } = useSettingsStore()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -102,14 +104,16 @@ export default function AITutor(): JSX.Element {
     setInput('')
 
     try {
-      const provider = activeProvider === 'claude' ? 'claude' : 'ollama'
+      const provider = activeProvider
       const response = await window.api.ai.chat(
         provider,
         [...messages, userMsg].map(m => ({ role: m.role, content: m.content })),
         SYSTEM_PROMPT,
         provider === 'claude'
           ? { apiKey: claudeApiKey }
-          : { ollamaUrl, ollamaModel }
+          : provider === 'gemini'
+            ? { geminiApiKey }
+            : { ollamaUrl, ollamaModel }
       )
 
       const assistantMsg: Message = {
@@ -156,7 +160,7 @@ export default function AITutor(): JSX.Element {
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xl font-bold text-white">🤖 AI Tutor</h2>
           <div className="flex gap-1 bg-gray-900 p-1 rounded-lg">
-            {(['claude', 'ollama'] as AiProvider[]).map(p => (
+            {PROVIDER_LIST.map(p => (
               <button
                 key={p}
                 onClick={() => setActiveProvider(p)}
@@ -164,7 +168,7 @@ export default function AITutor(): JSX.Element {
                   activeProvider === p ? 'bg-brand-600 text-white' : 'text-gray-400 hover:text-white'
                 }`}
               >
-                {p === 'claude' ? '🟣 Claude' : '🤖 Ollama'}
+                {p === 'claude' ? '🟣 Claude' : p === 'gemini' ? '🟡 Gemini' : '🤖 Ollama'}
               </button>
             ))}
           </div>

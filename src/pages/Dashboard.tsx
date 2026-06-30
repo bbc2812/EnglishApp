@@ -275,14 +275,16 @@ export default function Dashboard(): JSX.Element {
   const [loading, setLoading] = useState(true)
   const [vocabSets, setVocabSets] = useState<{ id: number; title: string; topic: string; level: string }[]>([])
   const [lessons, setLessons] = useState<{ id: number; title: string; type: string; locked: number }[]>([])
-  const [stats, setStats] = useState<{ wordsReviewed: number; streak: number; lessonsCompleted: number; totalWords: number; totalXp: number }>({
+  const [stats, setStats] = useState<{ wordsReviewed: number; streak: number; lessonsCompleted: number; totalWords: number; totalXp: number; challengeStreak: number }>({
     wordsReviewed: 0,
     streak: 0,
     lessonsCompleted: 0,
     totalWords: 0,
     totalXp: 0,
+    challengeStreak: 0,
   })
-  const [dailyChallenge, setDailyChallenge] = useState<{ type: string; completed: number; xp_reward: number } | null>(null)
+    const [dailyChallenge, setDailyChallenge] = useState<{ type: string; completed: number; xp_reward: number } | null>(null)
+    const [challengeStreak, setChallengeStreak] = useState(0)
   const [achievementCount, setAchievementCount] = useState(0)
 
   const loadDashboard = useCallback(async () => {
@@ -290,7 +292,7 @@ export default function Dashboard(): JSX.Element {
 
     await loadUnits()
 
-    const [dailyStats, vocabSetsData, lessonCount, wordCount, unlockedLessons, challenge, achievements]: [any[], any[], unknown, unknown, unknown, unknown, unknown] =
+    const [dailyStats, vocabSetsData, lessonCount, wordCount, unlockedLessons, challenge, achievements, streakData]: [any[], any[], unknown, unknown, unknown, unknown, unknown, unknown] =
       await Promise.all([
         window.api.db.all(
           `SELECT * FROM daily_stats WHERE date = ? ORDER BY date DESC LIMIT 1`,
@@ -310,6 +312,12 @@ export default function Dashboard(): JSX.Element {
         window.api.db.all(
           `SELECT COUNT(*) as count FROM achievements WHERE unlocked_at IS NOT NULL`
         ) as Promise<unknown>,
+        window.api.db.all(
+          `SELECT COUNT(*) as streak FROM (
+            SELECT date, completed FROM daily_challenges WHERE completed = 1
+            ORDER BY date DESC LIMIT 7
+          )`
+        ) as Promise<{ streak: number }[]>,
       ])
 
     if (dailyStats.length > 0) {
@@ -323,7 +331,7 @@ export default function Dashboard(): JSX.Element {
         writingMins: ds.writing_mins || 0,
         streak: ds.streak || 0,
       })
-      setStats((prev) => ({ ...prev, wordsReviewed: ds.words_reviewed || 0, streak: ds.streak || 0 }))
+      setStats((prev) => ({ ...prev, wordsReviewed: ds.words_reviewed || 0, streak: ds.streak || 0, challengeStreak: 0 }))
     }
 
     const lessonsResult = lessonCount as { count?: number }[] | { count?: number }
@@ -336,7 +344,7 @@ export default function Dashboard(): JSX.Element {
 
     setVocabSets(vocabSetsData)
     setLessons(unlockedLessons as { id: number; title: string; type: string; locked: number }[])
-    setStats(prev => ({ ...prev, lessonsCompleted: lessonC, totalWords: wordC }))
+    setStats(prev => ({ ...prev, lessonsCompleted: lessonC, totalWords: wordC, challengeStreak: prev.challengeStreak }))
     const challengeResult = challenge as { type?: string; completed?: number; xp_reward?: number }[]
     if (challengeResult.length > 0) {
       setDailyChallenge({
@@ -347,6 +355,29 @@ export default function Dashboard(): JSX.Element {
     }
     const achResult = achievements as { count?: number }[]
     setAchievementCount(Array.isArray(achResult) ? (achResult[0]?.count || 0) : 0)
+
+    // Load challenge streak
+    const streakResult = streakData as { streak?: number }[] | undefined
+    if (streakResult && Array.isArray(streakResult)) {
+      setChallengeStreak(streakResult[0]?.streak || 0)
+    }
+
+    // Check for 7-day streak bonus
+    if (challengeStreak >= 7 && !achievements) {
+      window.api.db.run(
+        `INSERT INTO achievements (key, title, description, icon, unlocked_at)
+         VALUES ('daily_warrior', '⚔️ Daily Warrior', 'Complete 7 daily challenges', '⚔️', datetime('now'))
+         ON CONFLICT(key) DO NOTHING`
+      ).then(() => {}).catch(() => {})
+      // Add streak bonus XP
+      window.api.db.run(
+        `INSERT INTO daily_stats (date, xp_earned, streak)
+         VALUES (?, 100, (SELECT COALESCE(streak, 0) FROM daily_stats WHERE date = ?))
+         ON CONFLICT(date) DO UPDATE SET xp_earned = xp_earned + 100`,
+        [new Date().toISOString().slice(0, 10), new Date().toISOString().slice(0, 10)]
+      ).then(() => {}).catch(() => {})
+    }
+
     setLoading(false)
   }, [loadUnits, setTodayStats, setTodayXP])
 
@@ -403,7 +434,7 @@ export default function Dashboard(): JSX.Element {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatCard icon="📝" label="Words Reviewed" value={stats.wordsReviewed} />
         <StatCard icon="📚" label="Total Words" value={stats.totalWords} />
-        <StatCard icon="🔥" label="Streak" value={`${stats.streak} days`} />
+        <StatCard icon="🔥" label="Streak" value={`${stats.streak} days`} subValue={stats.challengeStreak > 0 ? `${stats.challengeStreak}/7 daily streak` : undefined} />
         <StatCard icon="⭐" label="Today's XP" value={todayXP} subValue={`${stats.lessonsCompleted} lessons`} />
       </div>
 
@@ -416,7 +447,19 @@ export default function Dashboard(): JSX.Element {
               <div>
                 <h4 className="text-white font-semibold text-sm">Daily Challenge</h4>
                 <p className="text-gray-400 text-xs">
-                  {dailyChallenge.completed ? '✅ Completed! +25 XP' : '20 flashcards in 5 minutes — +25 XP'}
+                  {dailyChallenge.completed ? (
+                    <span className="text-green-400">✅ Completed! +{dailyChallenge.xp_reward} XP</span>
+                  ) : (
+                    <span>
+                      {dailyChallenge.type === 'vocab_blitz' && '20 flashcards in 5 min'}
+                      {dailyChallenge.type === 'listening_dictation' && 'Transcribe 60s audio'}
+                      {dailyChallenge.type === 'shadow_master' && 'Nail 3 sentences ≥80%'}
+                      {dailyChallenge.type === 'writing_sprint' && '150-word essay in 10 min'}
+                      {dailyChallenge.type === 'grammar_gauntlet' && '10 error-detection questions'}
+                      {' — '}
+                      <span className="text-brand-400">+{dailyChallenge.xp_reward} XP</span>
+                    </span>
+                  )}
                 </p>
               </div>
             </div>

@@ -367,13 +367,25 @@ export default function Listening(): JSX.Element {
   const correctCount = answers.filter(a => a === true).length
   const score = allAnswered ? Math.round((correctCount / exercises.length) * 100) : 0
 
-  const handleComplete = async () => {
+    const handleComplete = async () => {
     if (!lesson) return
     await completeLesson(lesson.id, score)
     setCompletedAt(Date.now())
     const xpEarned = score >= 80 ? 20 : 10
-    const todayXP = xpEarned
-    setTodayXP(todayXP)
+    setTodayXP(xpEarned)
+
+    // Track XP and listening mins in daily_stats
+    const today = new Date().toISOString().slice(0, 10)
+    try {
+      await window.api.db.run(
+        `INSERT INTO daily_stats (date, xp_earned, listening_mins)
+         VALUES (?, ?, 5)
+         ON CONFLICT(date) DO UPDATE SET
+           xp_earned = xp_earned + ?,
+           listening_mins = listening_mins + 5`,
+        [today, xpEarned, xpEarned]
+      )
+    } catch { /* ignore */ }
 
     await loadUnits()
     if (score >= 80) {

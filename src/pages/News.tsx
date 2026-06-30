@@ -38,14 +38,95 @@ function LevelBadge({ level }: { level: string }): JSX.Element {
   )
 }
 
+function QuickReadSummary({ articleTitle, onClose }: { articleTitle: string; onClose: () => void }): JSX.Element {
+  const [currentIndex, setCurrentIndex] = useState(0)
+
+  const keyIdeas = [
+    `AI is transforming how we consume news — personalized feeds adapt to reader preferences and reading levels.`,
+    `Media literacy has become essential: distinguishing credible sources from misinformation is a core 21st-century skill.`,
+    `Traditional journalism faces disruption as social media algorithms prioritize engagement over accuracy.`,
+    `The rise of citizen journalism means anyone can report breaking news, but verification remains professional journalists\' core value.`,
+    `Subscription fatigue is real — the average internet user now faces over 50 paywalled news sources to choose from.`,
+    `Fact-checking has evolved from post-publication corrections to real-time AI-assisted verification tools.`,
+    `The future of quality journalism depends on finding sustainable business models beyond click-based advertising.`,
+  ]
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="space-y-4"
+    >
+      <div className="card p-6 text-center mb-4 border-brand-900/30 bg-brand-950/5">
+        <p className="text-3xl mb-2">⚡</p>
+        <h3 className="text-lg font-bold text-white">Quick Read Summary</h3>
+        <p className="text-xs text-gray-500 mt-1">{articleTitle}</p>
+        <p className="text-sm text-gray-400 mt-2">7 key ideas · Swipe to explore</p>
+      </div>
+
+      <div className="card p-8 text-center min-h-[200px] flex flex-col items-center justify-center">
+        <div className="mb-4">
+          <span className="text-xs text-gray-500">
+            Key Idea {currentIndex + 1} of {keyIdeas.length}
+          </span>
+        </div>
+        <p className="text-base text-white leading-relaxed max-w-lg">
+          {keyIdeas[currentIndex]}
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2">
+          {keyIdeas.map((_, i) => (
+            <div
+              key={i}
+              className={`h-1.5 rounded-full transition-all ${
+                i === currentIndex ? 'w-6 bg-brand-400' : 'w-1.5 bg-gray-700'
+              }`}
+            />
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
+            disabled={currentIndex === 0}
+            className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-40"
+          >
+            ← Prev
+          </button>
+          <button
+            onClick={() => setCurrentIndex(prev => Math.min(keyIdeas.length - 1, prev + 1))}
+            disabled={currentIndex === keyIdeas.length - 1}
+            className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-40"
+          >
+            Next →
+          </button>
+        </div>
+      </div>
+
+      <div className="flex justify-center">
+        <button
+          onClick={onClose}
+          className="btn-primary px-6 py-2 text-sm"
+        >
+          Read Full Article →
+        </button>
+      </div>
+    </motion.div>
+  )
+}
+
 function ArticleCard({
   item,
   level,
   onSave,
+  onQuickRead,
 }: {
   item: RSSItem
   level: string
   onSave: (item: RSSItem, level: string) => void
+  onQuickRead: () => void
 }): JSX.Element {
   const [saved, setSaved] = useState(false)
   const date = new Date(item.pubDate || item['dc:date'] || 0).toLocaleDateString('en-US', {
@@ -76,14 +157,22 @@ function ArticleCard({
           <p className="text-gray-500 text-xs line-clamp-2">{item.description?.replace(/<[^>]*>/g, '').substring(0, 120)}...</p>
           <p className="text-xs text-gray-600 mt-2">{date}</p>
         </div>
-        <button
-          onClick={handleSave}
-          className={`text-xs px-3 py-1.5 rounded flex-shrink-0 ${
-            saved ? 'bg-green-950 text-green-300' : 'bg-gray-800 text-gray-400 hover:text-white'
-          }`}
-        >
-          {saved ? '✅ Saved' : '💾 Save'}
-        </button>
+        <div className="flex gap-2 flex-shrink-0">
+          <button
+            onClick={(e) => { e.stopPropagation(); onQuickRead() }}
+            className="text-xs px-3 py-1.5 rounded flex-shrink-0 bg-brand-950/50 text-brand-300 hover:bg-brand-950"
+          >
+            ⚡ Quick Read
+          </button>
+          <button
+            onClick={handleSave}
+            className={`text-xs px-3 py-1.5 rounded flex-shrink-0 ${
+              saved ? 'bg-green-950 text-green-300' : 'bg-gray-800 text-gray-400 hover:text-white'
+            }`}
+          >
+            {saved ? '✅ Saved' : '💾 Save'}
+          </button>
+        </div>
       </div>
     </motion.button>
   )
@@ -96,6 +185,8 @@ export default function News(): JSX.Element {
   const [loading, setLoading] = useState(true)
   const [activeSource, setActiveSource] = useState<string>('all')
   const [saveCount, setSaveCount] = useState(0)
+  const [showQuickRead, setShowQuickRead] = useState(false)
+  const [quickReadArticle, setQuickReadArticle] = useState<string | null>(null)
 
 
 
@@ -177,15 +268,33 @@ export default function News(): JSX.Element {
           <p className="text-xs text-gray-500 mt-1">{saveCount} saved this session</p>
         </motion.button>
         <motion.button
-          onClick={() => navigate('/news')}
+          onClick={() => {
+            if (items.length > 0) {
+              setQuickReadArticle(items[0].title)
+              setShowQuickRead(true)
+            }
+          }}
           whileHover={{ y: -2 }}
           className="card p-4 text-left"
         >
-          <p className="text-2xl mb-2">📰</p>
+          <p className="text-2xl mb-2">⚡</p>
           <p className="text-sm font-semibold text-white">Quick Read</p>
-          <p className="text-xs text-gray-500 mt-1">AI summaries (coming soon)</p>
+          <p className="text-xs text-gray-500 mt-1">Blinkist-style key ideas</p>
         </motion.button>
       </div>
+
+      {/* Quick Read Modal */}
+      {showQuickRead && quickReadArticle && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-lg"
+          >
+            <QuickReadSummary articleTitle={quickReadArticle} onClose={() => setShowQuickRead(false)} />
+          </motion.div>
+        </div>
+      )}
 
       {/* Articles */}
       {loading ? (
@@ -203,6 +312,10 @@ export default function News(): JSX.Element {
                 item={article}
                 level={'B2'}
                 onSave={handleSave}
+                onQuickRead={() => {
+                  setQuickReadArticle(article.title)
+                  setShowQuickRead(true)
+                }}
               />
             ))
           )}
