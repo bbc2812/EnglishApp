@@ -196,10 +196,27 @@ CREATE TABLE IF NOT EXISTS leaderboard_personas (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS vocab_sets (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  topic TEXT NOT NULL,
+  level TEXT NOT NULL,
+  description TEXT,
+  unit_id INTEGER REFERENCES units(id)
+);
+
 CREATE TABLE IF NOT EXISTS vocab_set_words (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   vocab_set_id INTEGER NOT NULL REFERENCES vocab_sets(id),
   word_id INTEGER NOT NULL REFERENCES words(id)
+);
+
+CREATE TABLE IF NOT EXISTS pronunciation_sessions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  word TEXT NOT NULL,
+  match_score INTEGER,
+  phoneme_feedback TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 `;
 const SEED_UNITS = `

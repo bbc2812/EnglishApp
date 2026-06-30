@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron';
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-async function chatWithClaude(apiKey, messages, system) {
+export async function chatWithClaude(apiKey, messages, system) {
     const client = new Anthropic({ apiKey });
     const response = await client.messages.create({
         model: 'claude-sonnet-4-6',
@@ -12,7 +12,7 @@ async function chatWithClaude(apiKey, messages, system) {
     const block = response.content[0];
     return block.type === 'text' ? block.text : '';
 }
-async function chatWithOllama(baseUrl, model, messages, system) {
+export async function chatWithOllama(baseUrl, model, messages, system) {
     const payload = {
         model,
         messages: system ? [{ role: 'system', content: system }, ...messages] : messages,
@@ -28,7 +28,7 @@ async function chatWithOllama(baseUrl, model, messages, system) {
     const data = (await res.json());
     return data.message?.content ?? '';
 }
-async function chatWithGemini(apiKey, messages, system) {
+export async function chatWithGemini(apiKey, messages, system) {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash', systemInstruction: system ?? '' });
     const chat = model.startChat({ history: messages.map(m => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.content }] })) });
