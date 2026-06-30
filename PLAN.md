@@ -44,6 +44,8 @@ Inspired by best features from: **Memrise, ELSA, MediaDict, TedDict, eJoy, 4Engl
 | Phase 9 — Settings, XP/Achievements, Daily Challenge, Polish | ✅ Done | — |
 | Phase 9.1 — Onboarding, Toast Notifications, Streak Bonus | ✅ Done | — |
 | Phase 9.2 — Wide-Range Auto-Feed Resources | ✅ Done | — |
+| Phase 9.3 — Sentence-by-Sentence Shadowing (Learn/Free/Review) | ✅ Done | 6f522c2 |
+| Phase 9.4 — UI Polish (Global CSS, Dashboard, Sidebar, AITutor) | ✅ Done | b3f9824 |
 
 ---
 
@@ -327,6 +329,16 @@ Be concise, specific, and encouraging.
 31. AI article adaptation (News in Levels style: B1/B2/C1) ✅
 32. Reading speed tracker (WPM) ✅
 33. AI Roleplay mode in AITutor ✅
+34. Sentence-by-sentence shadowing with Learn/Free/Review modes ✅
+35. Podcast ShadowingPlayer integration ✅
+36. YouTube auto-subtitle fetching + manual transcript paste ✅
+37. Shadowing scoring: Simulated (default) + AI toggle in Settings ✅
+38. Loop mode (A-B repeat 1-5x) in shadowing ✅
+39. Per-sentence progress tracking with pass/fail badges ✅
+40. Review mode for weak sentences ✅
+41. Keyboard shortcuts (Space/Arrows/R) in shadowing ✅
+42. Modern global CSS (glassmorphism, skeleton loading, transitions) ✅
+43. Shared utility helpers (`selectWord`, `formatDuration`, `truncate`) ✅
 
 ---
 
@@ -355,11 +367,56 @@ Be concise, specific, and encouraging.
 }
 ```
 
+## To-Do / Next Steps
+
+### High Priority
+- [ ] Real AI pronunciation scoring — integrate with Claude/Gemini API for phoneme-level analysis (currently simulated)
+- [ ] YouTube CC subtitle parsing — improve `fetchYouTubeSubtitles` to handle multiple languages and formats
+- [ ] Import page shadowing — add ShadowingPlayer integration for imported articles
+- [ ] Podcast AI-generated transcripts — use AI to generate transcripts for podcasts without existing ones
+
+### Medium Priority
+- [ ] Sentence-level vocabulary highlighting in shadowing — highlight difficult C1/C2 words in each sentence
+- [ ] Shadowing streak tracking — track consecutive days of shadowing practice in `daily_stats`
+- [ ] Export shadowing progress — CSV/PDF export of shadowing sessions for review
+- [ ] Dark/light theme toggle — implement theme switching in Settings
+- [ ] Offline-first content caching — cache YouTube RSS, news, dictionary results for offline use
+- [ ] Flashcard import — allow users to import CSV/JSON vocab lists
+
+### Low Priority
+- [ ] Social features — share achievements, compare stats with friends
+- [ ] PWA mode — web version alongside Electron desktop
+- [ ] Mobile responsive — make web version work on phones/tablets
+- [ ] Voice input for Writing module — dictation instead of typing
+- [ ] Gamification — badges, leaderboards, seasonal events
+- [ ] Plugin system — allow community-contributed content sources
+
+---
+
 ## Resume Trigger
 
-To continue in a new session: **"Continue building WiseRain — start Phase 5 (Roadmap)"**
+**Current state:** All planned phases complete (1-9.4). App is feature-complete with polished UI.
 
-Node.js setup required in WSL before any npm commands:
+**To continue in a new session:**
+
+For any new feature work: **"Continue building WiseRain — check PLAN.md To-Do list for next items"**
+
+For architecture questions: **"Review WiseRAIN architecture — check PLAN.md Build Status and Key npm Packages"**
+
+**Before any work:**
+1. Read `PLAN.md` for full context
+2. Run `npm run typecheck` to verify current state
+3. Read `electron/handlers/shadowing.ts` for latest IPC patterns
+4. Check `src/components/Layout/Sidebar.tsx` for latest UI patterns
+
+**Node.js setup required in WSL before any npm commands:**
 ```bash
 export NVM_DIR="$HOME/.nvm" && \. "$NVM_DIR/nvm.sh"
 ```
+
+**Key patterns to follow:**
+- DB changes: edit `electron/db/migrate.ts` only (raw SQL, `CREATE TABLE IF NOT EXISTS`)
+- New IPC: add to `electron/handlers/`, `electron/preload.ts`, `src/env.d.ts`
+- New page: `src/pages/Name.tsx` + route in `src/App.tsx` + sidebar link in `src/components/Layout/Sidebar.tsx`
+- New store: `src/store/nameStore.ts` (use Zustand with `persist()`)
+- Never import Node/Electron in `src/` — always IPC via `window.api`
