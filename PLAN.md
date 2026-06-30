@@ -333,8 +333,7 @@ Be concise, specific, and encouraging.
 - Grammar drills: error detect, sentence transform, cloze
 - Writing history browser
 
-### Phase 3 Enhancement — Mnemonics + Context on Flashcards
-*(Implement alongside Phase 7b or as a patch)*
+### Phase 3 Enhancement — Mnemonics + Context on Flashcards | ✅ Done
 - Add `mnemonic` + `source_sentence` + `source_url` display to `src/pages/Flashcards.tsx`
 - Card back: show "💡 Memory Trick" section (collapsible) + "📍 First seen in: [sentence]"
 - "Generate mnemonic" AI button: calls AI with word → returns a vivid memory story

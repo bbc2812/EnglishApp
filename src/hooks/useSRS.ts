@@ -6,7 +6,8 @@ export function useSRS() {
   const loadDueCards = useCallback(async (limit = 50): Promise<FlashcardRow[]> => {
     const today = new Date().toISOString().slice(0, 10)
     return window.api.db.all(
-      `SELECT f.*, w.word, w.ipa, w.audio_url, w.definition, w.examples
+      `SELECT f.*, w.word, w.ipa, w.audio_url, w.definition, w.examples,
+              w.mnemonic, w.source_sentence, w.source_url
         FROM flashcards f
         JOIN words w ON w.id = f.word_id
         WHERE f.due_date <= ?
@@ -20,7 +21,8 @@ export function useSRS() {
     return window.api.db.all(
       `SELECT f.id, f.word_id, f.due_date, f.stability, f.difficulty,
               f.elapsed_days, f.scheduled_days, f.reps, f.lapses, f.state, f.last_review,
-              w.word, w.ipa, w.audio_url, w.definition, w.examples
+              w.word, w.ipa, w.audio_url, w.definition, w.examples,
+              w.mnemonic, w.source_sentence, w.source_url
         FROM vocab_set_words vsw
         JOIN words w ON w.id = vsw.word_id
         LEFT JOIN flashcards f ON f.word_id = w.id
@@ -64,5 +66,23 @@ export function useSRS() {
     )
   }, [])
 
-  return { loadDueCards, loadVocabSetCards, applyRating, addWordToFlashcards }
+  const generateMnemonic = useCallback(async (word: string): Promise<string> => {
+    // Simulated mnemonic generation (real version would call AI API)
+    const mnemonics: Record<string, string> = {
+      'bizarre': 'BI-ZARRE — Imagine TWO bizarre stars dancing together. "Bi" = two, "zarre" sounds like "star". Two stars dancing = bizarre!',
+      'eloquent': 'E-LOK-WENT — An "eloquent" speaker has "elo"quence flowing like a river. Think "ELON MUSK" speaking eloquently.',
+      'perseverance': 'PER-SAY-VER-ANCE — "Per" = through, "say" = words, "ver" = very, "ance" = dance. Through words, very dance-like persistence.',
+      'eloquence': 'E-LOK-WENT-S — Same root as eloquent. The "s" makes it the noun form.',
+    }
+    return mnemonics[word.toLowerCase()] || `💡 Mnemonic for "${word}": Think of a vivid image or story that connects the sound of "${word}" to its meaning.`
+  }, [])
+
+  const saveMnemonic = useCallback(async (wordId: number, mnemonic: string) => {
+    await window.api.db.run(
+      `UPDATE words SET mnemonic = ? WHERE id = ?`,
+      [mnemonic, wordId]
+    )
+  }, [])
+
+  return { loadDueCards, loadVocabSetCards, applyRating, addWordToFlashcards, generateMnemonic, saveMnemonic }
 }

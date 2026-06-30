@@ -38,7 +38,10 @@ CREATE TABLE IF NOT EXISTS words (
   pos TEXT,
   examples TEXT,
   level TEXT,
-  unit_id INTEGER REFERENCES units(id)
+  unit_id INTEGER REFERENCES units(id),
+  mnemonic TEXT,
+  source_sentence TEXT,
+  source_url TEXT
 );
 
 CREATE TABLE IF NOT EXISTS flashcards (

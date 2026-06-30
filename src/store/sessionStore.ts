@@ -8,6 +8,9 @@ export interface FlashcardRow {
   audio_url: string | null
   definition: string | null
   examples: string | null
+  mnemonic: string | null
+  source_sentence: string | null
+  source_url: string | null
   due_date: string
   stability: number
   difficulty: number

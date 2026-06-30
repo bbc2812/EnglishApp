@@ -49,6 +49,16 @@ function CardBack({ card }: { card: FlashcardRow }): JSX.Element {
   const examples: string[] = (() => {
     try { return JSON.parse(card.examples ?? '[]') } catch { return [] }
   })()
+  const [generating, setGenerating] = useState(false)
+  const { generateMnemonic, saveMnemonic } = useSRS()
+
+  const handleGenerateMnemonic = async () => {
+    setGenerating(true)
+    const mnemonic = await generateMnemonic(card.word)
+    await saveMnemonic(card.word_id, mnemonic)
+    card.mnemonic = mnemonic
+    setGenerating(false)
+  }
 
   return (
     <div className="flex flex-col gap-4 h-full overflow-y-auto py-2 selectable">
@@ -72,6 +82,47 @@ function CardBack({ card }: { card: FlashcardRow }): JSX.Element {
             </li>
           ))}
         </ul>
+      )}
+
+      {/* Mnemonic section */}
+      <div className="mt-2 pt-3 border-t border-gray-800">
+        {card.mnemonic ? (
+          <details open>
+            <summary className="text-sm font-semibold text-brand-400 cursor-pointer flex items-center gap-2">
+              💡 Memory Trick
+            </summary>
+            <p className="text-gray-300 text-sm mt-2 leading-relaxed">{card.mnemonic}</p>
+          </details>
+        ) : (
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-gray-500">No memory trick yet</p>
+            <button
+              onClick={handleGenerateMnemonic}
+              disabled={generating}
+              className="text-xs text-brand-400 hover:text-brand-300 disabled:opacity-50"
+            >
+              {generating ? 'Generating...' : '💡 Generate one'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Source context */}
+      {card.source_sentence && (
+        <div className="mt-2 pt-3 border-t border-gray-800">
+          <p className="text-xs text-gray-500 font-semibold mb-1">📍 First seen in:</p>
+          <p className="text-gray-400 text-sm italic">"{card.source_sentence}"</p>
+          {card.source_url && (
+            <a
+              href={card.source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-brand-400 hover:text-brand-300 mt-1 inline-block"
+            >
+              🔗 Play original context
+            </a>
+          )}
+        </div>
       )}
     </div>
   )
