@@ -38,8 +38,9 @@ interface ContentApi {
   scrapeUrl: (url: string) => Promise<{ title: string; description: string; content: string }>
   saveYouTubeEpisode: (data: { videoId: string; title: string; channel: string; duration?: string; thumbnail?: string; publishedAt: string; level?: string }) => Promise<boolean>
   fetchWordNetwork: (word: string) => Promise<{ synonyms: string[]; associations: string[] }>
-  generatePodcastTranscript: (title: string, description: string, options?: { apiKey?: string; provider?: string }) => Promise<{ sentences: { text: string; startTime: number; endTime: number }[]; totalDuration: number }>
+  generatePodcastTranscript: (title: string, description: string, options?: { apiKey?: string; provider?: string }) => Promise<{ sentences: { text: string; translation: string; startTime: number; endTime: number }[]; totalDuration: number }>
   fetchPodcastEpisodes: () => Promise<any[]>
+  translateBatch: (sentences: string[]) => Promise<string[]>
 }
 
 interface ShadowingApi {
@@ -110,6 +111,7 @@ interface ShadowingApi {
     phoneme_breakdown: { word: string; phoneme: string; issue: string | null; suggestion: string }[]
     overall_feedback: string
   }>
+  getStreak: () => Promise<{ streak: number; dates: string[] }>
 }
 
 interface LearningApi {

@@ -670,18 +670,19 @@ export function registerContentHandlers(): void {
       }
 
       try {
-        const systemPrompt = `You are a podcast transcript generator. Given a podcast title and description, generate a realistic English learning podcast transcript.
+        const systemPrompt = `You are a podcast transcript generator and bilingual translator. Given a podcast title and description, generate a realistic English learning podcast transcript with Vietnamese translations.
 
 Rules:
 - Write 8-15 sentences appropriate for the described topic
 - Keep sentences at an intermediate English level (B1-B2)
 - Include a mix of short and medium-length sentences
 - Each sentence should be natural and conversational
-- Return ONLY a JSON array of objects with exactly these fields: text (string), startTime (number), endTime (number). Do NOT include any other text, markdown, or explanation.
+- Provide an accurate Vietnamese translation for each English sentence
+- Return ONLY a JSON array of objects with exactly these fields: text (string, English), translation (string, Vietnamese), startTime (number), endTime (number). Do NOT include any other text, markdown, or explanation.
 - startTime and endTime should be in seconds, incrementing naturally (each sentence ~3-5 seconds)
 - Do NOT wrap the JSON in markdown code blocks`
 
-        const userPrompt = `Podcast Title: ${title}\nDescription: ${description}\n\nGenerate the transcript.`
+        const userPrompt = `Podcast Title: ${title}\nDescription: ${description}\n\nGenerate the transcript with Vietnamese translations.`
 
         let response = ''
         if (provider === 'claude') {
@@ -689,7 +690,7 @@ Rules:
           const client = new anthropic.Anthropic({ apiKey })
           const res = await client.messages.create({
             model: 'claude-sonnet-4-6',
-            max_tokens: 2048,
+            max_tokens: 3072,
             system: systemPrompt,
             messages: [{ role: 'user', content: userPrompt }]
           })
@@ -711,8 +712,14 @@ Rules:
         }
 
         const cleanJson = response.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
-        const parsed = JSON.parse(cleanJson) as { text: string; startTime: number; endTime: number }[]
-        return { sentences: parsed, totalDuration: parsed.length * 4 }
+        const parsed = JSON.parse(cleanJson) as { text: string; translation?: string; startTime: number; endTime: number }[]
+        const sentences = parsed.map(s => ({
+          text: s.text,
+          translation: s.translation || '',
+          startTime: s.startTime,
+          endTime: s.endTime
+        }))
+        return { sentences, totalDuration: parsed.length * 4 }
       } catch {
         const fallbackSentences = generateFallbackTranscript(title, description)
         return { sentences: fallbackSentences, totalDuration: fallbackSentences.length * 4 }
@@ -752,30 +759,82 @@ Rules:
 
     return episodes
   })
+
+  // --- Batch Translate Sentences to Vietnamese (MyMemory API) ---
+  ipcMain.handle(
+    'content:translateBatch',
+    async (_event, sentences: string[]) => {
+      if (!sentences.length) return []
+
+      const db = getDb()
+      const results: string[] = []
+      const untranslated: { index: number; text: string }[] = []
+
+      // Check cache first
+      const cache = db.prepare('SELECT translation FROM translation_cache WHERE word = ?')
+      const insertCache = db.prepare('INSERT OR REPLACE INTO translation_cache (word, translation, fetched_at) VALUES (?, ?, datetime(\'now\'))')
+
+      for (let i = 0; i < sentences.length; i++) {
+        const text = sentences[i]
+        const cached = cache.pluck().get(text) as string | undefined
+        if (cached) {
+          results[i] = cached
+        } else {
+          untranslated.push({ index: i, text })
+        }
+      }
+
+      // Fetch untranslated via MyMemory API
+      if (untranslated.length > 0) {
+        // MyMemory API has a limit of ~500 words/day for anonymous, ~5000 with email
+        // Process in batches of 10 to avoid rate limiting
+        const batch = untranslated.slice(0, 10)
+        for (const item of batch) {
+          try {
+            const res = await fetch(
+              `https://api.mymemory.translated.net/get?q=${encodeURIComponent(item.text)}&langpair=en|vi`
+            )
+            if (res.ok) {
+              const data = await res.json() as { responseData?: { translatedText?: string } }
+              const translation = data.responseData?.translatedText || item.text
+              insertCache.get(item.text) || insertCache.run(item.text, translation)
+              results[item.index] = translation
+            } else {
+              results[item.index] = item.text
+            }
+          } catch {
+            results[item.index] = item.text
+          }
+        }
+      }
+
+      return results
+    }
+  )
 }
 
-function generateFallbackTranscript(title: string, description: string): { text: string; startTime: number; endTime: number }[] {
-  const sentences = [
-    `Welcome to today's episode of ${title}.`,
-    description.length > 100 ? description.substring(0, 100) + '...' : description || `Today we'll be discussing an important topic.`,
-    `In this episode, we'll explore some key ideas and examples.`,
-    `Let's start by looking at the main concepts involved.`,
-    `First, it's important to understand the context we're working with.`,
-    `Many people find this topic both interesting and challenging.`,
-    `Now let's look at a practical example to illustrate the point.`,
-    `As you can see, this concept applies in many real-world situations.`,
-    `Moving on, there are several important details to consider here.`,
-    `Let me share another example that might help clarify things.`,
-    `These examples show how the ideas connect together.`,
-    `To summarize what we've covered so far, the key points are clear.`,
-    `Thank you for listening. We hope you found this episode helpful.`,
+function generateFallbackTranscript(title: string, description: string): { text: string; translation: string; startTime: number; endTime: number }[] {
+  const sentences: { text: string; translation: string }[] = [
+    { text: `Welcome to today's episode of ${title}.`, translation: `Chào mừng bạn đến với tập phim hôm nay của ${title}.` },
+    { text: description.length > 100 ? description.substring(0, 100) + '...' : description || `Today we'll be discussing an important topic.`, translation: description.length > 100 ? description.substring(0, 100) + '...' : description || `Hôm nay chúng ta sẽ thảo luận về một chủ đề quan trọng.` },
+    { text: `In this episode, we'll explore some key ideas and examples.`, translation: `Trong tập này, chúng ta sẽ khám phá một số ý tưởng và ví dụ quan trọng.` },
+    { text: `Let's start by looking at the main concepts involved.`, translation: `Hãy bắt đầu bằng cách xem xét các khái niệm chính liên quan.` },
+    { text: `First, it's important to understand the context we're working with.`, translation: `Đầu tiên, điều quan trọng là phải hiểu ngữ cảnh mà chúng ta đang làm việc.` },
+    { text: `Many people find this topic both interesting and challenging.`, translation: `Nhiều người tìm chủ đề này vừa thú vị vừa thử thách.` },
+    { text: `Now let's look at a practical example to illustrate the point.`, translation: `Bây giờ hãy xem một ví dụ thực tế để minh họa cho điểm này.` },
+    { text: `As you can see, this concept applies in many real-world situations.`, translation: `Như bạn có thể thấy, khái niệm này áp dụng trong nhiều tình huống thực tế.` },
+    { text: `Moving on, there are several important details to consider here.`, translation: `Tiếp theo, có một số chi tiết quan trọng cần xem xét ở đây.` },
+    { text: `Let me share another example that might help clarify things.`, translation: `Hãy để tôi chia sẻ một ví dụ khác có thể giúp làm rõ vấn đề.` },
+    { text: `These examples show how the ideas connect together.`, translation: `Những ví dụ này cho thấy các ý tưởng kết hợp với nhau như thế nào.` },
+    { text: `To summarize what we've covered so far, the key points are clear.`, translation: `Để tóm tắt những gì chúng ta đã covered cho đến nay, các điểm chính rất rõ ràng.` },
+    { text: `Thank you for listening. We hope you found this episode helpful.`, translation: `Cảm ơn bạn đã lắng nghe. Chúng tôi hy vọng bạn thấy tập này hữu ích.` },
   ]
 
   let currentTime = 0
-  return sentences.map((text) => {
+  return sentences.map((s) => {
     const duration = 3 + Math.random() * 2
     const start = currentTime
     currentTime += duration
-    return { text, startTime: Math.round(start * 100) / 100, endTime: Math.round(currentTime * 100) / 100 }
+    return { text: s.text, translation: s.translation, startTime: Math.round(start * 100) / 100, endTime: Math.round(currentTime * 100) / 100 }
   })
 }

@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useShadowing, TranscriptionSentence } from '../../hooks/useShadowing'
 import { useSettingsStore } from '../../store/settingsStore'
+import { analyzeSentenceLevel } from '../../lib/advancedWords'
 
 interface ShadowingPlayerProps {
   sentences: TranscriptionSentence[]
@@ -133,6 +134,42 @@ function ProgressBars({ completed, total }: { completed: number; total: number }
         </div>
       </div>
     </div>
+  )
+}
+
+function AdvancedWordHighlight({ sentence, onWordClick }: { sentence: string; onWordClick: (word: string) => void }) {
+  const analyzed = analyzeSentenceLevel(sentence)
+  return (
+    <span className="selectable">
+      {analyzed.map((item, i) => {
+        if (!item.level) {
+          return (
+            <span
+              key={i}
+              onClick={() => item.word && onWordClick(item.word.replace(/[^a-zA-Z'-]/g, ''))}
+              className="cursor-pointer hover:text-brand-400 hover:bg-brand-950/30 px-0.5 rounded transition-colors inline"
+            >
+              {item.raw}{' '}
+            </span>
+          )
+        }
+        const isC2 = item.level === 'C2'
+        return (
+          <span
+            key={i}
+            onClick={() => item.word && onWordClick(item.word.replace(/[^a-zA-Z'-]/g, ''))}
+            className={`cursor-pointer px-0.5 rounded transition-colors inline ${
+              isC2
+                ? 'text-rose-400 bg-rose-950/30 hover:bg-rose-900/50 font-semibold'
+                : 'text-amber-400 bg-amber-950/30 hover:bg-amber-900/50 font-medium'
+            }`}
+            title={isC2 ? 'C2-level word' : 'C1-level word'}
+          >
+            {item.raw}{' '}
+          </span>
+        )
+      })}
+    </span>
   )
 }
 
@@ -276,6 +313,11 @@ export function ShadowingPlayer({ sentences, episodeType, episodeId, onClose }: 
         <div className="text-xs text-gray-500">
           Scoring: <span className={shadowingScoring === 'ai' ? 'text-brand-400' : ''}>{shadowingScoring === 'ai' ? 'AI' : 'Simulated'}</span>
         </div>
+        <div className="flex items-center gap-2 text-xs text-gray-500 border-l border-gray-700 pl-3">
+          <span>Vocab:</span>
+          <span className="text-amber-400 bg-amber-950/30 px-1.5 py-0.5 rounded">C1</span>
+          <span className="text-rose-400 bg-rose-950/30 px-1.5 py-0.5 rounded">C2</span>
+        </div>
       </div>
 
       <AnimatePresence mode="wait">
@@ -304,16 +346,8 @@ export function ShadowingPlayer({ sentences, episodeType, episodeId, onClose }: 
             <div className="card p-6">
               {/* English sentence */}
               <div className="mb-4">
-                <p className="text-xl text-white leading-relaxed selectable">
-                  {currentSentence.text.split(' ').map((word, i) => (
-                    <span
-                      key={i}
-                      onClick={() => handleWordClick(word.replace(/[^a-zA-Z'-]/g, ''))}
-                      className="cursor-pointer hover:text-brand-400 hover:bg-brand-950/30 px-0.5 rounded transition-colors inline"
-                    >
-                      {word}{' '}
-                    </span>
-                  ))}
+                <p className="text-xl text-white leading-relaxed">
+                  <AdvancedWordHighlight sentence={currentSentence.text} onWordClick={handleWordClick} />
                 </p>
               </div>
 
@@ -553,17 +587,9 @@ export function ShadowingPlayer({ sentences, episodeType, episodeId, onClose }: 
                           : 'hover:bg-gray-800/50'
                       }`}
                     >
-                      <p className={`text-sm selectable ${isActive ? 'text-white font-medium' : 'text-gray-400'}`}>
-                        {s.text.split(' ').map((word, j) => (
-                          <span
-                            key={j}
-                            onClick={(e) => { e.stopPropagation(); handleWordClick(word.replace(/[^a-zA-Z'-]/g, '')) }}
-                            className="cursor-pointer hover:text-brand-400 hover:bg-brand-950/30 px-0.5 rounded inline"
-                          >
-                            {word}{' '}
-                          </span>
-                        ))}
-                      </p>
+                    <p className={`text-sm ${isActive ? 'text-white font-medium' : 'text-gray-400'}`}>
+                          <AdvancedWordHighlight sentence={s.text} onWordClick={(w) => { handleWordClick(w); /* event propagation handled by component */ }} />
+                        </p>
                       {subtitleMode !== 'en' && s.translation && (
                         <p className={`text-xs mt-1 selectable ${isActive ? 'text-brand-400' : 'text-gray-600'}`}>
                           {s.translation}

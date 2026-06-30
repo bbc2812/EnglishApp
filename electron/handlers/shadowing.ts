@@ -172,6 +172,53 @@ export function registerShadowingHandlers(): void {
     return rows
   })
 
+  // Get shadowing streak (consecutive days of practice)
+  ipcMain.handle('shadowing:getStreak', async () => {
+    const db = getDb()
+
+    // Get all distinct dates where shadowing sessions occurred
+    const rows = db.prepare(
+      `SELECT DISTINCT date(created_at) as practice_date
+       FROM shadowing_sessions
+       WHERE created_at IS NOT NULL
+       ORDER BY practice_date DESC`
+    ).all() as { practice_date: string }[]
+
+    if (rows.length === 0) return { streak: 0, dates: [] }
+
+    const dates = rows.map(r => r.practice_date).sort()
+
+    // Calculate consecutive day streak
+    let streak = 1
+    let currentDate = new Date(dates[dates.length - 1]) // most recent date
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    // Check if the most recent practice was today or yesterday
+    const diffMs = today.getTime() - currentDate.getTime()
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24))
+
+    if (diffDays > 1) {
+      streak = 0
+    } else {
+      for (let i = dates.length - 2; i >= 0; i--) {
+        const prevDate = new Date(dates[i])
+        prevDate.setHours(0, 0, 0, 0)
+        const prevDiff = currentDate.getTime() - prevDate.getTime()
+        const prevDiffDays = Math.round(prevDiff / (1000 * 60 * 60 * 24))
+
+        if (prevDiffDays === 1) {
+          streak++
+          currentDate = prevDate
+        } else {
+          break
+        }
+      }
+    }
+
+    return { streak, dates: dates.slice(-30) }
+  })
+
   // Analyze pronunciation using AI
   ipcMain.handle('shadowing:analyzePronunciation', async (_event, request: AnalyzePronunciationRequest) => {
     const { sentenceText, targetPhonemes, recordingDuration, provider, apiKey, geminiApiKey, ollamaUrl, ollamaModel } = request

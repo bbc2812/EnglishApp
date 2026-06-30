@@ -6,12 +6,18 @@ import { ShadowingPlayer } from '../components/ShadowingPlayer'
 import { TranscriptionSentence } from '../hooks/useShadowing'
 
 interface PodcastEpisode {
-  id: number
+  id: string | number
   title: string
   source: string
   duration: string
   transcript: { sentence: string; translation: string; startTime: number; endTime: number }[]
   audioUrl: string
+  description?: string
+  url?: string
+  imageUrl?: string
+  publishedAt?: string
+  needsTranscript?: boolean
+  isSaved?: boolean
 }
 
 type SubtitleMode = 'en' | 'en-vn' | 'vn'
@@ -230,12 +236,44 @@ function AudioPlayer({ episode, onWordClick }: { episode: PodcastEpisode; onWord
   )
 }
 
+function GeneratingBadge({ onGenerate }: { onGenerate: () => void }) {
+  return (
+    <button
+      onClick={onGenerate}
+      className="ml-2 text-xs px-2 py-1 rounded bg-brand-950/50 text-brand-400 hover:bg-brand-900/60 border border-brand-800/50 transition-colors"
+      title="Generate transcript with AI"
+    >
+      🤖 Generate Transcript
+    </button>
+  )
+}
+
+function SaveButton({ saved, onSave }: { saved: boolean; onSave: () => void }) {
+  if (saved) {
+    return (
+      <span className="text-xs text-green-400 flex items-center gap-1">
+        ✅ Saved
+      </span>
+    )
+  }
+  return (
+    <button
+      onClick={onSave}
+      className="text-xs px-3 py-1 rounded bg-green-950/50 text-green-400 hover:bg-green-900/60 border border-green-800/50 transition-colors"
+    >
+      💾 Save Episode
+    </button>
+  )
+}
+
 export default function Podcasts(): JSX.Element {
   const navigate = useNavigate()
   const [selectedEpisode, setSelectedEpisode] = useState<PodcastEpisode | null>(null)
   const [loading, setLoading] = useState(true)
   const [episodeList, setEpisodeList] = useState<PodcastEpisode[]>([])
   const [showShadowing, setShowShadowing] = useState(false)
+  const [generatingId, setGeneratingId] = useState<string | number | null>(null)
+  const [generationError, setGenerationError] = useState<string | null>(null)
 
   const handleWordClick = useCallback((word: string) => {
     const el = document.createElement('span')
@@ -249,12 +287,131 @@ export default function Podcasts(): JSX.Element {
     document.body.removeChild(el)
   }, [])
 
-  useEffect(() => {
-    setTimeout(() => {
+  const fetchEpisodes = useCallback(async () => {
+    try {
+      const raw = await window.api.content.fetchPodcastEpisodes()
+      const episodes: PodcastEpisode[] = raw.map((item: any) => ({
+        id: item.id ?? item.url ?? Math.random(),
+        title: item.title || 'Untitled',
+        source: item.source || (item.type ? item.type : 'BBC Learning English'),
+        duration: item.duration || 'N/A',
+        audioUrl: item.audioUrl || '',
+        transcript: item.transcript
+          ? item.transcript.map((line: string, i: number) => ({
+              sentence: line,
+              translation: '',
+              startTime: i * 4,
+              endTime: (i + 1) * 4,
+            }))
+          : [],
+        description: item.description || '',
+        url: item.url || '',
+        imageUrl: item.imageUrl || '',
+        publishedAt: item.publishedAt || '',
+        needsTranscript: item.needsTranscript ?? (!item.transcript || (Array.isArray(item.transcript) ? item.transcript.length === 0 : item.transcript.trim().length === 0)),
+        isSaved: item.isSaved ?? false,
+      }))
+      if (episodes.length > 0) {
+        setEpisodeList(episodes)
+        // Add VN translations for episodes that have transcripts but no translations
+        const episodesWithEmptyTranslations = episodes.filter(ep =>
+          ep.transcript.length > 0 && ep.transcript.some(t => !t.translation)
+        )
+        if (episodesWithEmptyTranslations.length > 0) {
+          for (const ep of episodesWithEmptyTranslations) {
+            const englishSentences = ep.transcript.map(t => t.sentence)
+            const translations = await window.api.content.translateBatch(englishSentences)
+            setEpisodeList(prev =>
+              prev.map(e =>
+                e.id === ep.id
+                  ? { ...e, transcript: e.transcript.map((t, i) => ({ ...t, translation: translations[i] || '' })) }
+                  : e
+              )
+            )
+          }
+        }
+      } else {
+        setEpisodeList(MOCK_EPISODES)
+      }
+    } catch {
       setEpisodeList(MOCK_EPISODES)
+    } finally {
       setLoading(false)
-    }, 500)
+    }
   }, [])
+
+  useEffect(() => {
+    fetchEpisodes()
+  }, [fetchEpisodes])
+
+  const generateTranscript = useCallback(async (episode: PodcastEpisode) => {
+    setGeneratingId(episode.id)
+    setGenerationError(null)
+    try {
+      const result = await window.api.content.generatePodcastTranscript(
+        episode.title,
+        episode.description || ''
+      )
+      const sentences: PodcastEpisode['transcript'] = (result.sentences || []).map((s) => ({
+        sentence: s.text,
+        translation: s.translation || '',
+        startTime: s.startTime,
+        endTime: s.endTime,
+      }))
+      setEpisodeList(prev =>
+        prev.map(ep =>
+          ep.id === episode.id
+            ? { ...ep, transcript: sentences, needsTranscript: false }
+            : ep
+        )
+      )
+      if (selectedEpisode?.id === episode.id) {
+        setSelectedEpisode(prev =>
+          prev ? { ...prev, transcript: sentences, needsTranscript: false } : null
+        )
+      }
+    } catch (err: any) {
+      setGenerationError(err?.message || 'Failed to generate transcript')
+    } finally {
+      setGeneratingId(null)
+    }
+  }, [selectedEpisode])
+
+  const saveEpisode = useCallback(async (episode: PodcastEpisode) => {
+    try {
+      if (episode.url) {
+        await window.api.db.run(
+          `INSERT OR IGNORE INTO saved_podcasts (url, title, source, duration, transcript, saved_at)
+           VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+          [episode.url, episode.title, episode.source, episode.duration || 0, JSON.stringify(episode.transcript)]
+        )
+        setEpisodeList(prev =>
+          prev.map(ep =>
+            ep.id === episode.id ? { ...ep, isSaved: true } : ep
+          )
+        )
+        if (selectedEpisode?.id === episode.id) {
+          setSelectedEpisode(prev => prev ? { ...prev, isSaved: true } : null)
+        }
+      } else {
+        await window.api.db.run(
+          `INSERT OR IGNORE INTO saved_podcasts (url, title, source, duration, transcript, saved_at)
+           VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+          [`podcast-${episode.id}`, episode.title, episode.source, episode.duration || 0, JSON.stringify(episode.transcript)]
+        )
+        setEpisodeList(prev =>
+          prev.map(ep =>
+            ep.id === episode.id ? { ...ep, isSaved: true } : ep
+          )
+        )
+        if (selectedEpisode?.id === episode.id) {
+          setSelectedEpisode(prev => prev ? { ...prev, isSaved: true } : null)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to save episode:', err)
+    }
+  }, [selectedEpisode])
 
   const shadowingSentences: TranscriptionSentence[] = selectedEpisode
     ? selectedEpisode.transcript.map(t => ({
@@ -277,6 +434,13 @@ export default function Podcasts(): JSX.Element {
           <button onClick={() => navigate('/')} className="btn-secondary px-4 py-2 text-sm">← Back</button>
         )}
       </div>
+
+      {generationError && (
+        <div className="mb-4 p-3 rounded-lg bg-red-950/50 border border-red-800/50 text-red-400 text-sm">
+          {generationError}
+          <button onClick={() => setGenerationError(null)} className="ml-2 text-red-300 hover:text-white">×</button>
+        </div>
+      )}
 
       <AnimatePresence mode="wait">
         {showShadowing ? (
@@ -304,10 +468,25 @@ export default function Podcasts(): JSX.Element {
                   className="card w-full text-left p-5 hover:border-brand-500 transition-colors"
                 >
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-white font-semibold">{ep.title}</h4>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-white font-semibold truncate">{ep.title}</h4>
+                        {ep.needsTranscript && (
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-brand-950/50 text-brand-400 border border-brand-800/50" title="Needs transcript">
+                            🤖
+                          </span>
+                        )}
+                        {ep.isSaved && (
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-green-950/50 text-green-400" title="Saved">
+                            💾
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-gray-500 mt-1">{ep.source} · {ep.duration}</p>
-                      <p className="text-xs text-gray-600 mt-1">{ep.transcript.length} sentences · Dual subtitles</p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {ep.transcript.length > 0 ? `${ep.transcript.length} sentences` : 'No transcript yet'}
+                        {' · '}Dual subtitles
+                      </p>
                     </div>
                     <span className="text-2xl">🎙️</span>
                   </div>
@@ -317,33 +496,89 @@ export default function Podcasts(): JSX.Element {
           </motion.div>
         ) : (
           <motion.div key="player" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
+            {/* Episode header */}
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xl font-bold text-white">{selectedEpisode.title}</h3>
+                  {selectedEpisode.needsTranscript && (
+                    <span className="text-sm px-2 py-0.5 rounded bg-brand-950/50 text-brand-400 border border-brand-800/50">
+                      🤖 Needs transcript
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-500 mt-1">{selectedEpisode.source} · {selectedEpisode.duration}</p>
+                {selectedEpisode.description && (
+                  <p className="text-xs text-gray-600 mt-2">{selectedEpisode.description}</p>
+                )}
+              </div>
+              <div className="flex items-center gap-2 ml-4">
+                {selectedEpisode.needsTranscript ? (
+                  <GeneratingBadge
+                    onGenerate={() => generateTranscript(selectedEpisode)}
+                  />
+                ) : (
+                  <SaveButton
+                    saved={selectedEpisode.isSaved ?? false}
+                    onSave={() => saveEpisode(selectedEpisode)}
+                  />
+                )}
+              </div>
+            </div>
+
+            {generatingId === selectedEpisode.id && (
+              <div className="card p-4 flex items-center gap-3">
+                <div className="w-5 h-5 border-2 border-brand-400 border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm text-gray-300">Generating transcript with AI…</span>
+              </div>
+            )}
+
+            {selectedEpisode.needsTranscript && generatingId !== selectedEpisode.id && (
+              <div className="card p-6 text-center space-y-3">
+                <p className="text-lg text-gray-400">🎙️ No transcript available for this episode</p>
+                <p className="text-sm text-gray-600">AI will generate a sentence-by-sentence transcript with timestamps</p>
+                <button
+                  onClick={() => generateTranscript(selectedEpisode)}
+                  className="btn-primary px-6 py-2.5"
+                >
+                  🤖 Generate Transcript
+                </button>
+              </div>
+            )}
+
             {/* Player */}
-            <AudioPlayer episode={selectedEpisode} onWordClick={handleWordClick} />
+            {selectedEpisode.transcript.length > 0 && (
+              <AudioPlayer episode={selectedEpisode} onWordClick={handleWordClick} />
+            )}
 
             {/* Full transcript */}
-            <div className="card p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="text-sm font-semibold text-gray-300">Full Transcript</h4>
+            {selectedEpisode.transcript.length > 0 && (
+              <div className="card p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-sm font-semibold text-gray-300">Full Transcript</h4>
+                </div>
+                <div className="space-y-2">
+                  {selectedEpisode.transcript.map((t, i) => (
+                    <SubtitleLine
+                      key={i}
+                      sentence={t.sentence}
+                      translation={t.translation}
+                      isActive={false}
+                      onClick={() => {}}
+                      onWordClick={handleWordClick}
+                    />
+                  ))}
+                </div>
               </div>
-              <div className="space-y-2">
-                {selectedEpisode.transcript.map((t, i) => (
-                  <SubtitleLine
-                    key={i}
-                    sentence={t.sentence}
-                    translation={t.translation}
-                    isActive={false}
-                    onClick={() => {}}
-                    onWordClick={handleWordClick}
-                  />
-                ))}
-              </div>
-            </div>
+            )}
 
             {/* Actions */}
-            <div className="flex gap-3">
-              <button onClick={() => setSelectedEpisode(null)} className="btn-secondary px-5 py-2.5 text-sm">← All Episodes</button>
-              <button onClick={() => setShowShadowing(true)} className="btn-primary px-5 py-2.5 text-sm">🎤 Shadow This (Learn/Free Mode)</button>
-            </div>
+            {selectedEpisode.transcript.length > 0 && (
+              <div className="flex gap-3">
+                <button onClick={() => setSelectedEpisode(null)} className="btn-secondary px-5 py-2.5 text-sm">← All Episodes</button>
+                <button onClick={() => setShowShadowing(true)} className="btn-primary px-5 py-2.5 text-sm">🎤 Shadow This (Learn/Free Mode)</button>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

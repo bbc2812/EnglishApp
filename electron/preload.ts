@@ -62,10 +62,12 @@ const api = {
       ipcRenderer.invoke('content:saveYouTubeEpisode', data),
     fetchWordNetwork: (word: string): Promise<{ synonyms: string[]; associations: string[] }> =>
       ipcRenderer.invoke('content:fetchWordNetwork', word),
-    generatePodcastTranscript: (title: string, description: string, options?: { apiKey?: string; provider?: string }): Promise<{ sentences: { text: string; startTime: number; endTime: number }[]; totalDuration: number }> =>
+    generatePodcastTranscript: (title: string, description: string, options?: { apiKey?: string; provider?: string }): Promise<{ sentences: { text: string; translation: string; startTime: number; endTime: number }[]; totalDuration: number }> =>
       ipcRenderer.invoke('content:generatePodcastTranscript', title, description, options),
     fetchPodcastEpisodes: (): Promise<any[]> =>
-      ipcRenderer.invoke('content:fetchPodcastEpisodes')
+      ipcRenderer.invoke('content:fetchPodcastEpisodes'),
+    translateBatch: (sentences: string[]): Promise<string[]> =>
+      ipcRenderer.invoke('content:translateBatch', sentences)
   },
   shadowing: {
     save: (attempt: {
@@ -141,7 +143,9 @@ const api = {
       phoneme_breakdown: { word: string; phoneme: string; issue: string | null; suggestion: string }[]
       overall_feedback: string
     }> =>
-      ipcRenderer.invoke('shadowing:analyzePronunciation', request)
+      ipcRenderer.invoke('shadowing:analyzePronunciation', request),
+    getStreak: (): Promise<{ streak: number; dates: string[] }> =>
+      ipcRenderer.invoke('shadowing:getStreak')
   },
   learning: {
     mark: (req: {

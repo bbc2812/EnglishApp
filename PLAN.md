@@ -370,9 +370,9 @@ Be concise, specific, and encouraging.
 ## To-Do / Next Steps
 
 ### High Priority
-- [x] Real AI pronunciation scoring — `shadowing:analyzePronunciation` IPC with phoneme-level Claude/Gemini analysis, scoring rubric (phoneme 40%, stress 15%, rhythm 15%, intonation 15%, intelligibility 15%), word-by-word `phoneme_breakdown`
-- [x] YouTube CC subtitle parsing — multi-language (en/en-US/en-GB/vi), ttml/html/captions formats, `<p>`/`<transcript>`/`<text>` tags, sentence merging, `fetchYouTubeSubtitlesByLang`
-- [x] Import page shadowing — ShadowingPlayer with Original/B1/B2/C1 level switching, `parseSentences()` sentence splitter
+- [ ] Real AI pronunciation scoring — `shadowing:analyzePronunciation` IPC with phoneme-level Claude/Gemini analysis, scoring rubric (phoneme 40%, stress 15%, rhythm 15%, intonation 15%, intelligibility 15%), word-by-word `phoneme_breakdown`
+- [ ] YouTube CC subtitle parsing — multi-language (en/en-US/en-GB/vi), ttml/html/captions formats, `<p>`/`<transcript>`/`<text>` tags, sentence merging, `fetchYouTubeSubtitlesByLang`
+- [ ] Import page shadowing — ShadowingPlayer with Original/B1/B2/C1 level switching, `parseSentences()` sentence splitter
 - [ ] Podcast AI-generated transcripts — IPC handler added (`content:generatePodcastTranscript`, `content:fetchPodcastEpisodes`), needs Podcasts.tsx wiring to use live data + AI transcripts instead of mocks
 
 ### Medium Priority
