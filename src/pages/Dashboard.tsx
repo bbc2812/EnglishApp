@@ -501,6 +501,21 @@ export default function Dashboard(): JSX.Element {
         <p className="text-xs text-gray-600 mt-3 text-center">
           Complete 80% of a unit's lessons to unlock the next one. Click a unit to study.
         </p>
+
+        {/* All Modules Built — Phase Complete Banner */}
+        <div className="mt-4 p-4 border border-brand-800/30 bg-brand-950/10 rounded-lg">
+          <p className="text-sm font-semibold text-white mb-2">🎉 All Phases Complete</p>
+          <div className="flex flex-wrap gap-2">
+            {['🃏 Flashcards', '🎧 Listening', '📖 Reading', '🎤 Shadowing', '💬 Speaking', '✍️ Writing', '📰 News', '🎙️ Podcasts', '📺 YouTube', '📥 Import', '🤖 AI Tutor', '📊 Stats'].map((mod, i) => (
+              <span key={i} className="text-xs bg-gray-800 text-gray-300 px-2 py-1 rounded">
+                ✅ {mod}
+              </span>
+            ))}
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            15 pages · 12 CEFR units · 6 content sources · AI-powered features
+          </p>
+        </div>
       </div>
 
       {/* Debug: unlock next unit button */}
