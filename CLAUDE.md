@@ -11,12 +11,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm run dev          # Start Electron app in development (hot reload)
 npm run build        # Build for production
-npm run preview      # Preview production build
-npm run typecheck    # TypeScript type check (no emit)
+npm run start        # Preview production build
+npm run typecheck    # TypeScript type check (node + web, run separately)
 npm run lint         # ESLint
+npm run format       # Prettier
 ```
-
-Once the project is scaffolded via `npm create @quick-start/electron@latest`, these are the standard electron-vite commands.
 
 ## Architecture
 
@@ -24,54 +23,71 @@ Once the project is scaffolded via `npm create @quick-start/electron@latest`, th
 
 All code in `electron/` runs in the **main process** (Node.js, full OS access). All code in `src/` runs in the **renderer process** (browser sandbox). Communication between them is exclusively via IPC:
 
-- `electron/preload.ts` exposes a typed `window.electron` API using `contextBridge`
-- `electron/handlers/` contains the IPC handler implementations: `ai.ts`, `db.ts`, `audio.ts`, `content.ts`
-- Renderer code never imports Node or Electron modules directly — everything goes through `window.electron.*`
+- `electron/preload.ts` exposes `window.api` (typed via `src/env.d.ts`) using `contextBridge`
+- `electron/handlers/` contains the IPC handler implementations: `db.ts`, `ai.ts`, `content.ts`
+- Renderer code **never imports Node/Electron modules directly** — everything goes through `window.api.*`
 
-### Data layer
+### IPC Channel Naming
 
-SQLite via `better-sqlite3` + `drizzle-orm`, accessed only from the main process through IPC. Schema lives in `src/db/schema.ts` (imported by both sides for types), migrations run at startup via `src/db/migrate.ts`. All user progress, flashcard SRS state, dictionary cache, and conversation history persist locally.
+`ipcMain.handle('db:query', ...)` ↔ `ipcRenderer.invoke('db:query', ...)`
+The preload wraps these as:
+- `window.api.db.query(sql, params)` — returns single result
+- `window.api.db.run(sql, params)` — returns `{ changes, lastInsertRowid }`
+- `window.api.db.all(sql, params)` — returns rows array
+- `window.api.ai.chat(provider, messages, system?)` — AI chat
+- `window.api.ai.isAvailable(provider)` — check if provider is reachable
+- `window.api.content.fetchRss(url)`, `fetchDictionary(word)`, `fetchTranslation(word)`
 
-Key tables: `words`, `flashcards` (SRS state), `units`, `lessons`, `exercises`, `lesson_progress`, `unit_progress`, `daily_stats`, `grammar_mistakes`, `dictionary_cache`, `translation_cache`, `conversations`, `writing_history`.
+### DB Schema
 
-### AI provider abstraction
+**Raw SQL only** — `drizzle-orm` is in `package.json` but **unused**. Schema is in `electron/db/migrate.ts` via `CREATE TABLE IF NOT EXISTS` + `INSERT OR IGNORE` for seeding. DB file is at `%APPDATA%/wiserain/data/wiserain.db` on Windows. SQLite is opened with WAL mode + foreign keys enabled.
 
-`src/lib/ai/index.ts` defines an `AIProvider` interface (`chat`, `isAvailable`). Three implementations:
-- `ClaudeProvider` (`src/lib/ai/claude.ts`) — uses `@anthropic-ai/sdk`, requires paid API key from console.anthropic.com
-- `GeminiProvider` (`src/lib/ai/gemini.ts`) — uses `@google/generative-ai`, **free tier** via aistudio.google.com
-- `OllamaProvider` (`src/lib/ai/ollama.ts`) — HTTP fetch to `localhost:11434/api/chat`, fully offline
+**Key tables:** `units`, `lessons`, `exercises`, `words`, `flashcards` (FSRS-4.5 SRS state), `lesson_progress`, `unit_progress`, `daily_stats`, `grammar_mistakes`, `vocab_sets`, `vocab_set_words`, `dictionary_cache`, `translation_cache`, `conversations`, `writing_history`.
 
-> Note: Claude Pro (claude.ai subscription) does NOT provide API access. API keys are separate.
+**Seed data:** 12 CEFR units (B1→C2), 36 pre-seeded lessons (3 per unit), 12 topical vocab sets. `unit_progress` rows auto-created for unlocked units.
 
-The active provider (`claude` | `gemini` | `ollama`) is stored in `settingsStore`. All AI calls in the renderer go through `window.api.ai.chat(provider, messages, system, options)` via IPC — the actual SDK calls happen in `electron/handlers/ai.ts` in the main process.
+### AI Providers (Implemented)
+
+Only **Claude** and **Ollama** are coded. Gemini is in PLAN.md but **not implemented**.
+
+- `electron/handlers/ai.ts` routes `ai:chat` IPC:
+  - **Claude:** `@anthropic-ai/sdk`, model `claude-sonnet-4-6` (paid, key from env or `settingsStore`)
+  - **Ollama:** HTTP POST to `localhost:11434/api/chat` (free, local, default model `llama3.2`)
+
+> Claude Pro (claude.ai subscription) ≠ API access. API keys are separate from console.anthropic.com.
+
+Active provider (`'claude'` | `'ollama'`) is stored in `settingsStore`. All AI calls in the renderer go through `window.api.ai.chat(...)`.
 
 ### SRS (Spaced Repetition)
 
-`src/lib/srs/fsrs.ts` implements the FSRS-4.5 algorithm. The core function is `schedule(card, rating, now)` returning an updated card with new `due_date`, `stability`, and `difficulty`. Ratings: Again=1, Hard=2, Good=3, Easy=4. Daily queue is fetched with `WHERE due_date <= today`.
+`src/lib/srs/fsrs.ts` — pure JS implementation of **FSRS-4.5** with w0-w18 default parameters. Core function: `schedule(card, rating)` → `{ due_date, stability, difficulty, ... }`. Ratings: `1=Again`, `2=Hard`, `3=Good`, `4=Easy`. States: `new`, `learning`, `review`, `relearning`.
 
-### Click-to-define / translate
+Hooks: `src/hooks/useSRS.ts` — `loadDueCards()`, `loadVocabSetCards()`, `applyRating()`, `addWordToFlashcards()`.
 
-A global `mouseup` listener on `document` captures `window.getSelection()` and opens `DictionaryPopup`. The popup has three tabs: **Pronounce** (IPA + audio from Free Dictionary API), **EN-EN** (definition/examples), **EN-VN** (Vietnamese translation via MyMemory API). Both APIs are cached in SQLite indefinitely. This popup works on every page.
+### UI Components
 
-### Content fetching
+- **DictionaryPopup** (`src/components/DictionaryPopup/`) — global `mouseup` listener, 3 tabs: Pronounce (IPA+audio), EN-EN (definition), EN-VN (translation via MyMemory API). "Add to Flashcards" button.
+- **Tailwind classes:** `.card`, `.btn-primary`, `.btn-secondary`, `.sidebar-link.active`, `.badge-b1`/`.badge-b2`/`.badge-c1`/`.badge-c2`
+- **Brand palette:** `brand-400` = `#38bdf8` (sky blue), body bg = `bg-gray-950`
+- **Fonts:** Inter (sans-serif), JetBrains Mono (monospace)
+- **Vite alias:** `@renderer/*` → `src/*`
+- **Router:** React Router `HashRouter` — 11 routes, all in `src/App.tsx`
 
-All external HTTP calls (RSS feeds, dictionary API, translation API) happen in the main process via `electron/handlers/content.ts` to avoid CORS restrictions. Results are cached in SQLite. Content sources: VOA Learning English, BBC Learning English, The Guardian RSS, NPR, BBC 6 Minute English, TED Talks (all free, no auth).
-
-### State management
+### State Management
 
 Zustand stores in `src/store/`:
-- `settingsStore` — API keys, active AI provider, Ollama model, daily word limit, theme
-- `progressStore` — daily stats, current streak, aggregate unit progress
-- `sessionStore` — active flashcard session (current card, queue, results)
+- `settingsStore` — persisted (localStorage): API keys, active AI provider, Ollama URL/model, daily word limit, theme
+- `progressStore` — units array (from DB), daily stats, today's XP
+- `sessionStore` — active flashcard session: queue, currentIndex, results, isFlipped
 
-### Roadmap / unit unlock
+### Unit Progress & Unlock
 
-12 units mapped to CEFR levels (1-4: B1→B2, 5-8: B2→C1, 9-12: C1→C2). Unit 1 unlocked by default. A unit unlocks when `lesson_progress` records show ≥80% of the previous unit's lessons completed. Dashboard renders the roadmap as an SVG path with Framer Motion animations.
+`src/hooks/useUnitProgress.ts` — calculates unit completion from `lesson_progress`, updates `unit_progress`, checks if next unit should unlock (≥80% threshold).
 
-## Key conventions
+## Key Conventions
 
-- Renderer never calls Node/Electron APIs directly — always through `window.electron`
-- Dictionary and translation responses are always cached before returning to renderer
-- AI calls are non-blocking; show loading state in UI while awaiting
-- Exercise results always write to `lesson_progress` on completion, which triggers unit unlock check
-- Grammar mistakes detected by AI writing feedback are upserted into `grammar_mistakes` table (increment count)
+- **Renderer never calls Node/Electron APIs directly** — always through `window.api`
+- **DB types are in `src/env.d.ts`** — add new IPC channels here for type safety
+- **Typecheck runs separately:** `npm run typecheck:node` (tsconfig.node.json) then `npm run typecheck:web` (tsconfig.web.json) — do not combine
+- **ESLint:** uses `@electron-toolkit/eslint-config-ts` — no local `.eslintrc.cjs`
+- **`postcss.config.js`** is ESM — may produce "Reparsing as ES module" warning; harmless
