@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { useProgressStore } from '../store/progressStore'
 import { ShadowingPlayer } from '../components/ShadowingPlayer'
 import { TranscriptionSentence } from '../hooks/useShadowing'
+import LearningBadge from '../components/LearningBadge'
 
 interface Episode {
   videoId: string
@@ -11,12 +12,17 @@ interface Episode {
   publishedAt: string
   url: string
   transcript?: { text: string; startTime: number; endTime: number }[]
+  level?: string
+  learnt?: boolean
 }
 
 interface ChannelData {
   channel: string
   episodes: Episode[]
 }
+
+type FilterType = 'all' | 'learnt' | 'notlearnt'
+type SortType = 'newest' | 'oldest' | 'level'
 
 const YOUTUBE_CHANNELS = [
   { id: 'UCk-CP63XMk897PXXEhBizhw', name: 'BBC Learning English' },
@@ -43,11 +49,26 @@ export default function YouTube(): JSX.Element {
   const [channelGroups, setChannelGroups] = useState<ChannelData[]>([])
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null)
   const [loading, setLoading] = useState(false)
-  const [allLoaded, setAllLoaded] = useState(false)
   const [showShadowing, setShowShadowing] = useState(false)
   const [showTranscriptInput, setShowTranscriptInput] = useState(false)
   const [manualTranscript, setManualTranscript] = useState('')
   const [parsedSentences, setParsedSentences] = useState<TranscriptionSentence[]>([])
+  const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState<FilterType>('all')
+  const [sortBy, setSortBy] = useState<SortType>('newest')
+
+  const refreshAll = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await window.api.content.fetchYouTubeRSS() as ChannelData[]
+      setChannelGroups(data)
+    } catch { /* ignore */ }
+    setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    refreshAll()
+  }, [refreshAll])
 
   const loadChannel = useCallback(async (id: string) => {
     setLoading(true)
@@ -60,21 +81,9 @@ export default function YouTube(): JSX.Element {
     setLoading(false)
   }, [])
 
-  const loadAll = useCallback(async () => {
-    setLoading(true)
-    try {
-      const data = await window.api.content.fetchYouTubeRSS() as ChannelData[]
-      setChannelGroups(data)
-      setAllLoaded(true)
-    } catch {
-      setChannelGroups([])
-    }
-    setLoading(false)
-  }, [])
-
   useEffect(() => {
-    if (!channelId) loadAll()
-  }, [channelId, loadAll])
+    if (!channelId) refreshAll()
+  }, [channelId, refreshAll])
 
   useEffect(() => {
     if (channelId) loadChannel(channelId)
@@ -141,19 +150,76 @@ export default function YouTube(): JSX.Element {
       ? selectedEpisode.transcript.map(t => ({ ...t, translation: '' }))
       : []
 
+  // Filter and sort episodes
+  const filteredEpisodes = (() => {
+    let allEpisodes: Episode[] = channelId
+      ? episodes
+      : channelGroups.flatMap(g => g.episodes.map(e => ({ ...e, channel: g.channel })))
+
+    // Apply search
+    if (search.trim()) {
+      const s = search.toLowerCase()
+      allEpisodes = allEpisodes.filter(e =>
+        e.title.toLowerCase().includes(s) || e.channel.toLowerCase().includes(s)
+      )
+    }
+
+    // Apply filter
+    if (filter === 'learnt') {
+      allEpisodes = allEpisodes.filter(e => e.learnt)
+    } else if (filter === 'notlearnt') {
+      allEpisodes = allEpisodes.filter(e => !e.learnt)
+    }
+
+    // Apply sort
+    if (sortBy === 'newest') {
+      allEpisodes.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+    } else if (sortBy === 'oldest') {
+      allEpisodes.sort((a, b) => new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime())
+    }
+
+    return allEpisodes.slice(0, 48)
+  })()
+
   return (
     <div className="p-8 flex flex-col h-full overflow-y-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-2xl font-bold text-white">YouTube</h2>
           <p className="text-gray-400 text-sm mt-1">English learning videos from top channels</p>
         </div>
-        {!allLoaded && (
-          <button onClick={loadAll} className="btn-primary px-4 py-2 text-sm">
-            Load All Channels
-          </button>
-        )}
+        <button onClick={refreshAll} className="btn-primary px-4 py-2 text-sm">
+          {loading ? '...' : '🔄 Refresh'}
+        </button>
+      </div>
+
+      {/* Search & Filters */}
+      <div className="flex flex-col md:flex-row gap-3 mb-4">
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Search videos..."
+          className="flex-1 input-default"
+        />
+        <select
+          value={filter}
+          onChange={e => setFilter(e.target.value as FilterType)}
+          className="input-default w-36"
+        >
+          <option value="all">All</option>
+          <option value="learnt">✅ Learnt</option>
+          <option value="notlearnt">📝 Not Learnt</option>
+        </select>
+        <select
+          value={sortBy}
+          onChange={e => setSortBy(e.target.value as SortType)}
+          className="input-default w-36"
+        >
+          <option value="newest">Newest</option>
+          <option value="oldest">Oldest</option>
+        </select>
       </div>
 
       {/* Channel selector */}
@@ -181,12 +247,12 @@ export default function YouTube(): JSX.Element {
           <div className="card p-6 w-full max-w-2xl">
             <h3 className="text-lg font-bold text-white mb-2">Paste Transcript</h3>
             <p className="text-sm text-gray-400 mb-4">
-              Paste a transcript below. Supported formats: plain text (one sentence per line), or with timestamps like [0:01] Text or 0:01 -&gt; 0:04 Text
+              Paste a transcript below. Supported formats: plain text (one sentence per line), or with timestamps
             </p>
             <textarea
               value={manualTranscript}
               onChange={e => setManualTranscript(e.target.value)}
-              placeholder={"Artificial intelligence is transforming education.\nTeachers can now use AI to personalize learning.\nSome experts worry about over-reliance on technology."}
+              placeholder={"Artificial intelligence is transforming education.\nTeachers can now use AI to personalize learning."}
               className="w-full h-48 bg-gray-900 border border-gray-700 rounded-lg p-3 text-sm text-white resize-none focus:border-brand-500 focus:outline-none"
             />
             <div className="flex gap-3 mt-4 justify-end">
@@ -225,7 +291,14 @@ export default function YouTube(): JSX.Element {
               <h3 className="text-white font-semibold">{selectedEpisode.title}</h3>
               <p className="text-gray-500 text-xs">{selectedEpisode.channel}</p>
             </div>
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-2 flex-wrap items-center">
+              <LearningBadge
+                type="video"
+                itemId={selectedEpisode.videoId}
+                itemTitle={selectedEpisode.title}
+                source={selectedEpisode.channel}
+                cefrLevel={LEVELS[selectedEpisode.channel]?.[0]}
+              />
               <button
                 onClick={() => handleSaveEpisode(selectedEpisode)}
                 className="btn-secondary px-3 py-1.5 text-xs"
@@ -283,39 +356,37 @@ export default function YouTube(): JSX.Element {
       )}
 
       {/* Episode grid */}
-      {loading ? (
+      {loading && filteredEpisodes.length === 0 ? (
         <div className="card flex items-center justify-center h-48 text-gray-500">Loading episodes…</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {(channelId ? episodes : channelGroups.flatMap(g => g.episodes.map(e => ({ ...e, channel: g.channel }))))
-            .slice(0, 24)
-            .map((ep, i) => (
-              <motion.button
-                key={`${ep.videoId}-${i}`}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03 }}
-                onClick={() => handlePlay(ep)}
-                className="card text-left hover:border-brand-500 transition-colors"
-              >
-                <div className="aspect-video rounded-lg overflow-hidden bg-gray-800 mb-3 relative">
-                  <img
-                    src={`https://img.youtube.com/vi/${ep.videoId}/mqdefault.jpg`}
-                    alt={ep.title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-4xl">▶️</span>
-                  </div>
+          {filteredEpisodes.map((ep, i) => (
+            <motion.button
+              key={`${ep.videoId}-${i}`}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.03 }}
+              onClick={() => handlePlay(ep)}
+              className={`card text-left hover:border-brand-500 transition-colors relative ${ep.learnt ? 'opacity-80 border-l-2 border-green-500/50' : ''}`}
+            >
+              <div className="aspect-video rounded-lg overflow-hidden bg-gray-800 mb-3 relative">
+                <img
+                  src={`https://img.youtube.com/vi/${ep.videoId}/mqdefault.jpg`}
+                  alt={ep.title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-4xl">▶️</span>
                 </div>
-                <h4 className="text-white text-sm font-semibold line-clamp-2 mb-1">{ep.title}</h4>
-                <p className="text-gray-500 text-xs">{ep.channel} · {new Date(ep.publishedAt).toLocaleDateString()}</p>
-                {ep.transcript && ep.transcript.length > 0 && (
-                  <p className="text-xs text-brand-400 mt-1">📝 {ep.transcript.length} captions</p>
-                )}
-              </motion.button>
-            ))}
+              </div>
+              <h4 className="text-white text-sm font-semibold line-clamp-2 mb-1">{ep.title}</h4>
+              <p className="text-gray-500 text-xs">{ep.channel} · {new Date(ep.publishedAt).toLocaleDateString()}</p>
+              {ep.transcript && ep.transcript.length > 0 && (
+                <p className="text-xs text-brand-400 mt-1">📝 {ep.transcript.length} captions</p>
+              )}
+            </motion.button>
+          ))}
         </div>
       )}
     </div>

@@ -95,6 +95,48 @@ interface ShadowingApi {
   }[]>
 }
 
+interface LearningApi {
+  mark: (req: {
+    type: 'video' | 'audio' | 'article' | 'lesson' | 'shadowing'
+    itemId: string
+    itemTitle: string
+    source?: string
+    cefrLevel?: string
+  }) => Promise<{ toggled: boolean; nowLearnt: boolean }>
+  getHistory: (options?: {
+    search?: string
+    type?: string
+    cefrLevel?: string
+    completed?: string
+    sortBy?: string
+    limit?: number
+    offset?: number
+  }) => Promise<{ items: { id: number; type: string; item_id: string; item_title: string; source: string | null; cefr_level: string | null; completed: number; completed_at: string | null; added_at: string }[]; total: number }>
+  getStats: () => Promise<{
+    total: number
+    learnt: number
+    todayLearnt: number
+    thisWeekLearnt: number
+    byType: { type: string; c: number }[]
+    recentLearnt: { id: number; type: string; item_id: string; item_title: string; source: string | null; cefr_level: string | null; completed_at: string | null }[]
+  }>
+  getRecent: (limit?: number) => Promise<{
+    type: string
+    item_id: string
+    item_title: string
+    source: string | null
+    cefr_level: string | null
+    completed_at: string | null
+  }[]>
+  getByDate: () => Promise<{
+    today: { id: number; type: string; item_id: string; item_title: string; source: string | null; cefr_level: string | null; completed_at: string | null }[]
+    thisWeek: { id: number; type: string; item_id: string; item_title: string; source: string | null; cefr_level: string | null; completed_at: string | null }[]
+    thisMonth: { id: number; type: string; item_id: string; item_title: string; source: string | null; cefr_level: string | null; completed_at: string | null }[]
+    allTime: { id: number; type: string; item_id: string; item_title: string; source: string | null; cefr_level: string | null; completed_at: string | null }[]
+  }>
+  isLearnt: (type: string, itemId: string) => Promise<boolean>
+}
+
 interface ClipboardApi {
   capture: () => Promise<string>
   onCapture: (callback: (text: string) => void) => () => void
@@ -106,6 +148,7 @@ interface Window {
     ai: AiApi
     content: ContentApi
     shadowing: ShadowingApi
+    learning: LearningApi
     clipboard: ClipboardApi
   }
 }

@@ -5,6 +5,7 @@ import { registerDbHandlers } from './handlers/db'
 import { registerAiHandlers } from './handlers/ai'
 import { registerContentHandlers } from './handlers/content'
 import { registerShadowingHandlers } from './handlers/shadowing'
+import { registerLearningHandlers } from './handlers/learning'
 
 let tray: Tray | null = null
 
@@ -80,6 +81,7 @@ app.whenReady().then(() => {
   registerAiHandlers()
   registerContentHandlers()
   registerShadowingHandlers()
+  registerLearningHandlers()
 
   createWindow()
 

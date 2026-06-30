@@ -18,6 +18,7 @@ import Settings from './pages/Settings'
 import YouTube from './pages/YouTube'
 import Import from './pages/Import'
 import Stats from './pages/Stats'
+import Learning from './pages/Learning'
 
 interface Toast {
   id: number
@@ -144,6 +145,7 @@ export default function App(): JSX.Element {
             <Route path="/youtube" element={<YouTube />} />
             <Route path="/import" element={<Import />} />
             <Route path="/stats" element={<Stats />} />
+            <Route path="/learning" element={<Learning />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

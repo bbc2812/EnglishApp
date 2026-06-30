@@ -20,6 +20,7 @@ const NAV_CONTENT = [
   { to: '/podcasts', icon: '🎙️', label: 'Podcasts' },
   { to: '/youtube', icon: '📺', label: 'YouTube' },
   { to: '/import', icon: '📥', label: 'Import' },
+  { to: '/learning', icon: '📚', label: 'My Learning' },
 ]
 
 function XPBar({ xp, level }: { xp: number; level: number }): JSX.Element {

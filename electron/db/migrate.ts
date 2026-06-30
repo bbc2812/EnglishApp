@@ -220,6 +220,18 @@ CREATE TABLE IF NOT EXISTS vocab_set_words (
   vocab_set_id INTEGER NOT NULL REFERENCES vocab_sets(id),
   word_id INTEGER NOT NULL REFERENCES words(id)
 );
+
+CREATE TABLE IF NOT EXISTS learning_progress (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  type TEXT NOT NULL CHECK(type IN ('video','audio','article','lesson','shadowing')),
+  item_id TEXT NOT NULL,
+  item_title TEXT NOT NULL,
+  source TEXT,
+  cefr_level TEXT,
+  completed INTEGER NOT NULL DEFAULT 0,
+  completed_at TEXT,
+  added_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 `
 
 const SEED_UNITS = `

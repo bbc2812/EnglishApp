@@ -122,6 +122,53 @@ const api = {
     }[]> =>
       ipcRenderer.invoke('shadowing:getHistory', limit)
   },
+  learning: {
+    mark: (req: {
+      type: 'video' | 'audio' | 'article' | 'lesson' | 'shadowing'
+      itemId: string
+      itemTitle: string
+      source?: string
+      cefrLevel?: string
+    }): Promise<{ toggled: boolean; nowLearnt: boolean }> =>
+      ipcRenderer.invoke('learning:mark', req),
+    getHistory: (options?: {
+      search?: string
+      type?: string
+      cefrLevel?: string
+      completed?: string
+      sortBy?: string
+      limit?: number
+      offset?: number
+    }): Promise<{ items: { id: number; type: string; item_id: string; item_title: string; source: string | null; cefr_level: string | null; completed: number; completed_at: string | null; added_at: string }[]; total: number }> =>
+      ipcRenderer.invoke('learning:getHistory', options ?? {}),
+    getStats: (): Promise<{
+      total: number
+      learnt: number
+      todayLearnt: number
+      thisWeekLearnt: number
+      byType: { type: string; c: number }[]
+      recentLearnt: { id: number; type: string; item_id: string; item_title: string; source: string | null; cefr_level: string | null; completed_at: string | null }[]
+    }> =>
+      ipcRenderer.invoke('learning:getStats'),
+    getRecent: (limit?: number): Promise<{
+      type: string
+      item_id: string
+      item_title: string
+      source: string | null
+      cefr_level: string | null
+      completed_at: string | null
+    }[]> =>
+      ipcRenderer.invoke('learning:getRecent', limit ?? 6),
+    getByDate: (): Promise<{
+      today: { id: number; type: string; item_id: string; item_title: string; source: string | null; cefr_level: string | null; completed_at: string | null }[]
+      thisWeek: { id: number; type: string; item_id: string; item_title: string; source: string | null; cefr_level: string | null; completed_at: string | null }[]
+      thisMonth: { id: number; type: string; item_id: string; item_title: string; source: string | null; cefr_level: string | null; completed_at: string | null }[]
+      allTime: { id: number; type: string; item_id: string; item_title: string; source: string | null; cefr_level: string | null; completed_at: string | null }[]
+    }> =>
+      ipcRenderer.invoke('learning:getByDate'),
+    isLearnt: (type: string, itemId: string): Promise<boolean> =>
+      ipcRenderer.invoke('learning:isLearnt', type, itemId)
+  },
   clipboard: {
     capture: (): Promise<string> =>
       ipcRenderer.invoke('clipboard:capture'),
