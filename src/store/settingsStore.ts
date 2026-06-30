@@ -51,7 +51,7 @@ export const useSettingsStore = create<SettingsState>()(
       activeProvider: 'claude',
       dailyNewWords: 20,
       bilingualGrammar: true,
-      onboardingComplete: false,
+      onboardingComplete: true,
       newsApiKey: '733d0d9c99f84bdabd6decaf0525b25a',
       systemTray: true,
       clipboardHotkey: true,

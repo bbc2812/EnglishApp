@@ -3,7 +3,6 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import Sidebar from './components/Layout/Sidebar'
 import DictionaryPopup from './components/DictionaryPopup'
-import OnboardingModal from './components/OnboardingModal'
 import Dashboard from './pages/Dashboard'
 import Flashcards from './pages/Flashcards'
 import Listening from './pages/Listening'
@@ -118,7 +117,6 @@ function SharedToastContainer(): JSX.Element {
           ))}
         </AnimatePresence>
       </div>
-      <OnboardingModal />
     </>
   )
 }
@@ -154,3 +152,5 @@ export default function App(): JSX.Element {
     </HashRouter>
   )
 }
+
+// touched

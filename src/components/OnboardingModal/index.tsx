@@ -31,6 +31,7 @@ export default function OnboardingModal(): JSX.Element | null {
     claudeApiKey, geminiApiKey, ollamaUrl, ollamaModel,
     activeProvider, setActiveProvider,
     setDailyNewWords, setBilingualGrammar, setOnboardingComplete,
+    onboardingComplete,
   } = useSettingsStore()
 
   const [step, setStep] = useState(0)
@@ -38,6 +39,7 @@ export default function OnboardingModal(): JSX.Element | null {
   const [name, setName] = useState('Learner')
   const [dailyWords, setDailyWords] = useState(20)
   const [bilingual, setBilingual] = useState(true)
+  const [showSkipConfirm, setShowSkipConfirm] = useState(false)
 
   const handleFinish = () => {
     setDailyNewWords(dailyWords)
@@ -45,8 +47,42 @@ export default function OnboardingModal(): JSX.Element | null {
     setOnboardingComplete(true)
   }
 
+  if (onboardingComplete) return null
+
   if (step < STEPS.length) {
     const current = STEPS[step]
+
+    if (showSkipConfirm) {
+      return (
+        <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/70">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-gray-900 border border-gray-800 rounded-2xl p-8 max-w-md mx-4"
+          >
+            <h2 className="text-xl font-bold text-white mb-3">Skip onboarding?</h2>
+            <p className="text-gray-400 mb-6">You can always set up your profile later in Settings. AI features will require API keys.</p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowSkipConfirm(false)}
+                className="btn-secondary px-5 py-2.5 text-sm"
+              >
+                Continue Setup
+              </button>
+              <button
+                onClick={() => {
+                  setShowSkipConfirm(false)
+                  handleFinish()
+                }}
+                className="btn-primary px-5 py-2.5 text-sm"
+              >
+                Skip & Continue
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )
+    }
 
     if (step === 0) {
       return (
@@ -60,7 +96,13 @@ export default function OnboardingModal(): JSX.Element | null {
             <p className="text-5xl mb-4">🌧️</p>
             <h2 className="text-2xl font-bold text-white mb-3">{current.title}</h2>
             <p className="text-gray-400 mb-6">{current.description}</p>
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowSkipConfirm(true)}
+                className="btn-secondary px-5 py-2.5 text-sm"
+              >
+                Skip Setup
+              </button>
               <button
                 onClick={() => setStep(1)}
                 className="btn-primary px-6 py-2.5"
@@ -128,19 +170,27 @@ export default function OnboardingModal(): JSX.Element | null {
               </div>
             </div>
 
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <button
                 onClick={() => setStep(0)}
                 className="text-gray-500 hover:text-gray-300 text-sm"
               >
                 ← Back
               </button>
-              <button
-                onClick={() => setStep(2)}
-                className="btn-primary px-6 py-2.5"
-              >
-                Next →
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowSkipConfirm(true)}
+                  className="btn-secondary px-4 py-2.5 text-sm"
+                >
+                  Skip Setup
+                </button>
+                <button
+                  onClick={() => setStep(2)}
+                  className="btn-primary px-6 py-2.5"
+                >
+                  Next →
+                </button>
+              </div>
             </div>
           </motion.div>
         </div>
@@ -220,19 +270,27 @@ export default function OnboardingModal(): JSX.Element | null {
               </div>
             ) : null}
 
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               <button
                 onClick={() => setStep(1)}
                 className="text-gray-500 hover:text-gray-300 text-sm"
               >
                 ← Back
               </button>
-              <button
-                onClick={handleFinish}
-                className="btn-primary px-6 py-2.5"
-              >
-                🚀 Start Learning
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowSkipConfirm(true)}
+                  className="btn-secondary px-4 py-2.5 text-sm"
+                >
+                  Skip Setup
+                </button>
+                <button
+                  onClick={handleFinish}
+                  className="btn-primary px-6 py-2.5"
+                >
+                  🚀 Start Learning
+                </button>
+              </div>
             </div>
           </motion.div>
         </div>
