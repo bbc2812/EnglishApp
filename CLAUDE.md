@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **WiseRain** — an Electron desktop app for English learning targeting C1/C2 fluency. Built for a Vietnamese speaker at B1/B2 level. See `PLAN.md` for the full feature specification and implementation roadmap.
 
+> **Full reference:** `PROJECT_REFERENCE.md` — detailed schema, IPC patterns, pending phases.
+
 ## Commands
 
 ```bash
@@ -29,7 +31,7 @@ All code in `electron/` runs in the **main process** (Node.js, full OS access). 
 
 ### IPC Channel Naming
 
-`ipcMain.handle('db:query', ...)` ↔ `ipcRenderer.invoke('db:query', ...)`
+`ipcMain.handle('channel:name', ...)` ↔ `ipcRenderer.invoke('channel:name', ...)`
 The preload wraps these as:
 - `window.api.db.query(sql, params)` — returns single result
 - `window.api.db.run(sql, params)` — returns `{ changes, lastInsertRowid }`
@@ -38,11 +40,13 @@ The preload wraps these as:
 - `window.api.ai.isAvailable(provider)` — check if provider is reachable
 - `window.api.content.fetchRss(url)`, `fetchDictionary(word)`, `fetchTranslation(word)`
 
+**Adding new IPC:** Add handler in `electron/handlers/*.ts`, register in `electron/main.ts`, add to `electron/preload.ts` `api` object, add types to `src/env.d.ts`.
+
 ### DB Schema
 
 **Raw SQL only** — `drizzle-orm` is in `package.json` but **unused**. Schema is in `electron/db/migrate.ts` via `CREATE TABLE IF NOT EXISTS` + `INSERT OR IGNORE` for seeding. DB file is at `%APPDATA%/wiserain/data/wiserain.db` on Windows. SQLite is opened with WAL mode + foreign keys enabled.
 
-**Key tables:** `units`, `lessons`, `exercises`, `words`, `flashcards` (FSRS-4.5 SRS state), `lesson_progress`, `unit_progress`, `daily_stats`, `grammar_mistakes`, `vocab_sets`, `vocab_set_words`, `dictionary_cache`, `translation_cache`, `conversations`, `writing_history`.
+**17 tables:** `units`, `lessons`, `exercises`, `words`, `flashcards`, `lesson_progress`, `unit_progress`, `daily_stats`, `grammar_mistakes`, `vocab_sets`, `vocab_set_words`, `dictionary_cache`, `translation_cache`, `saved_articles`, `saved_podcasts`, `conversations`, `writing_history`.
 
 **Seed data:** 12 CEFR units (B1→C2), 36 pre-seeded lessons (3 per unit), 12 topical vocab sets. `unit_progress` rows auto-created for unlocked units.
 
@@ -51,8 +55,8 @@ The preload wraps these as:
 Only **Claude** and **Ollama** are coded. Gemini is in PLAN.md but **not implemented**.
 
 - `electron/handlers/ai.ts` routes `ai:chat` IPC:
-  - **Claude:** `@anthropic-ai/sdk`, model `claude-sonnet-4-6` (paid, key from env or `settingsStore`)
-  - **Ollama:** HTTP POST to `localhost:11434/api/chat` (free, local, default model `llama3.2`)
+  - **Claude:** `@anthropic-ai/sdk`, model `claude-sonnet-4-6`, max 2048 tokens (paid, key from env or `settingsStore`)
+  - **Ollama:** HTTP POST to `localhost:11434/api/chat`, stream=false (free, local, default model `llama3.2`)
 
 > Claude Pro (claude.ai subscription) ≠ API access. API keys are separate from console.anthropic.com.
 
@@ -66,23 +70,24 @@ Hooks: `src/hooks/useSRS.ts` — `loadDueCards()`, `loadVocabSetCards()`, `apply
 
 ### UI Components
 
-- **DictionaryPopup** (`src/components/DictionaryPopup/`) — global `mouseup` listener, 3 tabs: Pronounce (IPA+audio), EN-EN (definition), EN-VN (translation via MyMemory API). "Add to Flashcards" button.
+- **DictionaryPopup** (`src/components/DictionaryPopup/`) — global `mouseup` listener, 3 tabs: Pronounce (IPA+audio), EN-EN (definition), EN-VN (translation via MyMemory API). "Add to Flashcards" button. Caches results in `dictionary_cache` / `translation_cache`.
 - **Tailwind classes:** `.card`, `.btn-primary`, `.btn-secondary`, `.sidebar-link.active`, `.badge-b1`/`.badge-b2`/`.badge-c1`/`.badge-c2`
 - **Brand palette:** `brand-400` = `#38bdf8` (sky blue), body bg = `bg-gray-950`
 - **Fonts:** Inter (sans-serif), JetBrains Mono (monospace)
 - **Vite alias:** `@renderer/*` → `src/*`
 - **Router:** React Router `HashRouter` — 11 routes, all in `src/App.tsx`
+- **Custom component classes in:** `src/index.css`
 
 ### State Management
 
 Zustand stores in `src/store/`:
-- `settingsStore` — persisted (localStorage): API keys, active AI provider, Ollama URL/model, daily word limit, theme
-- `progressStore` — units array (from DB), daily stats, today's XP
-- `sessionStore` — active flashcard session: queue, currentIndex, results, isFlipped
+- `settingsStore` — **persisted** (localStorage `wiserain-settings`): API keys, active AI provider, Ollama URL/model, daily word limit, theme
+- `progressStore` — units array (from DB via `loadUnits()`), daily stats, today's XP
+- `sessionStore` — active flashcard session: queue, currentIndex, results, isFlipped, queueSource/type/id
 
 ### Unit Progress & Unlock
 
-`src/hooks/useUnitProgress.ts` — calculates unit completion from `lesson_progress`, updates `unit_progress`, checks if next unit should unlock (≥80% threshold).
+`src/hooks/useUnitProgress.ts` — calculates unit completion from `lesson_progress` (score ≥ 80 counts), updates `unit_progress`, checks if next unit should unlock (≥80% threshold).
 
 ## Key Conventions
 
@@ -91,3 +96,8 @@ Zustand stores in `src/store/`:
 - **Typecheck runs separately:** `npm run typecheck:node` (tsconfig.node.json) then `npm run typecheck:web` (tsconfig.web.json) — do not combine
 - **ESLint:** uses `@electron-toolkit/eslint-config-ts` — no local `.eslintrc.cjs`
 - **`postcss.config.js`** is ESM — may produce "Reparsing as ES module" warning; harmless
+- **DB migration is idempotent:** `CREATE TABLE IF NOT EXISTS` + `INSERT OR IGNORE`
+- **`settingsStore` uses `persist()` middleware** — changes survive restarts
+- **Dictionary/translation responses cached before returning to renderer**
+- **Exercise results always write to `lesson_progress` on completion, triggers unit unlock check**
+- **Grammar mistakes detected by AI writing feedback are upserted into `grammar_mistakes` table**
