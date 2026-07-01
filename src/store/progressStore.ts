@@ -43,6 +43,7 @@ export const useProgressStore = create<ProgressState>()((set, get) => ({
   setUnits: (units) => set({ units }),
   setTodayXP: (todayXP) => set({ todayXP }),
   loadUnits: async () => {
+    if (!window.api?.db) return
     const rows = await window.api.db.all(
       `SELECT u.id, u.title, u.cefr_level, u.unit_order, u.description, u.unlocked,
               COALESCE(up.percent_complete, 0) as percent_complete
@@ -50,6 +51,11 @@ export const useProgressStore = create<ProgressState>()((set, get) => ({
        LEFT JOIN unit_progress up ON up.unit_id = u.id
        ORDER BY u.unit_order`
     )
-    set({ units: rows as UnitProgress[] })
+    const typedRows = (rows as any[]).map((r: any) => ({
+      ...r,
+      percent_complete: Number(r.percent_complete) || 0,
+      unlocked: Number(r.unlocked) || 0,
+    }))
+    set({ units: typedRows as UnitProgress[] })
   }
 }))

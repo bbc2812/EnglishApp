@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useUnitProgress } from '../hooks/useUnitProgress'
 import { useProgressStore } from '../store/progressStore'
 
 interface Mistake {
@@ -73,7 +72,6 @@ function GrammarCorrection({ original, correction, explanation }: {
 }
 
 export default function Writing(): JSX.Element {
-  const { completeLesson: _completeLesson, checkAndUnlockNext: _checkAndUnlockNext } = useUnitProgress()
   const { setTodayXP } = useProgressStore()
   const [essay, setEssay] = useState('')
   const [timeLeft, setTimeLeft] = useState(600) // 10 minutes
@@ -95,6 +93,7 @@ export default function Writing(): JSX.Element {
   }, [running, timeLeft])
 
   const loadMistakes = useCallback(async () => {
+    if (!window.api?.db) return
     const rows = await window.api.db.all(
       `SELECT * FROM grammar_mistakes ORDER BY count DESC LIMIT 20`
     ) as Mistake[]
@@ -102,6 +101,7 @@ export default function Writing(): JSX.Element {
   }, [])
 
   const loadHistory = useCallback(async () => {
+    if (!window.api?.db) return
     const rows = await window.api.db.all(
       `SELECT * FROM writing_history ORDER BY created_at DESC LIMIT 20`
     ) as WritingEntry[]
@@ -145,6 +145,8 @@ export default function Writing(): JSX.Element {
     setScore(fakeScore)
     setSubmitted(true)
 
+    if (!window.api?.db) return
+
     // Save to DB
     window.api.db.run(
       `INSERT INTO writing_history (prompt, content, score, created_at)
@@ -170,12 +172,24 @@ export default function Writing(): JSX.Element {
     generatedCorrections.forEach(c => {
       const mistakeType = c.explanation.includes('very') ? 'Overuse of "Very"' :
                           c.explanation.includes('yesterday') ? 'Verb Tense' : 'Word Order'
-      window.api.db.run(
-        `INSERT INTO grammar_mistakes (type, description, count, last_seen)
-         VALUES (?, ?, COALESCE((SELECT count FROM grammar_mistakes WHERE type = ?), 0) + 1, datetime('now'))
-         ON CONFLICT(type) DO UPDATE SET count = count + 1, last_seen = datetime('now')`,
-        [mistakeType, c.explanation]
-      ).catch(() => {})
+      if (!window.api?.db) return
+      window.api.db.all(
+        `SELECT id FROM grammar_mistakes WHERE type = ?`,
+        [mistakeType]
+      ).then((rows: unknown[]) => {
+        const typedRows = rows as { id: number }[]
+        if (typedRows.length > 0) {
+          window.api.db.run(
+            `UPDATE grammar_mistakes SET count = count + 1, last_seen = datetime('now') WHERE id = ?`,
+            [typedRows[0].id]
+          ).catch(() => {})
+        } else {
+          window.api.db.run(
+            `INSERT INTO grammar_mistakes (type, description, count, last_seen) VALUES (?, ?, 1, datetime('now'))`,
+            [mistakeType, c.explanation]
+          ).catch(() => {})
+        }
+      }).catch(() => {})
     })
 
     loadMistakes()

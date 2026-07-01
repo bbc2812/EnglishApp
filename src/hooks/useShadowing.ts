@@ -60,12 +60,12 @@ export function useShadowing(sentences: TranscriptionSentence[]) {
     const words = sentenceText.toLowerCase().replace(/[^a-z\s']/g, '').split(/\s+/)
     const phonemes: { word: string; phoneme: string; difficulty: 'easy' | 'medium' | 'hard' }[] = []
 
-    const thVoiceless = ['th', 'this', 'that', 'than', 'there', 'think', 'thing', 'through', 'thought', 'three', 'thirteen', 'third', 'theater', 'theme', 'theory', 'thick', 'thief', 'thin', 'thread', 'throat', 'thrill', 'throat']
-    const thVoiced = ['this', 'that', 'they', 'them', 'there', 'these', 'then', 'thus', 'there', 'though', 'those', 'they\'re', 'their', 'they\'ve', 'they\'ll', 'weather', 'father', 'mother', 'brother', 'whether']
-    const rSounds = ['right', 'light', 'very', 'river', 'red', 'run', 'will', 'well', 'room', 'real', 'read', 'rice', 'road', 'roll', 'rain', 'race', 'request', 'result', 'remember', 'really']
-    const lSounds = ['light', 'life', 'like', 'love', 'long', 'look', 'leave', 'let', 'last', 'large', 'little', 'late', 'left', 'learn', 'listen', 'listen', 'listen', 'listen']
-    const vSounds = ['vest', 'very', 'love', 'have', 'live', 'five', 'three', 'give', 'get', 'go', 'good', 'got', 'game', 'girl', 'girl', 'green', 'great', 'grow']
-    const wSounds = ['watch', 'water', 'want', 'week', 'way', 'well', 'what', 'when', 'where', 'which', 'who', 'will', 'with', 'work', 'world', 'woman', 'way', 'wait', 'wake', 'walk']
+    const thVoiceless = ['think', 'thing', 'through', 'thought', 'three', 'thirteen', 'third', 'thick', 'thief', 'thin', 'thread', 'throat', 'thrill', 'thaw', 'thorn', 'thumb', 'thunder', 'thigh', 'thirty', 'thirsty', 'thirst', 'throw', 'thrown', 'thrust', 'Thursday', 'thyme']
+    const thVoiced = ['the', 'this', 'that', 'they', 'them', 'there', 'these', 'then', 'thus', 'though', 'those', 'they\'re', 'their', 'they\'ve', 'they\'ll', 'whether', 'weather', 'father', 'mother', 'brother', 'together', 'another', 'either', 'neither', 'here', 'there', 'where']
+    const rSounds = ['right', 'river', 'red', 'run', 'room', 'real', 'read', 'rice', 'road', 'roll', 'rain', 'race', 'request', 'result', 'remember', 'really', 'raw', 'ray', 'ride', 'ring', 'rise', 'risk', 'rock', 'roll', 'roof', 'root', 'row', 'rub', 'rule']
+    const lSounds = ['light', 'life', 'like', 'long', 'look', 'leave', 'let', 'last', 'large', 'little', 'late', 'left', 'learn', 'listen']
+    const vSounds = ['vest', 'very', 'love', 'have', 'live', 'five', 'give', 'get', 'go', 'good', 'got', 'game', 'girl', 'green', 'great', 'grow']
+    const wSounds = ['watch', 'water', 'want', 'week', 'way', 'what', 'when', 'where', 'which', 'who', 'will', 'with', 'work', 'world', 'woman', 'wait', 'wake', 'walk']
 
     for (const word of words) {
       const cleanWord = word.replace(/[^a-z]/g, '')
@@ -158,6 +158,7 @@ export function useShadowing(sentences: TranscriptionSentence[]) {
 
   // AI scoring (when enabled in settings)
   const getAiScore = useCallback(async (sentenceText: string, recordingDuration: number): Promise<{ score: number; feedback: string }> => {
+    if (!window.api?.shadowing) return simulateScore(recordingDuration, (currentSentence?.endTime ?? 0) - (currentSentence?.startTime ?? 0), new Blob())
     const settings = useSettingsStore.getState()
     const phonemes = detectTargetPhonemes(sentenceText)
 
@@ -382,7 +383,7 @@ export function useShadowing(sentences: TranscriptionSentence[]) {
 
   // Save result to DB when scoring is done
   useEffect(() => {
-    if (phase === 'scoring' && currentScore !== null && currentSentence) {
+    if (phase === 'scoring' && currentScore !== null && currentSentence && window.api?.shadowing) {
       const lastResult = results[results.length - 1]
       if (lastResult && lastResult.sentenceIndex === currentIndex) {
         window.api.shadowing.save({

@@ -215,6 +215,10 @@ export default function Reading(): JSX.Element {
   const loadLesson = useCallback(async () => {
     if (!lessonId) return
     setLoading(true)
+    if (!window.api?.db) {
+      setLoading(false)
+      return
+    }
 
     const les = await window.api.db.all(
       `SELECT * FROM lessons WHERE id = ?`,
@@ -461,7 +465,7 @@ export default function Reading(): JSX.Element {
             <div className="card p-6 selectable">
               <h3 className="text-lg font-semibold text-white mb-4">📄 Article</h3>
               <div className="space-y-3 text-gray-300 leading-relaxed text-base">
-                {lesson.transcript.split('. ').filter(Boolean).map((sentence, i) => (
+                {lesson.transcript.split(/(?<=[.!?])\s+/).filter(Boolean).map((sentence, i) => (
                   <p key={i} className="leading-relaxed">
                     <WordHighlight text={sentence} onWordClick={handleWordClick} />.
                   </p>

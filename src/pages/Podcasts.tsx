@@ -219,15 +219,13 @@ function AudioPlayer({ episode, onWordClick }: { episode: PodcastEpisode; onWord
       <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
         {episode.transcript.map((t, i) => {
           const isActive = i === activeTranscriptIndex || i === loopSentence
-          if (subtitleMode === 'en' && !isActive) return null
-          if (subtitleMode === 'vn' && isActive) return null
           return (
             <div key={i} onClick={() => playSentence(i)}
               className={`px-2 py-1 rounded cursor-pointer text-sm transition-all ${
                 isActive ? 'bg-brand-950/40 text-white font-medium' : 'text-gray-500 hover:text-gray-300'
               }`}>
               {subtitleMode !== 'vn' && <span className="selectable">{t.sentence.split(' ').map((w, j) => <ClickableWord key={j} word={w} onWordClick={onWordClick} />)}</span>}
-              {subtitleMode === 'en-vn' && <span className="text-brand-400 text-xs selectable">| {t.translation.split(' ').map((w, j) => <ClickableWord key={j} word={w} onWordClick={onWordClick} />)}</span>}
+              {(subtitleMode === 'en-vn' || subtitleMode === 'vn') && <span className="text-brand-400 text-xs selectable">{t.translation.split(' ').map((w, j) => <ClickableWord key={j} word={w} onWordClick={onWordClick} />)}</span>}
             </div>
           )
         })}
@@ -288,12 +286,17 @@ export default function Podcasts(): JSX.Element {
   }, [])
 
   const fetchEpisodes = useCallback(async () => {
+    if (!window.api?.content) {
+      setEpisodeList(MOCK_EPISODES)
+      setLoading(false)
+      return
+    }
     try {
       const raw = await window.api.content.fetchPodcastEpisodes()
       const episodes: PodcastEpisode[] = raw.map((item: any) => ({
         id: item.id ?? item.url ?? Math.random(),
         title: item.title || 'Untitled',
-        source: item.source || (item.type ? item.type : 'BBC Learning English'),
+        source: item.source || 'Podcast',
         duration: item.duration || 'N/A',
         audioUrl: item.audioUrl || '',
         transcript: item.transcript
@@ -345,6 +348,11 @@ export default function Podcasts(): JSX.Element {
   }, [fetchEpisodes])
 
   const generateTranscript = useCallback(async (episode: PodcastEpisode) => {
+    if (!window.api?.content) {
+      setGenerationError('API not available')
+      setGeneratingId(null)
+      return
+    }
     setGeneratingId(episode.id)
     setGenerationError(null)
     try {
@@ -378,6 +386,7 @@ export default function Podcasts(): JSX.Element {
   }, [selectedEpisode])
 
   const saveEpisode = useCallback(async (episode: PodcastEpisode) => {
+    if (!window.api?.db) return
     try {
       if (episode.url) {
         await window.api.db.run(

@@ -49,6 +49,7 @@ export default function News(): JSX.Element {
 
   const fetchNews = useCallback(async (category?: string) => {
     setLoading(true)
+    if (!window.api?.content) { setLoading(false); return }
     try {
       const data = await window.api.content.fetchNewsAPI(category, newsApiKey) as NewsArticle[]
       setArticles(data)
@@ -58,6 +59,7 @@ export default function News(): JSX.Element {
 
   const fetchBBCLE = useCallback(async () => {
     setLoading(true)
+    if (!window.api?.content) { setLoading(false); return }
     try {
       const data = await window.api.content.fetchBBCLE('article') as BBCLEItem[]
       setBbcItems(data)
@@ -67,6 +69,7 @@ export default function News(): JSX.Element {
 
   const fetchGuardian = useCallback(async () => {
     setLoading(true)
+    if (!window.api?.content) { setLoading(false); return }
     try {
       const data = await window.api.content.fetchGuardianArticles() as GuardianItem[]
       setGuardianItems(data)
@@ -75,11 +78,13 @@ export default function News(): JSX.Element {
   }, [])
 
   const fetchWOTD = useCallback(async () => {
+    if (!window.api?.content) return
     const data = await window.api.content.fetchWordOfTheDay() as { word: string; url: string } | null
     setWotd(data)
   }, [])
 
   const fetchQuotes = useCallback(async () => {
+    if (!window.api?.content) return
     const data = await window.api.content.fetchQuotable(10) as { content: string; author: string }[]
     setQuotes(data)
   }, [])
@@ -101,6 +106,7 @@ export default function News(): JSX.Element {
   useEffect(() => { loadTab('all') }, [loadTab])
 
   const handleSave = async (item: { title: string; url: string; description?: string }) => {
+    if (!window.api?.db) return
     await window.api.db.run(
       `INSERT INTO saved_articles (url, title, source, content, saved_at)
        VALUES (?, ?, 'News', ?, datetime('now'))
@@ -259,9 +265,12 @@ function ArticleCard({ article, onSave }: { article: NewsArticle; onSave: (item:
   const [saved, setSaved] = useState(false)
 
   return (
-    <motion.button
+    <motion.div
       onClick={() => window.open(article.url, '_blank')}
-      className="card text-left p-5 hover:border-brand-500 transition-colors block w-full"
+      className="card text-left p-5 hover:border-brand-500 transition-colors block w-full cursor-pointer"
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter') window.open(article.url, '_blank') }}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
@@ -277,7 +286,7 @@ function ArticleCard({ article, onSave }: { article: NewsArticle; onSave: (item:
           {saved ? '✅ Saved' : '💾 Save'}
         </button>
       </div>
-    </motion.button>
+    </motion.div>
   )
 }
 

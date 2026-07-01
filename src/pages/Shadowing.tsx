@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import WaveSurfer from 'wavesurfer.js'
 import { useProgressStore } from '../store/progressStore'
 
@@ -106,6 +107,7 @@ function ProblemSounds(): JSX.Element {
 }
 
 export default function Shadowing(): JSX.Element {
+  const navigate = useNavigate()
   const { setTodayXP } = useProgressStore()
   const [phase, setPhase] = useState<Phase>('drill')
   const [drillIndex, setDrillIndex] = useState(0)
@@ -124,7 +126,7 @@ export default function Shadowing(): JSX.Element {
 
   const handleNewShadowing = () => {
     // Navigate to Podcasts where users can do sentence-by-sentence shadowing
-    window.location.hash = '#/podcasts'
+    navigate('/podcasts')
   }
 
   useEffect(() => {

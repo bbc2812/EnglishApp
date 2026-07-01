@@ -202,6 +202,7 @@ export function ShadowingPlayer({ sentences, episodeType, episodeId, onClose }: 
 
   // Save episode ID to shadowing context
   const saveContext = useCallback(() => {
+    if (!window.api?.shadowing || !currentSentence) return
     window.api.shadowing.save({
       episodeType,
       episodeId,

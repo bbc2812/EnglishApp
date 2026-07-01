@@ -20,9 +20,11 @@ Be concise, specific, and encouraging.`
 
 function MessageBubble({ message }: { message: Message }): JSX.Element {
   const isUser = message.role === 'user'
+  const content = message.content || ''
 
   // Parse [correction] format
   const renderContent = (text: string) => {
+    if (!text) return <span />
     const parts = text.split(/\[([^\]]+)\]/g)
     return parts.map((part, i) => {
       if (i % 2 === 1) return <mark key={i} className="bg-brand-950/50 text-brand-300 px-1 rounded">{part}</mark>
@@ -37,7 +39,7 @@ function MessageBubble({ message }: { message: Message }): JSX.Element {
           ? 'bg-brand-600 text-white rounded-br-sm shadow-lg shadow-brand-900/20'
           : 'bg-gray-800/80 text-gray-200 rounded-bl-sm border border-gray-700/50'
       }`}>
-        <p className="text-sm leading-relaxed selectable">{renderContent(message.content)}</p>
+        <p className="text-sm leading-relaxed selectable">{renderContent(content)}</p>
       </div>
     </div>
   )
@@ -65,6 +67,7 @@ export default function AITutor(): JSX.Element {
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const loadConversation = useCallback(async () => {
+    if (!window.api?.db) return
     const rows = await window.api.db.all(
       `SELECT * FROM conversations ORDER BY created_at ASC LIMIT 50`
     ) as Message[]
@@ -80,6 +83,7 @@ export default function AITutor(): JSX.Element {
   }, [messages])
 
   const checkProvider = async (provider: string) => {
+    if (!window.api?.ai) return
     const isAvail = await window.api.ai.isAvailable(provider, provider === 'ollama' ? { ollamaUrl } : {})
     setAvailable(prev => ({ ...prev, [provider]: isAvail }))
   }
@@ -87,10 +91,12 @@ export default function AITutor(): JSX.Element {
   useEffect(() => {
     checkProvider('claude')
     checkProvider('ollama')
+    checkProvider('gemini')
   }, [])
 
   const sendMessage = async () => {
     if (!input.trim() || loading) return
+    if (!window.api?.ai) return
     setLoading(true)
 
     const userMsg: Message = {
@@ -128,7 +134,7 @@ export default function AITutor(): JSX.Element {
       // Save to DB
       try {
         await window.api.db.run(
-          `INSERT INTO conversations (type, provider, messages, created_at)
+          `INSERT INTO conversations ("type", provider, messages, created_at)
            VALUES ('tutor', ?, ?, datetime('now'))`,
           [provider, JSON.stringify([...messages, userMsg, assistantMsg])]
         )

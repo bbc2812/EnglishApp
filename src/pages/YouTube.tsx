@@ -56,9 +56,11 @@ export default function YouTube(): JSX.Element {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<FilterType>('all')
   const [sortBy, setSortBy] = useState<SortType>('newest')
+  const [failedThumbnails, setFailedThumbnails] = useState<Set<string>>(new Set())
 
   const refreshAll = useCallback(async () => {
     setLoading(true)
+    if (!window.api?.content) { setLoading(false); return }
     try {
       const data = await window.api.content.fetchYouTubeRSS() as ChannelData[]
       setChannelGroups(data)
@@ -72,6 +74,7 @@ export default function YouTube(): JSX.Element {
 
   const loadChannel = useCallback(async (id: string) => {
     setLoading(true)
+    if (!window.api?.content) { setLoading(false); return }
     try {
       const data = await window.api.content.fetchYouTubeChannel(id) as Episode[]
       setEpisodes(data)
@@ -90,6 +93,7 @@ export default function YouTube(): JSX.Element {
   }, [channelId, loadChannel])
 
   const loadSubtitles = useCallback(async (videoId: string) => {
+    if (!window.api?.content) return null
     try {
       const result = await window.api.content.fetchYouTubeSubtitles(videoId)
       if (result.sentences.length > 0) {
@@ -188,6 +192,12 @@ export default function YouTube(): JSX.Element {
         <div>
           <h2 className="text-2xl font-bold text-white">YouTube</h2>
           <p className="text-gray-400 text-sm mt-1">English learning videos from top channels</p>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs bg-brand-950/50 text-brand-400 border border-brand-800/50">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse"></span>
+              Demo Mode — 18 episodes loaded from mock data
+            </span>
+          </div>
         </div>
         <button onClick={refreshAll} className="btn-primary px-4 py-2 text-sm">
           {loading ? '...' : '🔄 Refresh'}
@@ -333,13 +343,16 @@ export default function YouTube(): JSX.Element {
               </button>
             </div>
           </div>
-          <div className="aspect-video rounded-lg overflow-hidden bg-black">
+          <div className="aspect-video rounded-lg overflow-hidden bg-black relative">
             <iframe
               src={`https://www.youtube.com/embed/${selectedEpisode.videoId}`}
               className="w-full h-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
+            <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded text-xs text-brand-400 border border-brand-800/50">
+              Demo Mode — Videos require real YouTube IDs
+            </div>
           </div>
           {selectedEpisode.transcript && selectedEpisode.transcript.length > 0 && (
             <div className="mt-3 max-h-32 overflow-y-auto">
@@ -370,14 +383,24 @@ export default function YouTube(): JSX.Element {
               className={`card text-left hover:border-brand-500 transition-colors relative ${ep.learnt ? 'opacity-80 border-l-2 border-green-500/50' : ''}`}
             >
               <div className="aspect-video rounded-lg overflow-hidden bg-gray-800 mb-3 relative">
-                <img
-                  src={`https://img.youtube.com/vi/${ep.videoId}/mqdefault.jpg`}
-                  alt={ep.title}
-                  className="w-full h-full object-cover"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-4xl">▶️</span>
+                {failedThumbnails.has(ep.videoId) ? (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-700 to-gray-800">
+                    <div className="text-center">
+                      <span className="text-4xl block mb-2">▶️</span>
+                      <span className="text-xs text-gray-400">{ep.channel}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <img
+                    src={`https://img.youtube.com/vi/${ep.videoId}/mqdefault.jpg`}
+                    alt={ep.title}
+                    className="w-full h-full object-cover"
+                    onLoad={() => setFailedThumbnails(prev => { const next = new Set(prev); next.delete(ep.videoId); return next })}
+                    onError={() => setFailedThumbnails(prev => new Set(prev).add(ep.videoId))}
+                  />
+                )}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <span className="text-4xl drop-shadow-lg">▶️</span>
                 </div>
               </div>
               <h4 className="text-white text-sm font-semibold line-clamp-2 mb-1">{ep.title}</h4>

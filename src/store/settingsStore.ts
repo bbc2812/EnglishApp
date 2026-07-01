@@ -52,7 +52,7 @@ export const useSettingsStore = create<SettingsState>()(
       dailyNewWords: 20,
       bilingualGrammar: true,
       onboardingComplete: true,
-      newsApiKey: '733d0d9c99f84bdabd6decaf0525b25a',
+      newsApiKey: '',
       systemTray: true,
       clipboardHotkey: true,
       readingGoalMins: 15,

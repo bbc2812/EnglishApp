@@ -39,6 +39,7 @@ export default function Stats(): JSX.Element {
   const [activityData, setActivityData] = useState<{ name: string; value: number }[]>([])
 
   const loadData = async () => {
+    if (!window.api?.db) return
     const stats = await window.api.db.all(
       `SELECT * FROM daily_stats ORDER BY date DESC LIMIT 30`
     ) as DailyStat[]
@@ -48,12 +49,11 @@ export default function Stats(): JSX.Element {
     setTotalWords(wc[0]?.c || 0)
 
     const fc = await window.api.db.all(`SELECT COUNT(*) as c FROM flashcards`) as { c: number }[]
-    setFlashcards(fc[0]?.c || 0)
+    const flashcardCount = fc[0]?.c || 0
+    setFlashcards(flashcardCount)
 
     const st = await window.api.db.all(`SELECT MAX(streak) as s FROM daily_stats`) as { s: number }[]
     setStreak(st[0]?.s || 0)
-
-    await window.api.db.all(`SELECT COUNT(*) as c FROM units WHERE unlocked = 1`).catch(() => {})
 
     const xp = await window.api.db.all(`SELECT SUM(xp_earned) as total FROM daily_stats`) as { total?: number }[]
     setTotalXp(xp[0]?.total || 0)
@@ -72,25 +72,25 @@ export default function Stats(): JSX.Element {
         COALESCE(SUM(writing_mins), 0) as writing
        FROM daily_stats WHERE date >= date('now', '-7 days')`
     ) as { listening: number; speaking: number; writing: number }[]
-    const a = sevenDayStats[0]
+    const a = sevenDayStats[0] ?? { listening: 0, speaking: 0, writing: 0 }
     setActivityData([
       { name: 'Listening', value: a.listening || 0 },
       { name: 'Speaking', value: a.speaking || 0 },
       { name: 'Writing', value: a.writing || 0 },
-      { name: 'Flashcards', value: flashcards * 2 },
+      { name: 'Flashcards', value: flashcardCount * 2 },
     ])
   }
 
   useEffect(() => { loadData() }, [])
 
-  const chartData: ChartData[] = dailyStats.slice().reverse().map(s => ({
+  const chartData: ChartData[] = dailyStats.filter(s => s.date).slice().reverse().map(s => ({
     name: s.date.slice(5),
-    value: s.words_reviewed,
-    xp: s.xp_earned,
-    words: s.words_reviewed + s.new_words,
-    listening: s.listening_mins,
-    speaking: s.speaking_mins,
-    writing: s.writing_mins,
+    value: s.words_reviewed || 0,
+    xp: s.xp_earned || 0,
+    words: (s.words_reviewed || 0) + (s.new_words || 0),
+    listening: s.listening_mins || 0,
+    speaking: s.speaking_mins || 0,
+    writing: s.writing_mins || 0,
   }))
 
   // Streak heatmap (last 28 days)
@@ -101,7 +101,7 @@ export default function Stats(): JSX.Element {
     const stat = dailyStats.find(s => s.date === dateStr)
     return {
       date: dateStr,
-      activity: stat ? (stat.words_reviewed + stat.xp_earned) : 0,
+      activity: stat ? ((stat.words_reviewed || 0) + (stat.xp_earned || 0)) : 0,
     }
   })
 
@@ -173,16 +173,20 @@ export default function Stats(): JSX.Element {
         {/* Activity Breakdown */}
         <div className="card">
           <h4 className="text-sm font-semibold text-white mb-3">Activity Breakdown (7 days)</h4>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie data={activityData} cx="50%" cy="50%" innerRadius={40} outerRadius={70} dataKey="value" label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}>
-                {activityData.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: 8 }} />
-            </PieChart>
-          </ResponsiveContainer>
+          {activityData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <PieChart>
+                <Pie data={activityData} cx="50%" cy="50%" innerRadius={40} outerRadius={70} dataKey="value" label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}>
+                  {activityData.map((_, i) => (
+                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: 8 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[200px] text-gray-500 text-sm">No activity data yet</div>
+          )}
         </div>
 
         {/* Streak Heatmap */}
@@ -212,10 +216,12 @@ export default function Stats(): JSX.Element {
       <div className="card mb-4">
         <h4 className="text-sm font-semibold text-white mb-3">Estimated CEFR Level</h4>
         <div className="flex items-center gap-4">
-          {['A2', 'B1', 'B2', 'C1', 'C2'].map((cefr, i) => {
+           {['A2', 'B1', 'B2', 'C1', 'C2'].map((cefr, i) => {
             const thresholds = [50, 200, 500, 1000, 2000]
-            const progress = Math.min(100, Math.max(0, ((totalXp - thresholds[i]) / (thresholds[i + 1] - thresholds[i])) * 100))
+            const nextThreshold = thresholds[i + 1]
             const isComplete = totalXp >= thresholds[i]
+            const range = nextThreshold ? (nextThreshold - thresholds[i]) : 1
+            const progress = isComplete && !nextThreshold ? 100 : Math.min(100, Math.max(0, ((totalXp - thresholds[i]) / range) * 100))
             return (
               <div key={cefr} className="flex-1">
                 <div className="flex items-center justify-between mb-1">

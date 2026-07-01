@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 
 export function useUnitProgress() {
   const calculateUnitCompletion = useCallback(async (unitId: number): Promise<number> => {
+    if (!window.api?.db) return 0
     const result = await window.api.db.all(
       `SELECT
         (SELECT COUNT(*) FROM lessons WHERE unit_id = ?) as total,
@@ -17,6 +18,7 @@ export function useUnitProgress() {
   }, [])
 
   const updateUnitProgress = useCallback(async (unitId: number): Promise<void> => {
+    if (!window.api?.db) return
     const percent = await calculateUnitCompletion(unitId)
 
     await window.api.db.run(
@@ -28,6 +30,7 @@ export function useUnitProgress() {
   }, [calculateUnitCompletion])
 
   const checkAndUnlockNext = useCallback(async (completedUnitId: number): Promise<boolean> => {
+    if (!window.api?.db) return false
     const result = await window.api.db.all(
       `SELECT u.id, u.unlocked
        FROM units u
@@ -56,6 +59,7 @@ export function useUnitProgress() {
   }, [calculateUnitCompletion])
 
   const unlockUnit = useCallback(async (unitId: number): Promise<void> => {
+    if (!window.api?.db) return
     await window.api.db.run(
       `UPDATE units SET unlocked = 1 WHERE id = ?`,
       [unitId]
@@ -69,6 +73,7 @@ export function useUnitProgress() {
   }, [])
 
   const completeLesson = useCallback(async (lessonId: number, score: number): Promise<void> => {
+    if (!window.api?.db) return
     await window.api.db.run(
       `INSERT INTO lesson_progress (lesson_id, completed_at, score)
        VALUES (?, datetime('now'), ?)`,

@@ -62,12 +62,13 @@ function AudioPlayer({ url, transcript }: { url: string | null; transcript: stri
             setDuration(dur)
             setProgress((curr / dur) * 100)
             if (transcript) {
+              const progress = curr / dur
+              const sentences = transcript.split(/(?<=[.!?])\s+/)
               const sentenceIndex = Math.min(
-                Math.floor((curr / dur) * 3),
-                2
+                Math.floor(progress * sentences.length),
+                sentences.length - 1
               )
-              const lines = transcript.split('. ')
-              setHighlightedLine(lines[sentenceIndex] || '')
+              setHighlightedLine(sentences[sentenceIndex] || '')
             }
           }
         }, 500)
@@ -168,7 +169,7 @@ function AudioPlayer({ url, transcript }: { url: string | null; transcript: stri
                   : 'text-gray-400'
               }`}
             >
-              {sentence.trim()}.{sentence.trim().endsWith('.') ? '' : ''}
+              {sentence.trim()}
             </p>
           )
         })}
@@ -330,6 +331,10 @@ export default function Listening(): JSX.Element {
   const loadLesson = useCallback(async () => {
     if (!lessonId) return
     setLoading(true)
+    if (!window.api?.db) {
+      setLoading(false)
+      return
+    }
 
     const les = await window.api.db.all(
       `SELECT * FROM lessons WHERE id = ?`,
@@ -525,7 +530,7 @@ export default function Listening(): JSX.Element {
                   )}
                   <div className="flex gap-3 justify-center">
                     <button
-                      onClick={() => { setPhase('intro'); setAnswers(new Array(exercises.length).fill(null)) }}
+                      onClick={() => { setPhase('listening'); setAnswers(new Array(exercises.length).fill(null)) }}
                       className="btn-secondary px-6 py-2.5 text-sm"
                     >
                       Retry

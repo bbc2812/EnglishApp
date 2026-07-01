@@ -31,7 +31,7 @@ export default function Import(): JSX.Element {
   const [shadowingLevel, setShadowingLevel] = useState<'original' | 'B1' | 'B2' | 'C1'>('original')
 
   const handleImport = useCallback(async () => {
-    if (!url.trim()) return
+    if (!url.trim() || !window.api?.content) return
     setImporting(true)
     try {
       const data = await window.api.content.scrapeUrl(url) as { title: string; description: string; content: string }

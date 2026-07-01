@@ -453,12 +453,16 @@ export default function Dashboard(): JSX.Element {
                     <span className="text-green-400">✅ Completed! +{dailyChallenge.xp_reward} XP</span>
                   ) : (
                     <span>
-                      {dailyChallenge.type === 'vocab_blitz' && '20 flashcards in 5 min'}
-                      {dailyChallenge.type === 'listening_dictation' && 'Transcribe 60s audio'}
-                      {dailyChallenge.type === 'shadow_master' && 'Nail 3 sentences ≥80%'}
-                      {dailyChallenge.type === 'writing_sprint' && '150-word essay in 10 min'}
-                      {dailyChallenge.type === 'grammar_gauntlet' && '10 error-detection questions'}
-                      {' — '}
+                      {(() => {
+                        switch (dailyChallenge.type) {
+                          case 'vocab_blitz': return '20 flashcards in 5 min'
+                          case 'listening_dictation': return 'Transcribe 60s audio'
+                          case 'shadow_master': return 'Nail 3 sentences ≥80%'
+                          case 'writing_sprint': return '150-word essay in 10 min'
+                          case 'grammar_gauntlet': return '10 error-detection questions'
+                          default: return 'Complete today\'s challenge'
+                        }
+                      })()}{' — '}
                       <span className="text-brand-400">+{dailyChallenge.xp_reward} XP</span>
                     </span>
                   )}

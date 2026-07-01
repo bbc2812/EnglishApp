@@ -100,6 +100,7 @@ export function useDictionary() {
   const lookup = useCallback(async (word: string): Promise<DictEntry | null> => {
     const clean = word.trim().toLowerCase()
     if (!clean || clean.split(' ').length > 3) return null
+    if (!window.api?.db) return null
 
     // Check cache first
     const cached = await window.api.db.query(
@@ -128,6 +129,7 @@ export function useDictionary() {
   const translate = useCallback(async (word: string): Promise<string> => {
     const clean = word.trim().toLowerCase()
     if (!clean) return word
+    if (!window.api?.db) return word
 
     const cached = await window.api.db.query(
       'SELECT translation FROM translation_cache WHERE word = ?',
@@ -149,6 +151,7 @@ export function useDictionary() {
   const fetchWordNetwork = useCallback(async (word: string): Promise<{ synonyms: string[]; associations: string[] }> => {
     const clean = word.trim().toLowerCase()
     if (!clean) return { synonyms: [], associations: [] }
+    if (!window.api?.content) return { synonyms: [], associations: [] }
 
     const result = await window.api.content.fetchDatamuse(clean, 'rel_syn') as { word: string; score: number }[]
     if (!result) return { synonyms: [], associations: [] }

@@ -61,6 +61,7 @@ export default function Learning(): JSX.Element {
 
   const fetchHistory = useCallback(async () => {
     setLoading(true)
+    if (!window.api?.learning) { setLoading(false); return }
     try {
       const result = await window.api.learning.getHistory({
         search: search.trim(),
@@ -77,6 +78,7 @@ export default function Learning(): JSX.Element {
   }, [search, contentType, cefrLevel, completed, sortBy])
 
   const fetchStats = useCallback(async () => {
+    if (!window.api?.learning) return
     try {
       const statsResult = await window.api.learning.getStats()
       setStats(statsResult)
@@ -84,6 +86,7 @@ export default function Learning(): JSX.Element {
   }, [])
 
   const fetchRecent = useCallback(async () => {
+    if (!window.api?.learning) return
     try {
       const recent = await window.api.learning.getRecent(20)
       setRecentLearnt(recent)
@@ -91,6 +94,7 @@ export default function Learning(): JSX.Element {
   }, [])
 
   const fetchByDate = useCallback(async () => {
+    if (!window.api?.learning) return
     try {
       const groupedResult = await window.api.learning.getByDate()
       setGrouped(groupedResult)

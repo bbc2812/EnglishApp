@@ -53,6 +53,7 @@ function CardBack({ card }: { card: FlashcardRow }): JSX.Element {
     try { return JSON.parse(card.examples ?? '[]') } catch { return [] }
   })()
   const [generating, setGenerating] = useState(false)
+  const [localMnemonic, setLocalMnemonic] = useState(card.mnemonic)
   const { generateMnemonic, saveMnemonic } = useSRS()
   const { activeProvider } = useSettingsStore()
 
@@ -79,7 +80,7 @@ function CardBack({ card }: { card: FlashcardRow }): JSX.Element {
     }
 
     await saveMnemonic(card.word_id, mnemonic)
-    card.mnemonic = mnemonic
+    setLocalMnemonic(mnemonic)
     setGenerating(false)
   }
 
@@ -109,12 +110,12 @@ function CardBack({ card }: { card: FlashcardRow }): JSX.Element {
 
       {/* Mnemonic section */}
       <div className="mt-2 pt-3 border-t border-gray-800">
-        {card.mnemonic ? (
+        {localMnemonic ? (
           <details open>
             <summary className="text-sm font-semibold text-brand-400 cursor-pointer flex items-center gap-2">
               💡 Memory Trick
             </summary>
-            <p className="text-gray-300 text-sm mt-2 leading-relaxed">{card.mnemonic}</p>
+            <p className="text-gray-300 text-sm mt-2 leading-relaxed">{localMnemonic}</p>
           </details>
         ) : (
           <div className="flex items-center justify-between">
@@ -194,6 +195,10 @@ export default function Flashcards(): JSX.Element {
   async function startSession(): Promise<void> {
     setLoading(true)
     setSessionXp(0)
+    if (!window.api?.db) {
+      setLoading(false)
+      return
+    }
     const cards = await loadDueCards(50)
     setQueue(cards, 'srs', 'flashcards', null)
     setSessionSource('srs')
@@ -202,6 +207,10 @@ export default function Flashcards(): JSX.Element {
 
   async function startUnitSession(uid: number): Promise<void> {
     setLoading(true)
+    if (!window.api?.db) {
+      setLoading(false)
+      return
+    }
     const words = await window.api.db.all(
       `SELECT w.id as word_id, w.word, w.ipa, w.audio_url, w.definition, w.examples
        FROM words w WHERE w.unit_id = ?`,
@@ -285,7 +294,7 @@ export default function Flashcards(): JSX.Element {
 
   const handleSessionDone = async () => {
     // Save session XP
-    if (sessionXp > 0) {
+    if (sessionXp > 0 && window.api?.db) {
       const today = new Date().toISOString().slice(0, 10)
       try {
         await window.api.db.run(
