@@ -213,8 +213,8 @@ if (process.contextIsolated) {
     console.error(error)
   }
 } else {
-  // @ts-ignore (global fallback for non-isolated contexts)
-  window.electron = electronAPI
-  // @ts-ignore
-  window.api = api
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- global fallback for non-isolated contexts
+  ;(window as any).electron = electronAPI
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(window as any).api = api
 }

@@ -22,22 +22,25 @@ function CEFRBadge({ level }: { level: string }): JSX.Element {
 function CompletionRing({ percent, size = 40, strokeWidth = 3, unlocked }: {
   percent: number; size?: number; strokeWidth?: number; unlocked: number
 }): JSX.Element {
-  const radius = (size - strokeWidth) / 2
+  const safePercent = typeof percent === 'string' ? parseFloat(percent) || 0 : (percent ?? 0)
+  const safeSize = size ?? 40
+  const safeStrokeWidth = strokeWidth ?? 3
+  const radius = (safeSize - safeStrokeWidth) / 2
   const circumference = 2 * Math.PI * radius
-  const offset = circumference - (percent / 100) * circumference
-  const strokeColor = percent >= 80 ? '#22c55e' : percent >= 40 ? '#eab308' : '#0ea5e9'
+  const offset = circumference - (safePercent / 100) * circumference
+  const strokeColor = safePercent >= 80 ? '#22c55e' : safePercent >= 40 ? '#eab308' : '#0ea5e9'
 
   return (
-    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
+    <div className="relative flex items-center justify-center" style={{ width: safeSize, height: safeSize }}>
+      <svg width={safeSize} height={safeSize} className="-rotate-90">
         <circle
-          cx={size / 2} cy={size / 2} r={radius}
-          fill="none" stroke="#1f2937" strokeWidth={strokeWidth}
+          cx={safeSize / 2} cy={safeSize / 2} r={radius}
+          fill="none" stroke="#1f2937" strokeWidth={safeStrokeWidth}
         />
-        {percent > 0 && (
+        {safePercent > 0 && (
           <circle
-            cx={size / 2} cy={size / 2} r={radius}
-            fill="none" stroke={strokeColor} strokeWidth={strokeWidth}
+            cx={safeSize / 2} cy={safeSize / 2} r={radius}
+            fill="none" stroke={strokeColor} strokeWidth={safeStrokeWidth}
             strokeDasharray={circumference}
             strokeDashoffset={offset}
             strokeLinecap="round"
@@ -94,7 +97,7 @@ function RoadmapSVG({
   const positions = useMemo(() => UNIT_POSITIONS.slice(0, units.length), [units.length])
   const pathD = useMemo(() => generatePath(positions), [positions])
   const pathLength = 2500
-  const totalUnits = units.length
+  const totalUnits = units.length || 1
   const unlockedCount = units.filter((u) => u.unlocked).length
 
   return (
@@ -193,7 +196,7 @@ function RoadmapSVG({
                 {/* Percent text inside ring */}
                 {isUnlocked && unit.percent_complete > 0 && (
                   <text
-                    x={pos.x} cy={pos.y + 20}
+                    x={pos.x} y={pos.y + 20}
                     textAnchor="middle"
                     dominantBaseline="central"
                     fill={isComplete ? '#22c55e' : '#e5e7eb'}
@@ -312,6 +315,10 @@ export default function Dashboard(): JSX.Element {
 
   const loadDashboard = useCallback(async () => {
     setLoading(true)
+    if (!window.api?.db) {
+      setLoading(false)
+      return
+    }
 
     await loadUnits()
 

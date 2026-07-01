@@ -55,7 +55,8 @@ function createTray(window: BrowserWindow): void {
 function registerGlobalShortcuts(): void {
   // Ctrl+Shift+D — Clipboard capture for dictionary lookup
   globalShortcut.register('CommandOrControl+Shift+D', () => {
-    const clipboard = require('electron').clipboard
+    // eslint-disable-next-line @typescript-eslint/no-var-requires -- dynamic require for clipboard
+    const { clipboard } = require('electron')
     const text = clipboard.readText('selection') || clipboard.readText('general')
     if (text && text.trim().length > 0) {
       ipcMain.emit('clipboard:capture', {}, text.trim())
@@ -65,7 +66,8 @@ function registerGlobalShortcuts(): void {
 
 // Clipboard IPC handler
 ipcMain.handle('clipboard:capture', () => {
-  const clipboard = require('electron').clipboard
+  // eslint-disable-next-line @typescript-eslint/no-var-requires -- dynamic require for clipboard
+  const { clipboard } = require('electron')
   return clipboard.readText('selection') || clipboard.readText('general') || ''
 })
 

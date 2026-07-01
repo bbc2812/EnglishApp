@@ -64,6 +64,7 @@ export default function Settings(): JSX.Element {
   const [level, setLevel] = useState(1)
 
   useEffect(() => {
+    if (!window.api?.db) return
     window.api.db.all(`SELECT key, unlocked_at FROM achievements WHERE unlocked_at IS NOT NULL`)
       .then(rows => setAchievements((rows as { key: string }[]).map(r => r.key)))
 
@@ -75,12 +76,14 @@ export default function Settings(): JSX.Element {
       }).catch(() => {})
 
     const checkAchievements = async () => {
+      if (!window.api?.db) return
       const wordCount = await window.api.db.all(`SELECT COUNT(*) as c FROM words`) as { c: number }[]
       const streak = await window.api.db.all(`SELECT streak FROM daily_stats ORDER BY date DESC LIMIT 1`) as { streak: number }[]
       const writingCount = await window.api.db.all(`SELECT COUNT(*) as c FROM writing_history`) as { c: number }[]
       const convCount = await window.api.db.all(`SELECT COUNT(*) as c FROM conversations`) as { c: number }[]
       const lessonCount = await window.api.db.all(`SELECT COUNT(*) as c FROM lesson_progress WHERE score >= 80`) as { c: number }[]
       const flashcardCount = await window.api.db.all(`SELECT COUNT(*) as c FROM flashcards`) as { c: number }[]
+      const shadowingBest = await window.api.db.all(`SELECT MAX(match_score) as best FROM shadowing_sessions`) as { best?: number }[]
       const unlockedUnits = await window.api.db.all(`SELECT COUNT(*) as c FROM units WHERE unlocked = 1`) as { c: number }[]
 
       const newAchievements: string[] = []
@@ -88,6 +91,7 @@ export default function Settings(): JSX.Element {
       if (flashcardCount[0]?.c && flashcardCount[0].c > 0 && !achievements.includes('first_card')) newAchievements.push('first_card')
       if (wordCount[0]?.c && wordCount[0].c >= 100 && !achievements.includes('word_hoarder')) newAchievements.push('word_hoarder')
       if (streak[0]?.streak && streak[0].streak >= 7 && !achievements.includes('sharpshooter')) newAchievements.push('sharpshooter')
+      if (shadowingBest[0]?.best && shadowingBest[0].best >= 90 && !achievements.includes('mimic_master')) newAchievements.push('mimic_master')
       if (writingCount[0]?.c && writingCount[0].c >= 5 && !achievements.includes('essay_writer')) newAchievements.push('essay_writer')
       if (convCount[0]?.c && convCount[0].c >= 50 && !achievements.includes('tutor_fan')) newAchievements.push('tutor_fan')
       if (lessonCount[0]?.c && lessonCount[0].c >= 10 && !achievements.includes('speed_reader')) newAchievements.push('speed_reader')
@@ -96,11 +100,12 @@ export default function Settings(): JSX.Element {
 
       if (newAchievements.length > 0) {
         for (const key of newAchievements) {
+          const a = ACHIEVEMENTS.find(x => x.key === key)
           await window.api.db.run(
             `INSERT INTO achievements (key, title, description, icon, unlocked_at)
              VALUES (?, ?, ?, ?, datetime('now'))
              ON CONFLICT(key) DO NOTHING`,
-            [key, ACHIEVEMENTS.find(a => a.key === key)?.title || '', '', '🏅']
+            [key, a?.title || '', a?.desc || '', a?.icon || '🏅']
           )
         }
         setAchievements(prev => [...prev, ...newAchievements])
@@ -108,7 +113,7 @@ export default function Settings(): JSX.Element {
     }
 
     checkAchievements()
-  }, [])
+  }, [achievements])
 
   const handleSave = () => {
     setSaved(true)
