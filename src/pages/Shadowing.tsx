@@ -60,24 +60,6 @@ function WaveformBox({ id }: { id: string; color?: string }): JSX.Element {
   )
 }
 
-function initWave(id: string, color: string): Promise<WaveSurfer> {
-  return new Promise((resolve, reject) => {
-    const ws = WaveSurfer.create({
-      container: `#${id}`,
-      height: 60,
-      waveColor: color,
-      progressColor: color === '#38bdf8' ? '#7dd3fc' : '#52c41a',
-      cursorColor: 'transparent',
-      barWidth: 2,
-      barGap: 1,
-      barRadius: 2,
-      backend: 'WebAudio',
-    })
-    ws.on('error', reject)
-    ws.on('ready', () => resolve(ws))
-  })
-}
-
 function ProblemSounds(): JSX.Element {
   const problems = [
     { phoneme: '/θ/', issue: 'Say "th" like "s" or "z"', drill: 'think, this, that, the' },
@@ -120,7 +102,6 @@ export default function Shadowing(): JSX.Element {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
-  const nativeWsRef = useRef<WaveSurfer | null>(null)
 
   const current = DRILLS[drillIndex]
 
@@ -130,26 +111,32 @@ export default function Shadowing(): JSX.Element {
   }
 
   useEffect(() => {
-    if (nativeWsRef.current) { nativeWsRef.current.destroy(); nativeWsRef.current = null }
-  }, [drillIndex])
+    return () => { window.speechSynthesis?.cancel() }
+  }, [])
 
-  const playNative = useCallback(async () => {
+  const playNative = useCallback(() => {
+    if (!('speechSynthesis' in window)) {
+      setPhase('record')
+      return
+    }
+    window.speechSynthesis.cancel()
     setNativePlaying(true)
-    try {
-      nativeWsRef.current = await initWave('native-waveform', '#38bdf8')
-      nativeWsRef.current.load(current.audioUrl)
-      nativeWsRef.current.play()
-      // Auto-advance after playback
-      setTimeout(() => {
-        setNativePlaying(false)
-        setPhase('record')
-      }, 4000)
-    } catch {
-      // Fallback: no audio available, just go to record
+    let finished = false
+    const done = () => {
+      if (finished) return
+      finished = true
       setNativePlaying(false)
       setPhase('record')
     }
-  }, [current.audioUrl])
+    const utterance = new SpeechSynthesisUtterance(`${current.word}. ${current.sentences.join(' ')}`)
+    utterance.lang = 'en-US'
+    utterance.rate = 0.85
+    utterance.onend = done
+    utterance.onerror = done
+    window.speechSynthesis.speak(utterance)
+    // Safety net in case the platform never fires end/error
+    setTimeout(done, 20000)
+  }, [current])
 
   const startRecording = useCallback(() => {
     const timerInterval = setInterval(() => setRecordingTime(prev => prev + 1), 1000)
@@ -282,13 +269,8 @@ export default function Shadowing(): JSX.Element {
               <p className="text-4xl font-bold text-white mb-1">{current.word}</p>
               <p className="text-brand-400 text-lg font-mono mb-6">/{current.ipa}/</p>
 
-              {/* Native waveform */}
-              <div className="mb-4">
-                <WaveformBox id="native-waveform" color="#38bdf8" />
-              </div>
-
               {nativePlaying ? (
-                <p className="text-brand-400 text-sm animate-pulse">Playing native audio…</p>
+                <p className="text-brand-400 text-sm animate-pulse">🔊 Playing native audio…</p>
               ) : (
                 <button onClick={playNative} className="btn-primary px-8 py-3 text-base">
                   ▶ Play Native Audio

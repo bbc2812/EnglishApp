@@ -26,6 +26,95 @@ interface Lesson {
 
 type Phase = 'intro' | 'listening' | 'exercises' | 'results'
 
+interface LessonListItem extends Lesson {
+  unit_title: string
+  cefr_level: string
+}
+
+function TtsPlayer({ transcript }: { transcript: string }): JSX.Element {
+  const sentences = transcript.split(/(?<=[.!?])\s+/).filter(s => s.trim())
+  const [playing, setPlaying] = useState(false)
+  const [speed, setSpeed] = useState(1)
+  const [activeIndex, setActiveIndex] = useState(-1)
+  const stoppedRef = useRef(false)
+
+  useEffect(() => {
+    return () => { window.speechSynthesis?.cancel() }
+  }, [])
+
+  const stop = () => {
+    stoppedRef.current = true
+    window.speechSynthesis.cancel()
+    setPlaying(false)
+    setActiveIndex(-1)
+  }
+
+  const playFrom = (start: number, rate: number) => {
+    if (!('speechSynthesis' in window)) return
+    window.speechSynthesis.cancel()
+    stoppedRef.current = false
+    setPlaying(true)
+    const speak = (i: number) => {
+      if (stoppedRef.current || i >= sentences.length) {
+        setPlaying(false)
+        setActiveIndex(-1)
+        return
+      }
+      setActiveIndex(i)
+      const utterance = new SpeechSynthesisUtterance(sentences[i])
+      utterance.lang = 'en-US'
+      utterance.rate = rate
+      utterance.onend = () => speak(i + 1)
+      utterance.onerror = () => { setPlaying(false); setActiveIndex(-1) }
+      window.speechSynthesis.speak(utterance)
+    }
+    speak(start)
+  }
+
+  return (
+    <div className="card p-4">
+      <div className="flex items-center gap-3 mb-3">
+        <button
+          onClick={() => (playing ? stop() : playFrom(0, speed))}
+          className="w-10 h-10 rounded-full bg-brand-600 hover:bg-brand-500 flex items-center justify-center text-white text-lg flex-shrink-0"
+        >
+          {playing ? '⏹' : '▶'}
+        </button>
+        <p className="text-xs text-gray-500">Text-to-speech narration — click any sentence to play from there</p>
+      </div>
+
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-xs text-gray-500">Speed:</span>
+        {[0.75, 1, 1.25].map(s => (
+          <button
+            key={s}
+            onClick={() => { setSpeed(s); if (playing) playFrom(Math.max(activeIndex, 0), s) }}
+            className={`text-xs px-2 py-0.5 rounded ${speed === s ? 'bg-brand-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
+          >
+            {s}x
+          </button>
+        ))}
+      </div>
+
+      <div className="space-y-2 mt-3">
+        {sentences.map((sentence, i) => (
+          <p
+            key={i}
+            onClick={() => playFrom(i, speed)}
+            className={`text-sm leading-relaxed cursor-pointer transition-all ${
+              i === activeIndex
+                ? 'text-brand-400 font-semibold bg-brand-950/30 px-2 py-1 rounded'
+                : 'text-gray-400 hover:text-gray-200'
+            }`}
+          >
+            {sentence.trim()}
+          </p>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function AudioPlayer({ url, transcript }: { url: string | null; transcript: string | null }): JSX.Element {
   const [playing, setPlaying] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -108,6 +197,9 @@ function AudioPlayer({ url, transcript }: { url: string | null; transcript: stri
   }
 
   if (!url || !transcript) {
+    if (transcript) {
+      return <TtsPlayer transcript={transcript} />
+    }
     return (
       <div className="card p-4 bg-gray-800/50">
         <p className="text-gray-500 text-sm">Audio not available for this lesson</p>
@@ -322,6 +414,7 @@ export default function Listening(): JSX.Element {
   const { loadUnits, setTodayXP } = useProgressStore()
 
   const [lesson, setLesson] = useState<Lesson | null>(null)
+  const [allLessons, setAllLessons] = useState<LessonListItem[]>([])
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [loading, setLoading] = useState(true)
   const [phase, setPhase] = useState<Phase>('intro')
@@ -329,9 +422,21 @@ export default function Listening(): JSX.Element {
   const [completedAt, setCompletedAt] = useState<number>(0)
 
   const loadLesson = useCallback(async () => {
-    if (!lessonId) return
     setLoading(true)
     if (!window.api?.db) {
+      setLoading(false)
+      return
+    }
+
+    if (!lessonId) {
+      const list = await window.api.db.all(
+        `SELECT l.*, u.title AS unit_title, u.cefr_level
+         FROM lessons l JOIN units u ON u.id = l.unit_id
+         WHERE l.type = 'listening' ORDER BY l.id`,
+        []
+      ) as LessonListItem[]
+      setAllLessons(list)
+      setLesson(null)
       setLoading(false)
       return
     }
@@ -342,11 +447,13 @@ export default function Listening(): JSX.Element {
     ) as Lesson[]
 
     if (les.length === 0) {
+      setLesson(null)
       setLoading(false)
       return
     }
 
     setLesson(les[0])
+    setPhase('intro')
     const exs = await window.api.db.all(
       `SELECT * FROM exercises WHERE lesson_id = ? ORDER BY id`,
       [lessonId]
@@ -405,6 +512,38 @@ export default function Listening(): JSX.Element {
     return (
       <div className="p-8 flex items-center justify-center h-full">
         <p className="text-gray-500">Loading lesson…</p>
+      </div>
+    )
+  }
+
+  if (!lessonId) {
+    return (
+      <div className="p-8 overflow-y-auto h-full">
+        <h2 className="text-2xl font-bold text-white mb-1">Listening</h2>
+        <p className="text-gray-400 text-sm mb-8">Audio lessons with comprehension exercises</p>
+        <div className="grid gap-3 max-w-3xl">
+          {allLessons.map(l => (
+            <button
+              key={l.id}
+              disabled={!!l.locked}
+              onClick={() => navigate(`/listening?lesson=${l.id}`)}
+              className="card p-4 text-left flex items-center gap-4 hover:border-brand-500/50 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <span className="text-2xl">🎧</span>
+              <div className="flex-1">
+                <p className="text-white font-medium">{l.title}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{l.unit_title}</p>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded badge-${l.cefr_level.toLowerCase()}`}>{l.cefr_level}</span>
+              <span className="text-gray-500">{l.locked ? '🔒' : '→'}</span>
+            </button>
+          ))}
+          {allLessons.length === 0 && (
+            <div className="card flex items-center justify-center h-40 text-gray-600">
+              No listening lessons available
+            </div>
+          )}
+        </div>
       </div>
     )
   }

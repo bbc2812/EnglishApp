@@ -25,6 +25,11 @@ interface Lesson {
 
 type Phase = 'intro' | 'reading' | 'quickread' | 'exercises' | 'results'
 
+interface LessonListItem extends Lesson {
+  unit_title: string
+  cefr_level: string
+}
+
 interface QuickReadCard {
   idea: string
   vocab: string[]
@@ -205,6 +210,7 @@ export default function Reading(): JSX.Element {
   const { loadUnits, setTodayXP } = useProgressStore()
 
   const [lesson, setLesson] = useState<Lesson | null>(null)
+  const [allLessons, setAllLessons] = useState<LessonListItem[]>([])
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [loading, setLoading] = useState(true)
   const [phase, setPhase] = useState<Phase>('intro')
@@ -213,9 +219,21 @@ export default function Reading(): JSX.Element {
   const [completedAt, setCompletedAt] = useState<number>(0)
 
   const loadLesson = useCallback(async () => {
-    if (!lessonId) return
     setLoading(true)
     if (!window.api?.db) {
+      setLoading(false)
+      return
+    }
+
+    if (!lessonId) {
+      const list = await window.api.db.all(
+        `SELECT l.*, u.title AS unit_title, u.cefr_level
+         FROM lessons l JOIN units u ON u.id = l.unit_id
+         WHERE l.type = 'reading' ORDER BY l.id`,
+        []
+      ) as LessonListItem[]
+      setAllLessons(list)
+      setLesson(null)
       setLoading(false)
       return
     }
@@ -226,11 +244,13 @@ export default function Reading(): JSX.Element {
     ) as Lesson[]
 
     if (les.length === 0) {
+      setLesson(null)
       setLoading(false)
       return
     }
 
     setLesson(les[0])
+    setPhase('intro')
     const exs = await window.api.db.all(
       `SELECT * FROM exercises WHERE lesson_id = ? ORDER BY id`,
       [lessonId]
@@ -299,6 +319,38 @@ export default function Reading(): JSX.Element {
     return (
       <div className="p-8 flex items-center justify-center h-full">
         <p className="text-gray-500">Loading article…</p>
+      </div>
+    )
+  }
+
+  if (!lessonId) {
+    return (
+      <div className="p-8 overflow-y-auto h-full">
+        <h2 className="text-2xl font-bold text-white mb-1">Reading</h2>
+        <p className="text-gray-400 text-sm mb-8">Articles with click-to-define vocabulary</p>
+        <div className="grid gap-3 max-w-3xl">
+          {allLessons.map(l => (
+            <button
+              key={l.id}
+              disabled={!!l.locked}
+              onClick={() => navigate(`/reading?lesson=${l.id}`)}
+              className="card p-4 text-left flex items-center gap-4 hover:border-brand-500/50 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <span className="text-2xl">📖</span>
+              <div className="flex-1">
+                <p className="text-white font-medium">{l.title}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{l.unit_title}</p>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded badge-${l.cefr_level.toLowerCase()}`}>{l.cefr_level}</span>
+              <span className="text-gray-500">{l.locked ? '🔒' : '→'}</span>
+            </button>
+          ))}
+          {allLessons.length === 0 && (
+            <div className="card flex items-center justify-center h-40 text-gray-600">
+              No reading lessons available
+            </div>
+          )}
+        </div>
       </div>
     )
   }

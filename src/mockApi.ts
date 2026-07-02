@@ -154,6 +154,14 @@ const mockApi = {
         ]
       }
 
+      // Lesson list with unit info (Listening & Reading index pages)
+      if (sql.includes('FROM lessons l JOIN units u')) {
+        const type = sql.includes("'reading'") ? 'reading' : 'listening'
+        return Object.values(mockData.lessons)
+          .filter(l => l.type === type)
+          .map(l => ({ ...l, unit_title: `Unit ${l.unit_id}`, cefr_level: l.unit_id <= 2 ? 'B1' : 'B2' }))
+      }
+
       // Lesson data (Listening & Reading) - handles both params and string interpolation
       if (sql.includes('SELECT * FROM lessons')) {
         let lessonId: number

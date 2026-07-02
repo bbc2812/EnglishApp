@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useSettingsStore } from '../store/settingsStore'
 
 interface NewsArticle {
@@ -470,7 +470,7 @@ function GuardianCard({ item, onSave, onRead }: {
           </button>
         </div>
         <button
-          onClick={(e) => { e.stopPropagation(); onSave({ title: item.webTitle, url: item.webUrl }) }}
+          onClick={(e) => { e.stopPropagation(); onSave({ title: item.webTitle, url: item.webUrl }); setSaved(true) }}
           className={`text-xs px-3 py-1.5 rounded flex-shrink-0 ${saved ? 'bg-green-950 text-green-300' : 'bg-gray-800 text-gray-400'}`}
         >
           {saved ? '✅' : '💾'}
