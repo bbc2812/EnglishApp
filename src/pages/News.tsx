@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useSettingsStore } from '../store/settingsStore'
 
 interface NewsArticle {
@@ -33,6 +33,12 @@ interface GuardianItem {
   pillarName: string
 }
 
+interface ArticleContent {
+  title: string
+  description: string
+  content: string
+}
+
 type TabType = 'all' | 'bbc' | 'guardian' | 'wotd' | 'quotes'
 
 export default function News(): JSX.Element {
@@ -46,6 +52,14 @@ export default function News(): JSX.Element {
   const [quotes, setQuotes] = useState<{ content: string; author: string }[]>([])
   const [loading, setLoading] = useState(false)
   const [savedCount, setSavedCount] = useState(0)
+  const [viewingArticle, setViewingArticle] = useState<{
+    title: string
+    content: string
+    source: string
+    url: string
+    publishedAt?: string
+  } | null>(null)
+  const [loadingContent, setLoadingContent] = useState(false)
 
   const fetchNews = useCallback(async (category?: string) => {
     setLoading(true)
@@ -91,6 +105,7 @@ export default function News(): JSX.Element {
 
   const loadTab = useCallback((tab: TabType) => {
     setActiveTab(tab)
+    setViewingArticle(null)
     switch (tab) {
       case 'all':
         const categories = ['general', 'technology', 'science', 'business', 'sports']
@@ -114,6 +129,101 @@ export default function News(): JSX.Element {
       [item.url, item.title, item.description || '', item.title]
     ).catch(() => {})
     setSavedCount(prev => prev + 1)
+  }
+
+  const handleOpenArticle = async (title: string, url: string, source: string, publishedAt?: string) => {
+    setLoadingContent(true)
+    setViewingArticle(null)
+    try {
+      if (window.api?.content) {
+        const scraped = await window.api.content.scrapeUrl(url) as ArticleContent
+        if (scraped.content && scraped.content.length > 100) {
+          setViewingArticle({
+            title: scraped.title || title,
+            content: scraped.content,
+            source,
+            url,
+            publishedAt,
+          })
+        }
+      }
+    } catch { /* will show fallback below */ }
+
+    // If scraping failed or returned nothing, still show the article with external link
+    if (!viewingArticle) {
+      setViewingArticle({
+        title,
+        content: '',
+        source,
+        url,
+        publishedAt,
+      })
+    }
+    setLoadingContent(false)
+  }
+
+  const handleBackToList = () => {
+    setViewingArticle(null)
+  }
+
+  const formatPublishedAt = (dateStr?: string) => {
+    if (!dateStr) return ''
+    try {
+      return new Date(dateStr).toLocaleDateString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+      })
+    } catch {
+      return ''
+    }
+  }
+
+  // Article reader view
+  if (viewingArticle) {
+    return (
+      <div className="p-8 flex flex-col h-full overflow-y-auto">
+        <div className="mb-6">
+          <button
+            onClick={handleBackToList}
+            className="btn-secondary px-4 py-2 text-sm mb-4 flex items-center gap-2"
+          >
+            ← Back to News
+          </button>
+          <h2 className="text-2xl font-bold text-white">{viewingArticle.title}</h2>
+          <div className="flex items-center gap-3 mt-2">
+            <span className="text-xs text-gray-500">{viewingArticle.source}</span>
+            {viewingArticle.publishedAt && (
+              <span className="text-xs text-gray-500">• {formatPublishedAt(viewingArticle.publishedAt)}</span>
+            )}
+          </div>
+        </div>
+
+        {loadingContent ? (
+          <div className="card flex items-center justify-center h-64 text-gray-500">
+            Loading article content…
+          </div>
+        ) : viewingArticle.content && viewingArticle.content.length > 100 ? (
+          <div className="card p-6 selectable">
+            <div className="text-gray-300 leading-relaxed text-base whitespace-pre-wrap">
+              {viewingArticle.content.substring(0, 5000)}
+            </div>
+          </div>
+        ) : (
+          <div className="card p-8 text-center">
+            <p className="text-gray-400 mb-4">
+              This article could not be loaded in-app. It may be behind a paywall or require JavaScript to display.
+            </p>
+            <a
+              href={viewingArticle.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary px-6 py-2.5 text-sm inline-flex items-center gap-2"
+            >
+              🔗 Read on {viewingArticle.source}
+            </a>
+          </div>
+        )}
+      </div>
+    )
   }
 
   return (
@@ -184,7 +294,7 @@ export default function News(): JSX.Element {
           ) : (
             articles.slice(0, 20).map((article, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
-                <ArticleCard article={article} onSave={handleSave} />
+                <ArticleCard article={article} onSave={handleSave} onRead={() => handleOpenArticle(article.title, article.url, article.source.name)} />
               </motion.div>
             ))
           )}
@@ -200,7 +310,7 @@ export default function News(): JSX.Element {
           ) : (
             bbcItems.map((item, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
-                <BBCLECard item={item} onSave={handleSave} />
+                <BBCLECard item={item} onSave={handleSave} onRead={() => handleOpenArticle(item.title, item.url, 'BBC Learning English', item.publishedAt)} />
               </motion.div>
             ))
           )}
@@ -216,7 +326,7 @@ export default function News(): JSX.Element {
           ) : (
             guardianItems.map((item, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
-                <GuardianCard item={item} onSave={handleSave} />
+                <GuardianCard item={item} onSave={handleSave} onRead={() => handleOpenArticle(item.webTitle, item.webUrl, 'The Guardian', item.webPublicationDate)} />
               </motion.div>
             ))
           )}
@@ -261,72 +371,114 @@ export default function News(): JSX.Element {
   )
 }
 
-function ArticleCard({ article, onSave }: { article: NewsArticle; onSave: (item: { title: string; url: string; description?: string }) => void }): JSX.Element {
+function ArticleCard({ article, onSave, onRead }: {
+  article: NewsArticle
+  onSave: (item: { title: string; url: string; description?: string }) => void
+  onRead: () => void
+}): JSX.Element {
   const [saved, setSaved] = useState(false)
 
   return (
-    <motion.div
-      onClick={() => window.open(article.url, '_blank')}
-      className="card text-left p-5 hover:border-brand-500 transition-colors block w-full cursor-pointer"
+    <div
+      className="card text-left p-5 hover:border-brand-500 transition-colors cursor-pointer"
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter') window.open(article.url, '_blank') }}
+      onKeyDown={(e) => { if (e.key === 'Enter') onRead() }}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0" onClick={onRead}>
           <h4 className="text-white font-semibold text-sm leading-snug mb-2">{article.title}</h4>
           <p className="text-gray-500 text-xs line-clamp-2">{article.description?.replace(/<[^>]*>/g, '').substring(0, 120)}...</p>
           <p className="text-xs text-gray-600 mt-2">{new Date(article.publishedAt).toLocaleDateString()}</p>
           <span className="text-xs text-gray-500">• {article.source.name}</span>
         </div>
-        <button
-          onClick={(e) => { e.stopPropagation(); onSave(article); setSaved(true); setTimeout(() => setSaved(false), 2000) }}
-          className={`text-xs px-3 py-1.5 rounded flex-shrink-0 ${saved ? 'bg-green-950 text-green-300' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
-        >
-          {saved ? '✅ Saved' : '💾 Save'}
-        </button>
+        <div className="flex flex-col gap-2 flex-shrink-0">
+          <button
+            onClick={(e) => { e.stopPropagation(); onRead() }}
+            className="text-xs px-3 py-1.5 rounded bg-brand-950/50 text-brand-400 hover:text-brand-300 border border-brand-800/50"
+          >
+            📖 Read
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onSave(article); setSaved(true); setTimeout(() => setSaved(false), 2000) }}
+            className={`text-xs px-3 py-1.5 rounded flex-shrink-0 ${saved ? 'bg-green-950 text-green-300' : 'bg-gray-800 text-gray-400 hover:text-white'}`}
+          >
+            {saved ? '✅ Saved' : '💾 Save'}
+          </button>
+        </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
-function BBCLECard({ item, onSave }: { item: BBCLEItem; onSave: (i: { title: string; url: string; description?: string }) => void }): JSX.Element {
+function BBCLECard({ item, onSave, onRead }: {
+  item: BBCLEItem
+  onSave: (i: { title: string; url: string; description?: string }) => void
+  onRead: () => void
+}): JSX.Element {
   const [saved, setSaved] = useState(false)
   return (
     <div className="card p-5 space-y-3">
       <div className="flex items-center justify-between">
-        <CEFRLevel level={item.level || 'B1'} />
-        <button onClick={(e) => { e.stopPropagation(); onSave(item); setSaved(true); setTimeout(() => setSaved(false), 2000) }}
-          className={`text-xs px-3 py-1.5 rounded flex-shrink-0 ${saved ? 'bg-green-950 text-green-300' : 'bg-gray-800 text-gray-400'}`}>
-          {saved ? '✅' : '💾'}
-        </button>
+        <div className="flex items-center gap-2">
+          <CEFRLevel level={item.level || 'B1'} />
+          <span className="text-xs text-gray-500 capitalize">{item.type}</span>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={(e) => { e.stopPropagation(); onRead() }}
+            className="text-xs px-3 py-1.5 rounded bg-brand-950/50 text-brand-400 hover:text-brand-300 border border-brand-800/50"
+          >
+            📖 Read
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onSave(item); setSaved(true); setTimeout(() => setSaved(false), 2000) }}
+            className={`text-xs px-3 py-1.5 rounded flex-shrink-0 ${saved ? 'bg-green-950 text-green-300' : 'bg-gray-800 text-gray-400'}`}
+          >
+            {saved ? '✅' : '💾'}
+          </button>
+        </div>
       </div>
       <h4 className="text-white font-semibold text-sm">{item.title}</h4>
       <p className="text-gray-400 text-xs">{item.description?.substring(0, 150)}...</p>
       {item.audioUrl && (
         <audio src={item.audioUrl} controls className="w-full mt-2" />
       )}
-      <button onClick={() => window.open(item.url, '_blank')} className="text-xs text-brand-400 hover:text-brand-300">
+      <button onClick={onRead} className="text-xs text-brand-400 hover:text-brand-300">
         Read full article →
       </button>
     </div>
   )
 }
 
-function GuardianCard({ item, onSave }: { item: GuardianItem; onSave: (i: { title: string; url: string; description?: string }) => void }): JSX.Element {
+function GuardianCard({ item, onSave, onRead }: {
+  item: GuardianItem
+  onSave: (i: { title: string; url: string; description?: string }) => void
+  onRead: () => void
+}): JSX.Element {
   const [saved, setSaved] = useState(false)
   return (
     <div className="card p-5">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-gray-500">{item.sectionName}</span>
-        <button onClick={(e) => { e.stopPropagation(); onSave({ title: item.webTitle, url: item.webUrl }); setSaved(true); setTimeout(() => setSaved(false), 2000) }}
-          className={`text-xs px-3 py-1.5 rounded flex-shrink-0 ${saved ? 'bg-green-950 text-green-300' : 'bg-gray-800 text-gray-400'}`}>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500">{item.sectionName}</span>
+          <button
+            onClick={(e) => { e.stopPropagation(); onRead() }}
+            className="text-xs px-3 py-1.5 rounded bg-brand-950/50 text-brand-400 hover:text-brand-300 border border-brand-800/50"
+          >
+            📖 Read
+          </button>
+        </div>
+        <button
+          onClick={(e) => { e.stopPropagation(); onSave({ title: item.webTitle, url: item.webUrl }) }}
+          className={`text-xs px-3 py-1.5 rounded flex-shrink-0 ${saved ? 'bg-green-950 text-green-300' : 'bg-gray-800 text-gray-400'}`}
+        >
           {saved ? '✅' : '💾'}
         </button>
       </div>
       <h4 className="text-white font-semibold text-sm mb-1">{item.webTitle}</h4>
       <p className="text-xs text-gray-600">{new Date(item.webPublicationDate).toLocaleDateString()}</p>
-      <button onClick={() => window.open(item.webUrl, '_blank')} className="text-xs text-brand-400 hover:text-brand-300 mt-2">
+      <button onClick={onRead} className="text-xs text-brand-400 hover:text-brand-300 mt-2">
         Read on The Guardian →
       </button>
     </div>

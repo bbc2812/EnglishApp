@@ -57,15 +57,47 @@ export default function YouTube(): JSX.Element {
   const [filter, setFilter] = useState<FilterType>('all')
   const [sortBy, setSortBy] = useState<SortType>('newest')
   const [failedThumbnails, setFailedThumbnails] = useState<Set<string>>(new Set())
+  const [usingDbEpisodes, setUsingDbEpisodes] = useState(false)
 
   const refreshAll = useCallback(async () => {
     setLoading(true)
+    setUsingDbEpisodes(false)
     if (!window.api?.content) { setLoading(false); return }
     try {
       const data = await window.api.content.fetchYouTubeRSS() as ChannelData[]
-      setChannelGroups(data)
-    } catch { /* ignore */ }
+      if (data.length > 0 && data.some(g => g.episodes.length > 0)) {
+        setChannelGroups(data)
+      } else {
+        // RSS returned empty, fallback to DB
+        await loadDbEpisodes()
+      }
+    } catch {
+      await loadDbEpisodes()
+    }
     setLoading(false)
+  }, [])
+
+  const loadDbEpisodes = useCallback(async () => {
+    if (!window.api?.db) return
+    try {
+      const dbEpisodes = await window.api.db.all(
+        `SELECT video_id, title, channel, duration, published_at as publishedAt, level, transcript
+         FROM youtube_episodes ORDER BY saved_at DESC`
+      ) as { video_id: string; title: string; channel: string; duration?: string; publishedAt: string; level?: string; transcript?: string }[]
+
+      const mapped = dbEpisodes.map(ep => ({
+        videoId: ep.video_id,
+        title: ep.title,
+        channel: ep.channel,
+        publishedAt: ep.publishedAt,
+        url: `https://www.youtube.com/watch?v=${ep.video_id}`,
+        level: ep.level,
+        transcript: ep.transcript ? JSON.parse(ep.transcript) : undefined,
+      }))
+      setEpisodes(mapped)
+      setChannelGroups([{ channel: 'All Saved Videos', episodes: mapped }])
+      setUsingDbEpisodes(true)
+    } catch { /* ignore */ }
   }, [])
 
   useEffect(() => {
@@ -74,14 +106,44 @@ export default function YouTube(): JSX.Element {
 
   const loadChannel = useCallback(async (id: string) => {
     setLoading(true)
+    setUsingDbEpisodes(false)
     if (!window.api?.content) { setLoading(false); return }
     try {
       const data = await window.api.content.fetchYouTubeChannel(id) as Episode[]
-      setEpisodes(data)
+      if (data.length > 0) {
+        setEpisodes(data)
+      } else {
+        // RSS returned empty, fallback to DB for this channel
+        await loadDbEpisodesForChannel(id)
+      }
     } catch {
-      setEpisodes([])
+      await loadDbEpisodesForChannel(id)
     }
     setLoading(false)
+  }, [])
+
+  const loadDbEpisodesForChannel = useCallback(async (id: string) => {
+    if (!window.api?.db) return
+    const ch = YOUTUBE_CHANNELS.find(c => c.id === id)
+    if (!ch) return
+    try {
+      const dbEpisodes = await window.api.db.all(
+        `SELECT video_id, title, channel, duration, published_at as publishedAt, level
+         FROM youtube_episodes WHERE channel = ? ORDER BY saved_at DESC`,
+        [ch.name]
+      ) as { video_id: string; title: string; channel: string; duration?: string; publishedAt: string; level?: string }[]
+
+      const mapped = dbEpisodes.map(ep => ({
+        videoId: ep.video_id,
+        title: ep.title,
+        channel: ep.channel,
+        publishedAt: ep.publishedAt,
+        url: `https://www.youtube.com/watch?v=${ep.video_id}`,
+        level: ep.level,
+      }))
+      setEpisodes(mapped)
+      setUsingDbEpisodes(true)
+    } catch { /* ignore */ }
   }, [])
 
   useEffect(() => {
@@ -193,10 +255,17 @@ export default function YouTube(): JSX.Element {
           <h2 className="text-2xl font-bold text-white">YouTube</h2>
           <p className="text-gray-400 text-sm mt-1">English learning videos from top channels</p>
           <div className="mt-2 flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs bg-brand-950/50 text-brand-400 border border-brand-800/50">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse"></span>
-              Demo Mode — 18 episodes loaded from mock data
-            </span>
+            {usingDbEpisodes ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs bg-amber-950/50 text-amber-400 border border-amber-800/50">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                Offline mode — {filteredEpisodes.length} saved videos
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs bg-brand-950/50 text-brand-400 border border-brand-800/50">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse"></span>
+                {filteredEpisodes.length} videos loaded
+              </span>
+            )}
           </div>
         </div>
         <button onClick={refreshAll} className="btn-primary px-4 py-2 text-sm">
@@ -351,7 +420,7 @@ export default function YouTube(): JSX.Element {
               allowFullScreen
             />
             <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded text-xs text-brand-400 border border-brand-800/50">
-              Demo Mode — Videos require real YouTube IDs
+              {usingDbEpisodes ? 'Saved video' : 'Playing'}
             </div>
           </div>
           {selectedEpisode.transcript && selectedEpisode.transcript.length > 0 && (
@@ -371,6 +440,10 @@ export default function YouTube(): JSX.Element {
       {/* Episode grid */}
       {loading && filteredEpisodes.length === 0 ? (
         <div className="card flex items-center justify-center h-48 text-gray-500">Loading episodes…</div>
+      ) : filteredEpisodes.length === 0 ? (
+        <div className="card flex items-center justify-center h-48 text-gray-500">
+          No videos found. Try refreshing or selecting a different channel.
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredEpisodes.map((ep, i) => (
@@ -405,6 +478,9 @@ export default function YouTube(): JSX.Element {
               </div>
               <h4 className="text-white text-sm font-semibold line-clamp-2 mb-1">{ep.title}</h4>
               <p className="text-gray-500 text-xs">{ep.channel} · {new Date(ep.publishedAt).toLocaleDateString()}</p>
+              {ep.level && (
+                <span className="text-xs bg-brand-950/50 text-brand-400 px-1.5 py-0.5 rounded mt-1 inline-block">{ep.level}</span>
+              )}
               {ep.transcript && ep.transcript.length > 0 && (
                 <p className="text-xs text-brand-400 mt-1">📝 {ep.transcript.length} captions</p>
               )}
