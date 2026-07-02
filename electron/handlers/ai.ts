@@ -77,16 +77,21 @@ export function registerAiHandlers(): void {
       system?: string,
       options?: { apiKey?: string; ollamaUrl?: string; ollamaModel?: string; geminiApiKey?: string }
     ) => {
-      if (provider === 'claude') {
-        const apiKey = options?.apiKey ?? process.env.ANTHROPIC_API_KEY ?? ''
-        return chatWithClaude(apiKey, messages, system)
-      } else if (provider === 'gemini') {
-        const apiKey = options?.geminiApiKey ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY ?? ''
-        return chatWithGemini(apiKey, messages, system)
-      } else {
-        const baseUrl = options?.ollamaUrl ?? 'http://localhost:11434'
-        const model = options?.ollamaModel ?? 'llama3.2'
-        return chatWithOllama(baseUrl, model, messages, system)
+      try {
+        if (provider === 'claude') {
+          const apiKey = options?.apiKey ?? process.env.ANTHROPIC_API_KEY ?? ''
+          return chatWithClaude(apiKey, messages, system)
+        } else if (provider === 'gemini') {
+          const apiKey = options?.geminiApiKey ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY ?? ''
+          return chatWithGemini(apiKey, messages, system)
+        } else {
+          const baseUrl = options?.ollamaUrl ?? 'http://localhost:11434'
+          const model = options?.ollamaModel ?? 'llama3.2'
+          return chatWithOllama(baseUrl, model, messages, system)
+        }
+      } catch (error: any) {
+        console.error('AI chat error:', error?.message ?? error)
+        return `Error: ${error?.message ?? 'Unknown error'}`
       }
     }
   )

@@ -1,0 +1,152 @@
+- generic [ref=f1e3]:
+  - complementary [ref=f1e4]:
+    - generic [ref=f1e5]:
+      - heading "WiseRain" [level=1] [ref=f1e6]
+      - paragraph [ref=f1e7]: English to C1/C2
+    - navigation [ref=f1e8]:
+      - generic [ref=f1e9]:
+        - paragraph [ref=f1e10]: Learn
+        - generic [ref=f1e11]:
+          - link "🗺️ Dashboard" [ref=f1e12] [cursor=pointer]:
+            - /url: "#/"
+            - generic [ref=f1e13]: 🗺️
+            - generic [ref=f1e14]: Dashboard
+          - link "🃏 Flashcards" [ref=f1e15] [cursor=pointer]:
+            - /url: "#/flashcards"
+            - generic [ref=f1e16]: 🃏
+            - generic [ref=f1e17]: Flashcards
+          - link "🎧 Listening" [ref=f1e18] [cursor=pointer]:
+            - /url: "#/listening"
+            - generic [ref=f1e19]: 🎧
+            - generic [ref=f1e20]: Listening
+          - link "📖 Reading" [ref=f1e21] [cursor=pointer]:
+            - /url: "#/reading"
+            - generic [ref=f1e22]: 📖
+            - generic [ref=f1e23]: Reading
+          - link "🎤 Shadowing" [ref=f1e24] [cursor=pointer]:
+            - /url: "#/shadowing"
+            - generic [ref=f1e25]: 🎤
+            - generic [ref=f1e26]: Shadowing
+      - generic [ref=f1e27]:
+        - paragraph [ref=f1e28]: Practice
+        - generic [ref=f1e29]:
+          - link "🎙️ Speaking" [ref=f1e30] [cursor=pointer]:
+            - /url: "#/speaking"
+            - generic [ref=f1e31]: 🎙️
+            - generic [ref=f1e32]: Speaking
+          - link "✍️ Writing" [ref=f1e33] [cursor=pointer]:
+            - /url: "#/writing"
+            - generic [ref=f1e34]: ✍️
+            - generic [ref=f1e35]: Writing
+          - link "🤖 AI Tutor" [ref=f1e36] [cursor=pointer]:
+            - /url: "#/tutor"
+            - generic [ref=f1e37]: 🤖
+            - generic [ref=f1e38]: AI Tutor
+      - generic [ref=f1e39]:
+        - paragraph [ref=f1e40]: Content
+        - generic [ref=f1e41]:
+          - link "📰 News" [ref=f1e42] [cursor=pointer]:
+            - /url: "#/news"
+            - generic [ref=f1e43]: 📰
+            - generic [ref=f1e44]: News
+          - link "🎙️ Podcasts" [ref=f1e45] [cursor=pointer]:
+            - /url: "#/podcasts"
+            - generic [ref=f1e46]: 🎙️
+            - generic [ref=f1e47]: Podcasts
+          - link "📺 YouTube" [ref=f1e48] [cursor=pointer]:
+            - /url: "#/youtube"
+            - generic [ref=f1e49]: 📺
+            - generic [ref=f1e50]: YouTube
+          - link "📥 Import" [ref=f1e51] [cursor=pointer]:
+            - /url: "#/import"
+            - generic [ref=f1e52]: 📥
+            - generic [ref=f1e53]: Import
+          - link "📚 My Learning" [ref=f1e54] [cursor=pointer]:
+            - /url: "#/learning"
+            - generic [ref=f1e55]: 📚
+            - generic [ref=f1e56]: My Learning
+    - generic [ref=f1e59]:
+      - generic [ref=f1e60]:
+        - generic [ref=f1e61]: ⚡
+        - text: Lvl 1
+      - generic [ref=f1e62]: 0/100 XP
+    - generic [ref=f1e64]:
+      - link "📊 Stats" [ref=f1e65] [cursor=pointer]:
+        - /url: "#/stats"
+        - generic [ref=f1e66]: 📊
+        - generic [ref=f1e67]: Stats
+      - link "⚙️ Settings" [ref=f1e68] [cursor=pointer]:
+        - /url: "#/settings"
+        - generic [ref=f1e69]: ⚙️
+        - generic [ref=f1e70]: Settings
+  - main [ref=f1e71]:
+    - generic [ref=f1e126]:
+      - heading "Settings" [level=2] [ref=f1e127]
+      - paragraph [ref=f1e128]: API keys, AI provider, content sources, and preferences
+      - generic [ref=f1e130]:
+        - generic [ref=f1e131]: 🧠
+        - generic [ref=f1e132]:
+          - paragraph [ref=f1e133]: Learner
+          - generic [ref=f1e135]:
+            - generic [ref=f1e136]: Level 1
+            - generic [ref=f1e137]: 0/100 XP
+      - generic [ref=f1e139]:
+        - heading "📡 Content Sources" [level=3] [ref=f1e140]
+        - generic [ref=f1e141]:
+          - generic [ref=f1e142]: NewsAPI Key
+          - textbox "newsapi key" [ref=f1e143]: 733d0d9c99f84bdabd6decaf0525b25a
+        - generic [ref=f1e144]:
+          - generic [ref=f1e145]: Reading Goal (mins/day)
+          - spinbutton [ref=f1e146]: "15"
+      - generic [ref=f1e147]:
+        - heading "🤖 AI Provider Settings" [level=3] [ref=f1e148]
+        - generic [ref=f1e149]:
+          - generic [ref=f1e150]: Active Provider
+          - generic [ref=f1e151]:
+            - button "🟣 Claude" [ref=f1e152] [cursor=pointer]
+            - button "🤖 Ollama" [ref=f1e153] [cursor=pointer]
+            - button "🟡 Gemini" [ref=f1e154] [cursor=pointer]
+        - generic [ref=f1e155]:
+          - generic [ref=f1e156]: Claude API Key
+          - textbox "sk-ant-..." [ref=f1e157]
+      - generic [ref=f1e158]:
+        - heading "📚 Learning Preferences" [level=3] [ref=f1e159]
+        - generic [ref=f1e160]:
+          - generic [ref=f1e161]: Daily New Words
+          - spinbutton [ref=f1e162]: "20"
+        - generic [ref=f1e163]:
+          - generic [ref=f1e164]: Bilingual Grammar Explanations
+          - button "✅ On" [ref=f1e165] [cursor=pointer]
+      - generic [ref=f1e166]:
+        - heading "🎤 Shadowing & Pronunciation" [level=3] [ref=f1e167]
+        - generic [ref=f1e168]:
+          - generic [ref=f1e169]: Scoring Method
+          - generic [ref=f1e170]:
+            - button "⚡ Simulated" [ref=f1e171] [cursor=pointer]
+            - button "🤖 AI" [ref=f1e172] [cursor=pointer]
+          - paragraph [ref=f1e173]: Simulated = instant & free, AI = needs API key but more accurate
+        - generic [ref=f1e174]:
+          - generic [ref=f1e175]: Target Score (to pass)
+          - slider [ref=f1e176]: "80"
+          - generic [ref=f1e177]: 80%
+        - generic [ref=f1e178]:
+          - generic [ref=f1e179]: Subtitle Language
+          - generic [ref=f1e180]:
+            - button "EN" [ref=f1e181] [cursor=pointer]
+            - button "VN" [ref=f1e182] [cursor=pointer]
+            - button "EN+VN" [ref=f1e183] [cursor=pointer]
+      - generic [ref=f1e184]:
+        - heading "⚡ App Settings" [level=3] [ref=f1e185]
+        - generic [ref=f1e186]:
+          - generic [ref=f1e187]: Global Hotkey (Ctrl+Shift+D)
+          - button "✅ On" [ref=f1e188] [cursor=pointer]
+        - generic [ref=f1e189]:
+          - generic [ref=f1e190]: System Tray
+          - button "✅ On" [ref=f1e191] [cursor=pointer]
+        - generic [ref=f1e192]:
+          - generic [ref=f1e193]: Theme
+          - generic [ref=f1e194]:
+            - button "🌙 Dark" [ref=f1e195] [cursor=pointer]
+            - button "☀️ Light" [ref=f1e196] [cursor=pointer]
+            - button "🔄 Auto" [ref=f1e197] [cursor=pointer]
+      - button "Save Settings" [ref=f1e199] [cursor=pointer]

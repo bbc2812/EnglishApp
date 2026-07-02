@@ -1,0 +1,171 @@
+- generic [ref=f1e3]:
+  - complementary [ref=f1e4]:
+    - generic [ref=f1e5]:
+      - heading "WiseRain" [level=1] [ref=f1e6]
+      - paragraph [ref=f1e7]: English to C1/C2
+    - navigation [ref=f1e8]:
+      - generic [ref=f1e9]:
+        - paragraph [ref=f1e10]: Learn
+        - generic [ref=f1e11]:
+          - link "🗺️ Dashboard" [ref=f1e12] [cursor=pointer]:
+            - /url: "#/"
+            - generic [ref=f1e13]: 🗺️
+            - generic [ref=f1e14]: Dashboard
+          - link "🃏 Flashcards" [ref=f1e15] [cursor=pointer]:
+            - /url: "#/flashcards"
+            - generic [ref=f1e16]: 🃏
+            - generic [ref=f1e17]: Flashcards
+          - link "🎧 Listening" [ref=f1e18] [cursor=pointer]:
+            - /url: "#/listening"
+            - generic [ref=f1e19]: 🎧
+            - generic [ref=f1e20]: Listening
+          - link "📖 Reading" [ref=f1e21] [cursor=pointer]:
+            - /url: "#/reading"
+            - generic [ref=f1e22]: 📖
+            - generic [ref=f1e23]: Reading
+          - link "🎤 Shadowing" [ref=f1e24] [cursor=pointer]:
+            - /url: "#/shadowing"
+            - generic [ref=f1e25]: 🎤
+            - generic [ref=f1e26]: Shadowing
+      - generic [ref=f1e27]:
+        - paragraph [ref=f1e28]: Practice
+        - generic [ref=f1e29]:
+          - link "🎙️ Speaking" [ref=f1e30] [cursor=pointer]:
+            - /url: "#/speaking"
+            - generic [ref=f1e31]: 🎙️
+            - generic [ref=f1e32]: Speaking
+          - link "✍️ Writing" [ref=f1e33] [cursor=pointer]:
+            - /url: "#/writing"
+            - generic [ref=f1e34]: ✍️
+            - generic [ref=f1e35]: Writing
+          - link "🤖 AI Tutor" [ref=f1e36] [cursor=pointer]:
+            - /url: "#/tutor"
+            - generic [ref=f1e37]: 🤖
+            - generic [ref=f1e38]: AI Tutor
+      - generic [ref=f1e39]:
+        - paragraph [ref=f1e40]: Content
+        - generic [ref=f1e41]:
+          - link "📰 News" [ref=f1e42] [cursor=pointer]:
+            - /url: "#/news"
+            - generic [ref=f1e43]: 📰
+            - generic [ref=f1e44]: News
+          - link "🎙️ Podcasts" [ref=f1e45] [cursor=pointer]:
+            - /url: "#/podcasts"
+            - generic [ref=f1e46]: 🎙️
+            - generic [ref=f1e47]: Podcasts
+          - link "📺 YouTube" [ref=f1e48] [cursor=pointer]:
+            - /url: "#/youtube"
+            - generic [ref=f1e49]: 📺
+            - generic [ref=f1e50]: YouTube
+          - link "📥 Import" [ref=f1e51] [cursor=pointer]:
+            - /url: "#/import"
+            - generic [ref=f1e52]: 📥
+            - generic [ref=f1e53]: Import
+          - link "📚 My Learning" [ref=f1e54] [cursor=pointer]:
+            - /url: "#/learning"
+            - generic [ref=f1e55]: 📚
+            - generic [ref=f1e56]: My Learning
+    - generic [ref=f1e59]:
+      - generic [ref=f1e60]:
+        - generic [ref=f1e61]: ⚡
+        - text: Lvl 1
+      - generic [ref=f1e62]: 0/100 XP
+    - generic [ref=f1e64]:
+      - link "📊 Stats" [ref=f1e65] [cursor=pointer]:
+        - /url: "#/stats"
+        - generic [ref=f1e66]: 📊
+        - generic [ref=f1e67]: Stats
+      - link "⚙️ Settings" [ref=f1e68] [cursor=pointer]:
+        - /url: "#/settings"
+        - generic [ref=f1e69]: ⚙️
+        - generic [ref=f1e70]: Settings
+  - main [ref=f1e71]:
+    - generic [ref=f1e450]:
+      - heading "Learning Analytics" [level=2] [ref=f1e451]
+      - paragraph [ref=f1e452]: Your progress, habits, and growth over time
+      - generic [ref=f1e453]:
+        - generic [ref=f1e455]:
+          - paragraph [ref=f1e456]: ⭐
+          - paragraph [ref=f1e457]: "0"
+          - paragraph [ref=f1e458]: Total XP
+        - generic [ref=f1e460]:
+          - paragraph [ref=f1e461]: 🎓
+          - paragraph [ref=f1e462]: "1"
+          - paragraph [ref=f1e463]: Level
+        - generic [ref=f1e465]:
+          - paragraph [ref=f1e466]: 📚
+          - paragraph [ref=f1e467]: "0"
+          - paragraph [ref=f1e468]: Words Learned
+        - generic [ref=f1e470]:
+          - paragraph [ref=f1e471]: 🃏
+          - paragraph [ref=f1e472]: "0"
+          - paragraph [ref=f1e473]: Flashcards
+        - generic [ref=f1e475]:
+          - paragraph [ref=f1e476]: 🔥
+          - paragraph [ref=f1e477]: 0 days
+          - paragraph [ref=f1e478]: Best Streak
+      - generic [ref=f1e479]:
+        - heading "Words Reviewed (30 days)" [level=4] [ref=f1e481]
+        - heading "XP Earned (30 days)" [level=4] [ref=f1e484]
+      - generic [ref=f1e486]:
+        - heading "Activity Breakdown (7 days)" [level=4] [ref=f1e488]
+        - generic [ref=f1e490]:
+          - heading "Activity Heatmap (28 days)" [level=4] [ref=f1e491]
+          - generic [ref=f1e492]:
+            - 'generic "2026-06-04: 0 activity" [ref=f1e493]'
+            - 'generic "2026-06-05: 0 activity" [ref=f1e494]'
+            - 'generic "2026-06-06: 0 activity" [ref=f1e495]'
+            - 'generic "2026-06-07: 0 activity" [ref=f1e496]'
+            - 'generic "2026-06-08: 0 activity" [ref=f1e497]'
+            - 'generic "2026-06-09: 0 activity" [ref=f1e498]'
+            - 'generic "2026-06-10: 0 activity" [ref=f1e499]'
+            - 'generic "2026-06-11: 0 activity" [ref=f1e500]'
+            - 'generic "2026-06-12: 0 activity" [ref=f1e501]'
+            - 'generic "2026-06-13: 0 activity" [ref=f1e502]'
+            - 'generic "2026-06-14: 0 activity" [ref=f1e503]'
+            - 'generic "2026-06-15: 0 activity" [ref=f1e504]'
+            - 'generic "2026-06-16: 0 activity" [ref=f1e505]'
+            - 'generic "2026-06-17: 0 activity" [ref=f1e506]'
+            - 'generic "2026-06-18: 0 activity" [ref=f1e507]'
+            - 'generic "2026-06-19: 0 activity" [ref=f1e508]'
+            - 'generic "2026-06-20: 0 activity" [ref=f1e509]'
+            - 'generic "2026-06-21: 0 activity" [ref=f1e510]'
+            - 'generic "2026-06-22: 0 activity" [ref=f1e511]'
+            - 'generic "2026-06-23: 0 activity" [ref=f1e512]'
+            - 'generic "2026-06-24: 0 activity" [ref=f1e513]'
+            - 'generic "2026-06-25: 0 activity" [ref=f1e514]'
+            - 'generic "2026-06-26: 0 activity" [ref=f1e515]'
+            - 'generic "2026-06-27: 0 activity" [ref=f1e516]'
+            - 'generic "2026-06-28: 0 activity" [ref=f1e517]'
+            - 'generic "2026-06-29: 0 activity" [ref=f1e518]'
+            - 'generic "2026-06-30: 0 activity" [ref=f1e519]'
+            - 'generic "2026-07-01: 0 activity" [ref=f1e520]'
+          - generic [ref=f1e521]:
+            - generic [ref=f1e522]: Less
+            - generic [ref=f1e528]: More
+      - generic [ref=f1e529]:
+        - heading "Estimated CEFR Level" [level=4] [ref=f1e530]
+        - generic [ref=f1e531]:
+          - generic [ref=f1e533]:
+            - generic [ref=f1e534]: A2
+            - generic [ref=f1e535]: 50 XP
+          - generic [ref=f1e538]:
+            - generic [ref=f1e539]: B1
+            - generic [ref=f1e540]: 200 XP
+          - generic [ref=f1e543]:
+            - generic [ref=f1e544]: B2
+            - generic [ref=f1e545]: 500 XP
+          - generic [ref=f1e548]:
+            - generic [ref=f1e549]: C1
+            - generic [ref=f1e550]: 1000 XP
+          - generic [ref=f1e553]:
+            - generic [ref=f1e554]: C2
+            - generic [ref=f1e555]: 2000 XP
+      - generic [ref=f1e558]:
+        - heading "Top Grammar Mistakes" [level=4] [ref=f1e559]
+        - paragraph [ref=f1e560]: No mistakes recorded yet. Keep writing!
+      - generic [ref=f1e561]:
+        - heading "🧠 Known Vocabulary Estimate" [level=4] [ref=f1e562]
+        - paragraph [ref=f1e563]: "0"
+        - paragraph [ref=f1e564]: words based on 0 saved + 0 active flashcards
+        - paragraph [ref=f1e565]: "B1: ~2,000 words · B2: ~4,000 words · C1: ~8,000 words · C2: ~16,000 words"

@@ -4,6 +4,7 @@ import { type FlashcardRow } from '../store/sessionStore'
 
 export function useSRS() {
   const loadDueCards = useCallback(async (limit = 50): Promise<FlashcardRow[]> => {
+    if (!window.api?.db) return []
     const today = new Date().toISOString().slice(0, 10)
     return window.api.db.all(
       `SELECT f.*, w.word, w.ipa, w.audio_url, w.definition, w.examples,
@@ -18,6 +19,7 @@ export function useSRS() {
   }, [])
 
   const loadVocabSetCards = useCallback(async (vocabSetId: number, limit = 50): Promise<FlashcardRow[]> => {
+    if (!window.api?.db) return []
     return window.api.db.all(
       `SELECT f.id, f.word_id, f.due_date, f.stability, f.difficulty,
               f.elapsed_days, f.scheduled_days, f.reps, f.lapses, f.state, f.last_review,
@@ -35,6 +37,7 @@ export function useSRS() {
   }, [])
 
   const applyRating = useCallback(async (card: FlashcardRow, rating: Rating) => {
+    if (!window.api?.db) return schedule(card as unknown as Card, rating)
     const result = schedule(card as unknown as Card, rating)
     await window.api.db.run(
       `UPDATE flashcards SET
@@ -59,6 +62,7 @@ export function useSRS() {
   }, [])
 
   const addWordToFlashcards = useCallback(async (wordId: number) => {
+    if (!window.api?.db) return
     await window.api.db.run(
       `INSERT OR IGNORE INTO flashcards (word_id, due_date, state)
        VALUES (?, date('now'), 'new')`,
@@ -78,6 +82,7 @@ export function useSRS() {
   }, [])
 
   const saveMnemonic = useCallback(async (wordId: number, mnemonic: string) => {
+    if (!window.api?.db) return
     await window.api.db.run(
       `UPDATE words SET mnemonic = ? WHERE id = ?`,
       [mnemonic, wordId]

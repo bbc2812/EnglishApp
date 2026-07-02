@@ -1,0 +1,525 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - heading "WiseRain" [level=1] [ref=e6]
+      - paragraph [ref=e7]: English to C1/C2
+    - navigation [ref=e8]:
+      - generic [ref=e9]:
+        - paragraph [ref=e10]: Learn
+        - generic [ref=e11]:
+          - link "🗺️ Dashboard" [ref=e12] [cursor=pointer]:
+            - /url: "#/"
+            - generic [ref=e13]: 🗺️
+            - generic [ref=e14]: Dashboard
+          - link "🃏 Flashcards" [ref=e15] [cursor=pointer]:
+            - /url: "#/flashcards"
+            - generic [ref=e16]: 🃏
+            - generic [ref=e17]: Flashcards
+          - link "🎧 Listening" [ref=e18] [cursor=pointer]:
+            - /url: "#/listening"
+            - generic [ref=e19]: 🎧
+            - generic [ref=e20]: Listening
+          - link "📖 Reading" [ref=e21] [cursor=pointer]:
+            - /url: "#/reading"
+            - generic [ref=e22]: 📖
+            - generic [ref=e23]: Reading
+          - link "🎤 Shadowing" [ref=e24] [cursor=pointer]:
+            - /url: "#/shadowing"
+            - generic [ref=e25]: 🎤
+            - generic [ref=e26]: Shadowing
+      - generic [ref=e27]:
+        - paragraph [ref=e28]: Practice
+        - generic [ref=e29]:
+          - link "🎙️ Speaking" [ref=e30] [cursor=pointer]:
+            - /url: "#/speaking"
+            - generic [ref=e31]: 🎙️
+            - generic [ref=e32]: Speaking
+          - link "✍️ Writing" [ref=e33] [cursor=pointer]:
+            - /url: "#/writing"
+            - generic [ref=e34]: ✍️
+            - generic [ref=e35]: Writing
+          - link "🤖 AI Tutor" [ref=e36] [cursor=pointer]:
+            - /url: "#/tutor"
+            - generic [ref=e37]: 🤖
+            - generic [ref=e38]: AI Tutor
+      - generic [ref=e39]:
+        - paragraph [ref=e40]: Content
+        - generic [ref=e41]:
+          - link "📰 News" [ref=e42] [cursor=pointer]:
+            - /url: "#/news"
+            - generic [ref=e43]: 📰
+            - generic [ref=e44]: News
+          - link "🎙️ Podcasts" [ref=e45] [cursor=pointer]:
+            - /url: "#/podcasts"
+            - generic [ref=e46]: 🎙️
+            - generic [ref=e47]: Podcasts
+          - link "📺 YouTube" [ref=e48] [cursor=pointer]:
+            - /url: "#/youtube"
+            - generic [ref=e49]: 📺
+            - generic [ref=e50]: YouTube
+          - link "📥 Import" [ref=e51] [cursor=pointer]:
+            - /url: "#/import"
+            - generic [ref=e52]: 📥
+            - generic [ref=e53]: Import
+          - link "📚 My Learning" [ref=e54] [cursor=pointer]:
+            - /url: "#/learning"
+            - generic [ref=e55]: 📚
+            - generic [ref=e56]: My Learning
+    - generic [ref=e59]:
+      - generic [ref=e60]:
+        - generic [ref=e61]: ⚡
+        - text: Lvl 7
+      - generic [ref=e62]: 658/700 XP
+    - generic [ref=e65]:
+      - link "📊 Stats" [ref=e66] [cursor=pointer]:
+        - /url: "#/stats"
+        - generic [ref=e67]: 📊
+        - generic [ref=e68]: Stats
+      - link "⚙️ Settings" [ref=e69] [cursor=pointer]:
+        - /url: "#/settings"
+        - generic [ref=e70]: ⚙️
+        - generic [ref=e71]: Settings
+  - main [ref=e72]:
+    - generic [ref=e356]:
+      - generic [ref=e357]:
+        - heading "My Learning" [level=2] [ref=e358]
+        - paragraph [ref=e359]: Track everything you've learnt across all content types
+      - generic [ref=e361]:
+        - textbox "Search by title or source..." [ref=e363]
+        - combobox [ref=e364]:
+          - option "All Types" [selected]
+          - option "📺 Videos"
+          - option "🎙️ Audio"
+          - option "📖 Articles"
+          - option "📝 Lessons"
+          - option "🎤 Shadowing"
+        - combobox [ref=e365]:
+          - option "All Levels" [selected]
+          - option "A2"
+          - option "B1"
+          - option "B2"
+          - option "C1"
+          - option "C2"
+        - combobox [ref=e366]:
+          - option "All" [selected]
+          - option "✅ Learnt"
+          - option "📝 Not Learnt"
+        - combobox [ref=e367]:
+          - option "Newest First" [selected]
+          - option "Oldest First"
+          - option "By Level"
+      - generic [ref=e368]:
+        - generic [ref=e369]:
+          - paragraph [ref=e370]: "45"
+          - paragraph [ref=e371]: Total Items
+        - generic [ref=e372]:
+          - paragraph [ref=e373]: "23"
+          - paragraph [ref=e374]: Learnt
+        - generic [ref=e375]:
+          - paragraph [ref=e376]: "3"
+          - paragraph [ref=e377]: Today
+        - generic [ref=e378]:
+          - paragraph [ref=e379]: "12"
+          - paragraph [ref=e380]: This Week
+      - generic [ref=e381]:
+        - heading "Recently Learnt" [level=3] [ref=e382]
+        - generic [ref=e383]:
+          - generic [ref=e384]:
+            - generic [ref=e385]:
+              - generic [ref=e386]: 📺
+              - generic [ref=e387]: 0m ago
+            - paragraph [ref=e388]: "Recent Item #1"
+            - paragraph [ref=e389]: YouTube
+          - generic [ref=e390]:
+            - generic [ref=e391]:
+              - generic [ref=e392]: 🎙️
+              - generic [ref=e393]: 1d ago
+            - paragraph [ref=e394]: "Recent Item #2"
+            - paragraph [ref=e395]: YouTube
+          - generic [ref=e396]:
+            - generic [ref=e397]:
+              - generic [ref=e398]: 📖
+              - generic [ref=e399]: 2d ago
+            - paragraph [ref=e400]: "Recent Item #3"
+            - paragraph [ref=e401]: YouTube
+          - generic [ref=e402]:
+            - generic [ref=e403]:
+              - generic [ref=e404]: 📝
+              - generic [ref=e405]: 3d ago
+            - paragraph [ref=e406]: "Recent Item #4"
+            - paragraph [ref=e407]: YouTube
+          - generic [ref=e408]:
+            - generic [ref=e409]:
+              - generic [ref=e410]: 🎤
+              - generic [ref=e411]: 4d ago
+            - paragraph [ref=e412]: "Recent Item #5"
+            - paragraph [ref=e413]: YouTube
+      - generic [ref=e414]:
+        - generic [ref=e415]:
+          - heading "Today (3)" [level=3] [ref=e416]: Today (3)
+          - generic [ref=e418]:
+            - generic [ref=e419]:
+              - generic [ref=e420]:
+                - generic [ref=e421]: 📝
+                - generic [ref=e422]:
+                  - paragraph [ref=e423]: "Today's Lesson #1"
+                  - paragraph [ref=e424]: Reading · B1 · 0m ago
+              - button "📝" [ref=e425] [cursor=pointer]
+            - generic [ref=e426]:
+              - generic [ref=e427]:
+                - generic [ref=e428]: 📝
+                - generic [ref=e429]:
+                  - paragraph [ref=e430]: "Today's Lesson #2"
+                  - paragraph [ref=e431]: Reading · B1 · 0m ago
+              - button "📝" [ref=e432] [cursor=pointer]
+            - generic [ref=e433]:
+              - generic [ref=e434]:
+                - generic [ref=e435]: 📝
+                - generic [ref=e436]:
+                  - paragraph [ref=e437]: "Today's Lesson #3"
+                  - paragraph [ref=e438]: Reading · B1 · 0m ago
+              - button "📝" [ref=e439] [cursor=pointer]
+        - generic [ref=e440]:
+          - heading "This Week (8)" [level=3] [ref=e441]: This Week (8)
+          - generic [ref=e443]:
+            - generic [ref=e444]:
+              - generic [ref=e445]:
+                - generic [ref=e446]: 📺
+                - generic [ref=e447]:
+                  - paragraph [ref=e448]: "Week Item #1"
+                  - paragraph [ref=e449]: Podcast · B2 · 0m ago
+              - button "📝" [ref=e450] [cursor=pointer]
+            - generic [ref=e451]:
+              - generic [ref=e452]:
+                - generic [ref=e453]: 🎙️
+                - generic [ref=e454]:
+                  - paragraph [ref=e455]: "Week Item #2"
+                  - paragraph [ref=e456]: Podcast · B2 · 1d ago
+              - button "📝" [ref=e457] [cursor=pointer]
+            - generic [ref=e458]:
+              - generic [ref=e459]:
+                - generic [ref=e460]: 📖
+                - generic [ref=e461]:
+                  - paragraph [ref=e462]: "Week Item #3"
+                  - paragraph [ref=e463]: Podcast · B2 · 2d ago
+              - button "📝" [ref=e464] [cursor=pointer]
+            - generic [ref=e465]:
+              - generic [ref=e466]:
+                - generic [ref=e467]: 📺
+                - generic [ref=e468]:
+                  - paragraph [ref=e469]: "Week Item #4"
+                  - paragraph [ref=e470]: Podcast · B2 · 3d ago
+              - button "📝" [ref=e471] [cursor=pointer]
+            - generic [ref=e472]:
+              - generic [ref=e473]:
+                - generic [ref=e474]: 🎙️
+                - generic [ref=e475]:
+                  - paragraph [ref=e476]: "Week Item #5"
+                  - paragraph [ref=e477]: Podcast · B2 · 4d ago
+              - button "📝" [ref=e478] [cursor=pointer]
+            - generic [ref=e479]:
+              - generic [ref=e480]:
+                - generic [ref=e481]: 📖
+                - generic [ref=e482]:
+                  - paragraph [ref=e483]: "Week Item #6"
+                  - paragraph [ref=e484]: Podcast · B2 · 5d ago
+              - button "📝" [ref=e485] [cursor=pointer]
+            - generic [ref=e486]:
+              - generic [ref=e487]:
+                - generic [ref=e488]: 📺
+                - generic [ref=e489]:
+                  - paragraph [ref=e490]: "Week Item #7"
+                  - paragraph [ref=e491]: Podcast · B2 · 6d ago
+              - button "📝" [ref=e492] [cursor=pointer]
+            - generic [ref=e493]:
+              - generic [ref=e494]:
+                - generic [ref=e495]: 🎙️
+                - generic [ref=e496]:
+                  - paragraph [ref=e497]: "Week Item #8"
+                  - paragraph [ref=e498]: Podcast · B2 · 6/24/2026
+              - button "📝" [ref=e499] [cursor=pointer]
+        - generic [ref=e500]:
+          - heading "This Month (15)" [level=3] [ref=e501]: This Month (15)
+          - generic [ref=e503]:
+            - generic [ref=e504]:
+              - generic [ref=e505]:
+                - generic [ref=e506]: 📝
+                - generic [ref=e507]:
+                  - paragraph [ref=e508]: "Month Item #1"
+                  - paragraph [ref=e509]: News · C1 · 0m ago
+              - button "📝" [ref=e510] [cursor=pointer]
+            - generic [ref=e511]:
+              - generic [ref=e512]:
+                - generic [ref=e513]: 📝
+                - generic [ref=e514]:
+                  - paragraph [ref=e515]: "Month Item #2"
+                  - paragraph [ref=e516]: News · C1 · 2d ago
+              - button "📝" [ref=e517] [cursor=pointer]
+            - generic [ref=e518]:
+              - generic [ref=e519]:
+                - generic [ref=e520]: 📝
+                - generic [ref=e521]:
+                  - paragraph [ref=e522]: "Month Item #3"
+                  - paragraph [ref=e523]: News · C1 · 4d ago
+              - button "📝" [ref=e524] [cursor=pointer]
+            - generic [ref=e525]:
+              - generic [ref=e526]:
+                - generic [ref=e527]: 📝
+                - generic [ref=e528]:
+                  - paragraph [ref=e529]: "Month Item #4"
+                  - paragraph [ref=e530]: News · C1 · 6d ago
+              - button "📝" [ref=e531] [cursor=pointer]
+            - generic [ref=e532]:
+              - generic [ref=e533]:
+                - generic [ref=e534]: 📝
+                - generic [ref=e535]:
+                  - paragraph [ref=e536]: "Month Item #5"
+                  - paragraph [ref=e537]: News · C1 · 6/23/2026
+              - button "📝" [ref=e538] [cursor=pointer]
+            - generic [ref=e539]:
+              - generic [ref=e540]:
+                - generic [ref=e541]: 📝
+                - generic [ref=e542]:
+                  - paragraph [ref=e543]: "Month Item #6"
+                  - paragraph [ref=e544]: News · C1 · 6/21/2026
+              - button "📝" [ref=e545] [cursor=pointer]
+            - generic [ref=e546]:
+              - generic [ref=e547]:
+                - generic [ref=e548]: 📝
+                - generic [ref=e549]:
+                  - paragraph [ref=e550]: "Month Item #7"
+                  - paragraph [ref=e551]: News · C1 · 6/19/2026
+              - button "📝" [ref=e552] [cursor=pointer]
+            - generic [ref=e553]:
+              - generic [ref=e554]:
+                - generic [ref=e555]: 📝
+                - generic [ref=e556]:
+                  - paragraph [ref=e557]: "Month Item #8"
+                  - paragraph [ref=e558]: News · C1 · 6/17/2026
+              - button "📝" [ref=e559] [cursor=pointer]
+            - generic [ref=e560]:
+              - generic [ref=e561]:
+                - generic [ref=e562]: 📝
+                - generic [ref=e563]:
+                  - paragraph [ref=e564]: "Month Item #9"
+                  - paragraph [ref=e565]: News · C1 · 6/15/2026
+              - button "📝" [ref=e566] [cursor=pointer]
+            - generic [ref=e567]:
+              - generic [ref=e568]:
+                - generic [ref=e569]: 📝
+                - generic [ref=e570]:
+                  - paragraph [ref=e571]: "Month Item #10"
+                  - paragraph [ref=e572]: News · C1 · 6/13/2026
+              - button "📝" [ref=e573] [cursor=pointer]
+            - generic [ref=e574]:
+              - generic [ref=e575]:
+                - generic [ref=e576]: 📝
+                - generic [ref=e577]:
+                  - paragraph [ref=e578]: "Month Item #11"
+                  - paragraph [ref=e579]: News · C1 · 6/11/2026
+              - button "📝" [ref=e580] [cursor=pointer]
+            - generic [ref=e581]:
+              - generic [ref=e582]:
+                - generic [ref=e583]: 📝
+                - generic [ref=e584]:
+                  - paragraph [ref=e585]: "Month Item #12"
+                  - paragraph [ref=e586]: News · C1 · 6/9/2026
+              - button "📝" [ref=e587] [cursor=pointer]
+            - generic [ref=e588]:
+              - generic [ref=e589]:
+                - generic [ref=e590]: 📝
+                - generic [ref=e591]:
+                  - paragraph [ref=e592]: "Month Item #13"
+                  - paragraph [ref=e593]: News · C1 · 6/7/2026
+              - button "📝" [ref=e594] [cursor=pointer]
+            - generic [ref=e595]:
+              - generic [ref=e596]:
+                - generic [ref=e597]: 📝
+                - generic [ref=e598]:
+                  - paragraph [ref=e599]: "Month Item #14"
+                  - paragraph [ref=e600]: News · C1 · 6/5/2026
+              - button "📝" [ref=e601] [cursor=pointer]
+            - generic [ref=e602]:
+              - generic [ref=e603]:
+                - generic [ref=e604]: 📝
+                - generic [ref=e605]:
+                  - paragraph [ref=e606]: "Month Item #15"
+                  - paragraph [ref=e607]: News · C1 · 6/3/2026
+              - button "📝" [ref=e608] [cursor=pointer]
+      - generic [ref=e609]:
+        - heading "Filtered Results (20 items)" [level=3] [ref=e610]:
+          - generic [ref=e611]: Filtered Results (20 items)
+        - generic [ref=e612]:
+          - generic [ref=e613]:
+            - generic [ref=e614]:
+              - generic [ref=e615]: 📺
+              - generic [ref=e616]:
+                - paragraph [ref=e617]: "Learning Item #1"
+                - paragraph [ref=e618]: YouTube · B1 · 0m ago
+            - button "📝" [ref=e619] [cursor=pointer]
+          - generic [ref=e620]:
+            - generic [ref=e621]:
+              - generic [ref=e622]: 🎙️
+              - generic [ref=e623]:
+                - paragraph [ref=e624]: "Learning Item #2"
+                - paragraph [ref=e625]: Podcast · B2 ·
+            - button "📝" [ref=e626] [cursor=pointer]
+          - generic [ref=e627]:
+            - generic [ref=e628]:
+              - generic [ref=e629]: 📖
+              - generic [ref=e630]:
+                - paragraph [ref=e631]: "Learning Item #3"
+                - paragraph [ref=e632]: News · C1 ·
+            - button "📝" [ref=e633] [cursor=pointer]
+          - generic [ref=e634]:
+            - generic [ref=e635]:
+              - generic [ref=e636]: 📝
+              - generic [ref=e637]:
+                - paragraph [ref=e638]: "Learning Item #4"
+                - paragraph [ref=e639]: Reading Lesson · B1 · 3d ago
+            - button "📝" [ref=e640] [cursor=pointer]
+          - generic [ref=e641]:
+            - generic [ref=e642]:
+              - generic [ref=e643]: 🎤
+              - generic [ref=e644]:
+                - paragraph [ref=e645]: "Learning Item #5"
+                - paragraph [ref=e646]: YouTube · B2 ·
+            - button "📝" [ref=e647] [cursor=pointer]
+          - generic [ref=e648]:
+            - generic [ref=e649]:
+              - generic [ref=e650]: 📺
+              - generic [ref=e651]:
+                - paragraph [ref=e652]: "Learning Item #6"
+                - paragraph [ref=e653]: Podcast · C1 ·
+            - button "📝" [ref=e654] [cursor=pointer]
+          - generic [ref=e655]:
+            - generic [ref=e656]:
+              - generic [ref=e657]: 🎙️
+              - generic [ref=e658]:
+                - paragraph [ref=e659]: "Learning Item #7"
+                - paragraph [ref=e660]: News · B1 · 6d ago
+            - button "📝" [ref=e661] [cursor=pointer]
+          - generic [ref=e662]:
+            - generic [ref=e663]:
+              - generic [ref=e664]: 📖
+              - generic [ref=e665]:
+                - paragraph [ref=e666]: "Learning Item #8"
+                - paragraph [ref=e667]: Reading Lesson · B2 ·
+            - button "📝" [ref=e668] [cursor=pointer]
+          - generic [ref=e669]:
+            - generic [ref=e670]:
+              - generic [ref=e671]: 📝
+              - generic [ref=e672]:
+                - paragraph [ref=e673]: "Learning Item #9"
+                - paragraph [ref=e674]: YouTube · C1 ·
+            - button "📝" [ref=e675] [cursor=pointer]
+          - generic [ref=e676]:
+            - generic [ref=e677]:
+              - generic [ref=e678]: 🎤
+              - generic [ref=e679]:
+                - paragraph [ref=e680]: "Learning Item #10"
+                - paragraph [ref=e681]: Podcast · B1 · 2d ago
+            - button "📝" [ref=e682] [cursor=pointer]
+          - generic [ref=e683]:
+            - generic [ref=e684]:
+              - generic [ref=e685]: 📺
+              - generic [ref=e686]:
+                - paragraph [ref=e687]: "Learning Item #11"
+                - paragraph [ref=e688]: News · B2 ·
+            - button "📝" [ref=e689] [cursor=pointer]
+          - generic [ref=e690]:
+            - generic [ref=e691]:
+              - generic [ref=e692]: 🎙️
+              - generic [ref=e693]:
+                - paragraph [ref=e694]: "Learning Item #12"
+                - paragraph [ref=e695]: Reading Lesson · C1 ·
+            - button "📝" [ref=e696] [cursor=pointer]
+          - generic [ref=e697]:
+            - generic [ref=e698]:
+              - generic [ref=e699]: 📖
+              - generic [ref=e700]:
+                - paragraph [ref=e701]: "Learning Item #13"
+                - paragraph [ref=e702]: YouTube · B1 · 5d ago
+            - button "📝" [ref=e703] [cursor=pointer]
+          - generic [ref=e704]:
+            - generic [ref=e705]:
+              - generic [ref=e706]: 📝
+              - generic [ref=e707]:
+                - paragraph [ref=e708]: "Learning Item #14"
+                - paragraph [ref=e709]: Podcast · B2 ·
+            - button "📝" [ref=e710] [cursor=pointer]
+          - generic [ref=e711]:
+            - generic [ref=e712]:
+              - generic [ref=e713]: 🎤
+              - generic [ref=e714]:
+                - paragraph [ref=e715]: "Learning Item #15"
+                - paragraph [ref=e716]: News · C1 ·
+            - button "📝" [ref=e717] [cursor=pointer]
+          - generic [ref=e718]:
+            - generic [ref=e719]:
+              - generic [ref=e720]: 📺
+              - generic [ref=e721]:
+                - paragraph [ref=e722]: "Learning Item #16"
+                - paragraph [ref=e723]: Reading Lesson · B1 · 1d ago
+            - button "📝" [ref=e724] [cursor=pointer]
+          - generic [ref=e725]:
+            - generic [ref=e726]:
+              - generic [ref=e727]: 🎙️
+              - generic [ref=e728]:
+                - paragraph [ref=e729]: "Learning Item #17"
+                - paragraph [ref=e730]: YouTube · B2 ·
+            - button "📝" [ref=e731] [cursor=pointer]
+          - generic [ref=e732]:
+            - generic [ref=e733]:
+              - generic [ref=e734]: 📖
+              - generic [ref=e735]:
+                - paragraph [ref=e736]: "Learning Item #18"
+                - paragraph [ref=e737]: Podcast · C1 ·
+            - button "📝" [ref=e738] [cursor=pointer]
+          - generic [ref=e739]:
+            - generic [ref=e740]:
+              - generic [ref=e741]: 📝
+              - generic [ref=e742]:
+                - paragraph [ref=e743]: "Learning Item #19"
+                - paragraph [ref=e744]: News · B1 · 4d ago
+            - button "📝" [ref=e745] [cursor=pointer]
+          - generic [ref=e746]:
+            - generic [ref=e747]:
+              - generic [ref=e748]: 🎤
+              - generic [ref=e749]:
+                - paragraph [ref=e750]: "Learning Item #20"
+                - paragraph [ref=e751]: Reading Lesson · B2 ·
+            - button "📝" [ref=e752] [cursor=pointer]
+  - generic [ref=e194]:
+    - generic [ref=e195]:
+      - generic [ref=e196]: 🔥
+      - paragraph [ref=e197]: 🏅 🔥 First Flame — Achievement Unlocked!
+      - button "✕" [ref=e198] [cursor=pointer]
+    - generic [ref=e199]:
+      - generic [ref=e200]: 📚
+      - paragraph [ref=e201]: 🏅 📚 Word Hoarder — Achievement Unlocked!
+      - button "✕" [ref=e202] [cursor=pointer]
+    - generic [ref=e203]:
+      - generic [ref=e204]: 🎯
+      - paragraph [ref=e205]: 🏅 🎯 Sharpshooter — Achievement Unlocked!
+      - button "✕" [ref=e206] [cursor=pointer]
+    - generic [ref=e207]:
+      - generic [ref=e208]: 🗣️
+      - paragraph [ref=e209]: 🏅 🗣️ Mimic Master — Achievement Unlocked!
+      - button "✕" [ref=e210] [cursor=pointer]
+    - generic [ref=e211]:
+      - generic [ref=e212]: ✍️
+      - paragraph [ref=e213]: 🏅 ✍️ Essay Writer — Achievement Unlocked!
+      - button "✕" [ref=e214] [cursor=pointer]
+    - generic [ref=e215]:
+      - generic [ref=e216]: ⚔️
+      - paragraph [ref=e217]: 🏅 ⚔️ Daily Warrior — Achievement Unlocked!
+      - button "✕" [ref=e218] [cursor=pointer]
+    - generic [ref=e219]:
+      - generic [ref=e220]: 💬
+      - paragraph [ref=e221]: 🏅 💬 Tutor Fan — Achievement Unlocked!
+      - button "✕" [ref=e222] [cursor=pointer]
+    - generic [ref=e223]:
+      - generic [ref=e224]: ⚡
+      - paragraph [ref=e225]: 🏅 ⚡ Speed Reader — Achievement Unlocked!
+      - button "✕" [ref=e226] [cursor=pointer]

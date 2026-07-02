@@ -61,106 +61,134 @@ async function fetchJson<T>(url: string): Promise<T | null> {
 export function registerContentHandlers(): void {
   // --- RSS ---
   ipcMain.handle('content:fetchRss', async (_event, url: string) => {
-    return rssParser.parseURL(url)
+    try {
+      return await rssParser.parseURL(url)
+    } catch {
+      return null
+    }
   })
 
   // --- NewsAPI.org ---
   ipcMain.handle(
     'content:fetchNewsAPI',
     async (_event, category?: string, apiKey?: string) => {
-      const key = apiKey ?? NEWSAPI_KEY
-      const catParam = category ? `&category=${category}` : ''
-      const url = `https://newsapi.org/v2/top-headlines?country=us${catParam}&apiKey=${key}`
-      const data = await fetchJson<NewsAPIResponse>(url)
-      return data?.articles ?? []
+      try {
+        const key = apiKey ?? NEWSAPI_KEY
+        const catParam = category ? `&category=${category}` : ''
+        const url = `https://newsapi.org/v2/top-headlines?country=us${catParam}&apiKey=${key}`
+        const data = await fetchJson<NewsAPIResponse>(url)
+        return data?.articles ?? []
+      } catch {
+        return []
+      }
     }
   )
 
   // --- BBC Learning English API ---
   ipcMain.handle('content:fetchBBCLE', async (_event, filter?: string) => {
-    const filterParam = filter ? `&filter=${filter}` : ''
-    const url = `https://learningenglish.bbc.com/api/v2/media.json${filterParam}&limit=20`
-    const data = await fetchJson<any>(url)
-    if (!data) return []
-    const items = data.media || []
-    return items.map((item: any) => ({
-      title: item.headlines?.headline || item.title,
-      description: item.summary?.text || '',
-      url: item.url,
-      imageUrl: item.image?.image?.url || '',
-      publishedAt: item.publish_date,
-      type: item.type,
-      level: item.level,
-      audioUrl: item.audio?.url || '',
-      transcript: item.transcript || '',
-    }))
+    try {
+      const filterParam = filter ? `&filter=${filter}` : ''
+      const url = `https://learningenglish.bbc.com/api/v2/media.json${filterParam}&limit=20`
+      const data = await fetchJson<any>(url)
+      if (!data) return []
+      const items = data.media || []
+      return items.map((item: any) => ({
+        title: item.headlines?.headline || item.title,
+        description: item.summary?.text || '',
+        url: item.url,
+        imageUrl: item.image?.image?.url || '',
+        publishedAt: item.publish_date,
+        type: item.type,
+        level: item.level,
+        audioUrl: item.audio?.url || '',
+        transcript: item.transcript || '',
+      }))
+    } catch {
+      return []
+    }
   })
 
   // --- Guardian Open Platform ---
   ipcMain.handle(
     'content:fetchGuardianArticles',
     async (_event, topic?: string, page = 1) => {
-      const section = topic ? `&section=${topic}` : ''
-      const url = `https://content.guardianapis.com/search?order-by=newest${section}&page=${page}&page-size=20&api-token=`
-      const data = await fetchJson<GuardianResponse>(url)
-      return data?.results ?? []
+      try {
+        const section = topic ? `&section=${topic}` : ''
+        const url = `https://content.guardianapis.com/search?order-by=newest${section}&page=${page}&page-size=20&api-token=`
+        const data = await fetchJson<GuardianResponse>(url)
+        return data?.results ?? []
+      } catch {
+        return []
+      }
     }
   )
 
   // --- YouTube RSS Feeds ---
   ipcMain.handle('content:fetchYouTubeRSS', async (_event, channelId?: string) => {
-    if (channelId) {
-      const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
-      const feed = rssParser.parseURL(url) as unknown as {
-        feed: { title: string; id: string }
-        entries: { id: string; title: string; published: string; link: string }[]
-      }
-      return feed?.entries?.map((e) => ({
-        videoId: e.id.replace('yt:video:', ''),
-        title: e.title,
-        channel: feed.feed?.title || '',
-        publishedAt: e.published,
-        url: e.link,
-      })) ?? []
-    }
-    // Return all channels with their episodes
-    const all: { channel: string; episodes: any[] }[] = []
-    for (const ch of YOUTUBE_CHANNELS) {
-      const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${ch.id}`
-      const feed = rssParser.parseURL(url) as unknown as {
-        feed: { title: string }
-        entries: { id: string; title: string; published: string; link: string }[]
-      }
-      all.push({
-        channel: ch.name,
-        episodes: (feed?.entries || []).map((e) => ({
+    try {
+      if (channelId) {
+        const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
+        const feed = await rssParser.parseURL(url) as unknown as {
+          feed: { title: string; id: string }
+          entries: { id: string; title: string; published: string; link: string }[]
+        }
+        return feed?.entries?.map((e) => ({
           videoId: e.id.replace('yt:video:', ''),
           title: e.title,
-          channel: ch.name,
+          channel: feed.feed?.title || '',
           publishedAt: e.published,
           url: e.link,
-        })),
-      })
+        })) ?? []
+      }
+      // Return all channels with their episodes
+      const all: { channel: string; episodes: any[] }[] = []
+      for (const ch of YOUTUBE_CHANNELS) {
+        const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${ch.id}`
+        try {
+          const feed = await rssParser.parseURL(url) as unknown as {
+            feed: { title: string }
+            entries: { id: string; title: string; published: string; link: string }[]
+          }
+          all.push({
+            channel: ch.name,
+            episodes: (feed?.entries || []).map((e) => ({
+              videoId: e.id.replace('yt:video:', ''),
+              title: e.title,
+              channel: ch.name,
+              publishedAt: e.published,
+              url: e.link,
+            })),
+          })
+        } catch {
+          all.push({ channel: ch.name, episodes: [] })
+        }
+      }
+      return all
+    } catch {
+      return []
     }
-    return all
   })
 
   // --- YouTube RSS for a single channel ---
   ipcMain.handle('content:fetchYouTubeChannel', async (_event, channelId?: string) => {
-    const ch = YOUTUBE_CHANNELS.find((c) => c.id === channelId)
-    if (!channelId || !ch) return []
-    const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
-    const feed = rssParser.parseURL(url) as unknown as {
-      feed: { title: string }
-      entries: { id: string; title: string; published: string; link: string }[]
+    try {
+      const ch = YOUTUBE_CHANNELS.find((c) => c.id === channelId)
+      if (!channelId || !ch) return []
+      const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
+      const feed = await rssParser.parseURL(url) as unknown as {
+        feed: { title: string }
+        entries: { id: string; title: string; published: string; link: string }[]
+      }
+      return (feed?.entries || []).map((e) => ({
+        videoId: e.id.replace('yt:video:', ''),
+        title: e.title,
+        channel: ch.name,
+        publishedAt: e.published,
+        url: e.link,
+      }))
+    } catch {
+      return []
     }
-    return (feed?.entries || []).map((e) => ({
-      videoId: e.id.replace('yt:video:', ''),
-      title: e.title,
-      channel: ch.name,
-      publishedAt: e.published,
-      url: e.link,
-    }))
   })
 
   // --- Datamuse API (word associations) ---
@@ -729,35 +757,39 @@ Rules:
 
   // --- Fetch Podcast Episodes (BBC LE + DB check) ---
   ipcMain.handle('content:fetchPodcastEpisodes', async () => {
-    const bbcEpisodes = await fetchJson<any[]>(`https://learningenglish.bbc.com/api/v2/media.json?filter=podcast&limit=20`)
-    if (!bbcEpisodes) return []
+    try {
+      const bbcEpisodes = await fetchJson<any[]>(`https://learningenglish.bbc.com/api/v2/media.json?filter=podcast&limit=20`)
+      if (!bbcEpisodes) return []
 
-    const db = getDb()
-    const savedUrls = new Set(
-      db.prepare('SELECT url FROM saved_podcasts').pluck().all() as string[]
-    )
+      const db = getDb()
+      const savedUrls = new Set(
+        db.prepare('SELECT url FROM saved_podcasts').pluck().all() as string[]
+      )
 
-    const episodes = bbcEpisodes.map((item: any) => {
-      const url = item.url || ''
-      const hasTranscript = !!item.transcript && item.transcript.trim().length > 0
-      const isSaved = savedUrls.has(url)
-      return {
-        id: url,
-        title: item.headlines?.headline || item.title,
-        description: item.summary?.text || '',
-        url,
-        imageUrl: item.image?.image?.url || '',
-        publishedAt: item.publish_date,
-        type: item.type,
-        level: item.level,
-        audioUrl: item.audio?.url || '',
-        transcript: hasTranscript ? item.transcript : '',
-        needsTranscript: !hasTranscript && !isSaved,
-        isSaved,
-      }
-    })
+      const episodes = bbcEpisodes.map((item: any) => {
+        const url = item.url || ''
+        const hasTranscript = !!item.transcript && item.transcript.trim().length > 0
+        const isSaved = savedUrls.has(url)
+        return {
+          id: url,
+          title: item.headlines?.headline || item.title,
+          description: item.summary?.text || '',
+          url,
+          imageUrl: item.image?.image?.url || '',
+          publishedAt: item.publish_date,
+          type: item.type,
+          level: item.level,
+          audioUrl: item.audio?.url || '',
+          transcript: hasTranscript ? item.transcript : '',
+          needsTranscript: !hasTranscript && !isSaved,
+          isSaved,
+        }
+      })
 
-    return episodes
+      return episodes
+    } catch {
+      return []
+    }
   })
 
   // --- Batch Translate Sentences to Vietnamese (MyMemory API) ---

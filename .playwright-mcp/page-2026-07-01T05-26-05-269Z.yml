@@ -1,0 +1,148 @@
+- generic [ref=f1e3]:
+  - complementary [ref=f1e4]:
+    - generic [ref=f1e5]:
+      - heading "WiseRain" [level=1] [ref=f1e6]
+      - paragraph [ref=f1e7]: English to C1/C2
+    - navigation [ref=f1e8]:
+      - generic [ref=f1e9]:
+        - paragraph [ref=f1e10]: Learn
+        - generic [ref=f1e11]:
+          - link "🗺️ Dashboard" [ref=f1e12] [cursor=pointer]:
+            - /url: "#/"
+            - generic [ref=f1e13]: 🗺️
+            - generic [ref=f1e14]: Dashboard
+          - link "🃏 Flashcards" [ref=f1e15] [cursor=pointer]:
+            - /url: "#/flashcards"
+            - generic [ref=f1e16]: 🃏
+            - generic [ref=f1e17]: Flashcards
+          - link "🎧 Listening" [ref=f1e18] [cursor=pointer]:
+            - /url: "#/listening"
+            - generic [ref=f1e19]: 🎧
+            - generic [ref=f1e20]: Listening
+          - link "📖 Reading" [ref=f1e21] [cursor=pointer]:
+            - /url: "#/reading"
+            - generic [ref=f1e22]: 📖
+            - generic [ref=f1e23]: Reading
+          - link "🎤 Shadowing" [ref=f1e24] [cursor=pointer]:
+            - /url: "#/shadowing"
+            - generic [ref=f1e25]: 🎤
+            - generic [ref=f1e26]: Shadowing
+      - generic [ref=f1e27]:
+        - paragraph [ref=f1e28]: Practice
+        - generic [ref=f1e29]:
+          - link "🎙️ Speaking" [ref=f1e30] [cursor=pointer]:
+            - /url: "#/speaking"
+            - generic [ref=f1e31]: 🎙️
+            - generic [ref=f1e32]: Speaking
+          - link "✍️ Writing" [ref=f1e33] [cursor=pointer]:
+            - /url: "#/writing"
+            - generic [ref=f1e34]: ✍️
+            - generic [ref=f1e35]: Writing
+          - link "🤖 AI Tutor" [ref=f1e36] [cursor=pointer]:
+            - /url: "#/tutor"
+            - generic [ref=f1e37]: 🤖
+            - generic [ref=f1e38]: AI Tutor
+      - generic [ref=f1e39]:
+        - paragraph [ref=f1e40]: Content
+        - generic [ref=f1e41]:
+          - link "📰 News" [ref=f1e42] [cursor=pointer]:
+            - /url: "#/news"
+            - generic [ref=f1e43]: 📰
+            - generic [ref=f1e44]: News
+          - link "🎙️ Podcasts" [ref=f1e45] [cursor=pointer]:
+            - /url: "#/podcasts"
+            - generic [ref=f1e46]: 🎙️
+            - generic [ref=f1e47]: Podcasts
+          - link "📺 YouTube" [ref=f1e48] [cursor=pointer]:
+            - /url: "#/youtube"
+            - generic [ref=f1e49]: 📺
+            - generic [ref=f1e50]: YouTube
+          - link "📥 Import" [ref=f1e51] [cursor=pointer]:
+            - /url: "#/import"
+            - generic [ref=f1e52]: 📥
+            - generic [ref=f1e53]: Import
+          - link "📚 My Learning" [ref=f1e54] [cursor=pointer]:
+            - /url: "#/learning"
+            - generic [ref=f1e55]: 📚
+            - generic [ref=f1e56]: My Learning
+    - generic [ref=f1e59]:
+      - generic [ref=f1e60]:
+        - generic [ref=f1e61]: ⚡
+        - text: Lvl 7
+      - generic [ref=f1e62]: 658/700 XP
+    - generic [ref=f1e65]:
+      - link "📊 Stats" [ref=f1e66] [cursor=pointer]:
+        - /url: "#/stats"
+        - generic [ref=f1e67]: 📊
+        - generic [ref=f1e68]: Stats
+      - link "⚙️ Settings" [ref=f1e69] [cursor=pointer]:
+        - /url: "#/settings"
+        - generic [ref=f1e70]: ⚙️
+        - generic [ref=f1e71]: Settings
+  - main [ref=f1e72]:
+    - generic [ref=f1e481]:
+      - generic [ref=f1e482]:
+        - generic [ref=f1e483]:
+          - heading "Shadowing" [level=2] [ref=f1e484]
+          - paragraph [ref=f1e485]: Listen, record, and compare your pronunciation
+        - button "📝 Sentence-by-Sentence Shadowing →" [ref=f1e486] [cursor=pointer]
+      - generic [ref=f1e487]:
+        - generic [ref=f1e488]:
+          - button "Think //θɪŋk//" [ref=f1e489] [cursor=pointer]:
+            - paragraph [ref=f1e490]: Think
+            - paragraph [ref=f1e491]: //θɪŋk//
+          - button "This //ðɪs//" [ref=f1e492] [cursor=pointer]:
+            - paragraph [ref=f1e493]: This
+            - paragraph [ref=f1e494]: //ðɪs//
+          - button "Right //raɪt//" [ref=f1e495] [cursor=pointer]:
+            - paragraph [ref=f1e496]: Right
+            - paragraph [ref=f1e497]: //raɪt//
+          - button "Light //laɪt//" [ref=f1e498] [cursor=pointer]:
+            - paragraph [ref=f1e499]: Light
+            - paragraph [ref=f1e500]: //laɪt//
+          - button "Vest //vest//" [ref=f1e501] [cursor=pointer]:
+            - paragraph [ref=f1e502]: Vest
+            - paragraph [ref=f1e503]: //vest//
+          - button "Watch //wɒtʃ//" [ref=f1e504] [cursor=pointer]:
+            - paragraph [ref=f1e505]: Watch
+            - paragraph [ref=f1e506]: //wɒtʃ//
+        - generic [ref=f1e507]:
+          - paragraph [ref=f1e508]: Think
+          - paragraph [ref=f1e509]: //θɪŋk//
+          - button "▶ Play Native Audio" [ref=f1e510] [cursor=pointer]
+        - generic [ref=f1e511]:
+          - paragraph [ref=f1e512]: "⚠️ Common mistake for this sound:"
+          - paragraph [ref=f1e513]: Vietnamese speakers often say /tɪŋk/ or /dɪŋk/
+        - generic [ref=f1e514]:
+          - heading "⚠️ Common Vietnamese→English Sound Issues" [level=4] [ref=f1e515]
+          - generic [ref=f1e516]:
+            - generic [ref=f1e517]:
+              - generic [ref=f1e518]: /θ/
+              - generic [ref=f1e519]:
+                - paragraph [ref=f1e520]: Say "th" like "s" or "z"
+                - paragraph [ref=f1e521]: "Drill: think, this, that, the"
+            - generic [ref=f1e522]:
+              - generic [ref=f1e523]: /ð/
+              - generic [ref=f1e524]:
+                - paragraph [ref=f1e525]: Voiced th often becomes /z/
+                - paragraph [ref=f1e526]: "Drill: this, that, them, there"
+            - generic [ref=f1e527]:
+              - generic [ref=f1e528]: /r/
+              - generic [ref=f1e529]:
+                - paragraph [ref=f1e530]: Confused with /l/ or /j/
+                - paragraph [ref=f1e531]: "Drill: right, light, very, river"
+            - generic [ref=f1e532]:
+              - generic [ref=f1e533]: /v/
+              - generic [ref=f1e534]:
+                - paragraph [ref=f1e535]: Replaced with /w/ or /f/
+                - paragraph [ref=f1e536]: "Drill: vest, very, love, have"
+            - generic [ref=f1e537]:
+              - generic [ref=f1e538]: /w/
+              - generic [ref=f1e539]:
+                - paragraph [ref=f1e540]: Pronounced as /v/ or /f/
+                - paragraph [ref=f1e541]: "Drill: watch, water, want, week"
+            - generic [ref=f1e542]:
+              - generic [ref=f1e543]: final /t/
+              - generic [ref=f1e544]:
+                - paragraph [ref=f1e545]: Added vowel after final consonants
+                - paragraph [ref=f1e546]: "Drill: cat, best, light, rest"

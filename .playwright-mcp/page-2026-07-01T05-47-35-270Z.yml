@@ -1,0 +1,215 @@
+- generic [ref=f1e3]:
+  - complementary [ref=f1e4]:
+    - generic [ref=f1e5]:
+      - heading "WiseRain" [level=1] [ref=f1e6]
+      - paragraph [ref=f1e7]: English to C1/C2
+    - navigation [ref=f1e8]:
+      - generic [ref=f1e9]:
+        - paragraph [ref=f1e10]: Learn
+        - generic [ref=f1e11]:
+          - link "🗺️ Dashboard" [active] [ref=f1e12] [cursor=pointer]:
+            - /url: "#/"
+            - generic [ref=f1e13]: 🗺️
+            - generic [ref=f1e14]: Dashboard
+          - link "🃏 Flashcards" [ref=f1e15] [cursor=pointer]:
+            - /url: "#/flashcards"
+            - generic [ref=f1e16]: 🃏
+            - generic [ref=f1e17]: Flashcards
+          - link "🎧 Listening" [ref=f1e18] [cursor=pointer]:
+            - /url: "#/listening"
+            - generic [ref=f1e19]: 🎧
+            - generic [ref=f1e20]: Listening
+          - link "📖 Reading" [ref=f1e21] [cursor=pointer]:
+            - /url: "#/reading"
+            - generic [ref=f1e22]: 📖
+            - generic [ref=f1e23]: Reading
+          - link "🎤 Shadowing" [ref=f1e24] [cursor=pointer]:
+            - /url: "#/shadowing"
+            - generic [ref=f1e25]: 🎤
+            - generic [ref=f1e26]: Shadowing
+      - generic [ref=f1e27]:
+        - paragraph [ref=f1e28]: Practice
+        - generic [ref=f1e29]:
+          - link "🎙️ Speaking" [ref=f1e30] [cursor=pointer]:
+            - /url: "#/speaking"
+            - generic [ref=f1e31]: 🎙️
+            - generic [ref=f1e32]: Speaking
+          - link "✍️ Writing" [ref=f1e33] [cursor=pointer]:
+            - /url: "#/writing"
+            - generic [ref=f1e34]: ✍️
+            - generic [ref=f1e35]: Writing
+          - link "🤖 AI Tutor" [ref=f1e36] [cursor=pointer]:
+            - /url: "#/tutor"
+            - generic [ref=f1e37]: 🤖
+            - generic [ref=f1e38]: AI Tutor
+      - generic [ref=f1e39]:
+        - paragraph [ref=f1e40]: Content
+        - generic [ref=f1e41]:
+          - link "📰 News" [ref=f1e42] [cursor=pointer]:
+            - /url: "#/news"
+            - generic [ref=f1e43]: 📰
+            - generic [ref=f1e44]: News
+          - link "🎙️ Podcasts" [ref=f1e45] [cursor=pointer]:
+            - /url: "#/podcasts"
+            - generic [ref=f1e46]: 🎙️
+            - generic [ref=f1e47]: Podcasts
+          - link "📺 YouTube" [ref=f1e48] [cursor=pointer]:
+            - /url: "#/youtube"
+            - generic [ref=f1e49]: 📺
+            - generic [ref=f1e50]: YouTube
+          - link "📥 Import" [ref=f1e51] [cursor=pointer]:
+            - /url: "#/import"
+            - generic [ref=f1e52]: 📥
+            - generic [ref=f1e53]: Import
+          - link "📚 My Learning" [ref=f1e54] [cursor=pointer]:
+            - /url: "#/learning"
+            - generic [ref=f1e55]: 📚
+            - generic [ref=f1e56]: My Learning
+    - generic [ref=f1e59]:
+      - generic [ref=f1e60]:
+        - generic [ref=f1e61]: ⚡
+        - text: Lvl 7
+      - generic [ref=f1e62]: 658/700 XP
+    - generic [ref=f1e65]:
+      - link "📊 Stats" [ref=f1e66] [cursor=pointer]:
+        - /url: "#/stats"
+        - generic [ref=f1e67]: 📊
+        - generic [ref=f1e68]: Stats
+      - link "⚙️ Settings" [ref=f1e69] [cursor=pointer]:
+        - /url: "#/settings"
+        - generic [ref=f1e70]: ⚙️
+        - generic [ref=f1e71]: Settings
+  - main [ref=f1e72]:
+    - generic [ref=f1e747]:
+      - generic [ref=f1e748]:
+        - generic [ref=f1e749]:
+          - heading "YouTube" [level=2] [ref=f1e750]
+          - paragraph [ref=f1e751]: English learning videos from top channels
+          - generic [ref=f1e753]: Demo Mode — 18 episodes loaded from mock data
+        - button "🔄 Refresh" [ref=f1e755] [cursor=pointer]
+      - generic [ref=f1e756]:
+        - textbox "Search videos..." [ref=f1e757]
+        - combobox [ref=f1e758]:
+          - option "All" [selected]
+          - option "✅ Learnt"
+          - option "📝 Not Learnt"
+        - combobox [ref=f1e759]:
+          - option "Newest" [selected]
+          - option "Oldest"
+      - generic [ref=f1e760]:
+        - button "All Channels" [ref=f1e761] [cursor=pointer]
+        - button "BBC Learning English" [ref=f1e762] [cursor=pointer]
+        - button "VOA Learning English" [ref=f1e763] [cursor=pointer]
+        - button "TED" [ref=f1e764] [cursor=pointer]
+        - button "English with Lucy" [ref=f1e765] [cursor=pointer]
+        - button "mmmEnglish" [ref=f1e766] [cursor=pointer]
+        - button "English Addict with Mr Steve" [ref=f1e767] [cursor=pointer]
+      - generic [ref=f1e768]:
+        - 'button "6 Minute English: Should we learn coding in school? ▶️ 6 Minute English: Should we learn coding in school? BBC Learning English · 6/30/2026" [ref=f1e769] [cursor=pointer]':
+          - generic [ref=f1e770]:
+            - 'img "6 Minute English: Should we learn coding in school?" [ref=f1e771]'
+            - generic [ref=f1e773]: ▶️
+          - 'heading "6 Minute English: Should we learn coding in school?" [level=4] [ref=f1e774]'
+          - paragraph [ref=f1e775]: BBC Learning English · 6/30/2026
+        - 'button "VOA: The Future of Artificial Intelligence ▶️ VOA: The Future of Artificial Intelligence VOA Learning English · 6/30/2026" [ref=f1e776] [cursor=pointer]':
+          - generic [ref=f1e777]:
+            - 'img "VOA: The Future of Artificial Intelligence" [ref=f1e778]'
+            - generic [ref=f1e780]: ▶️
+          - 'heading "VOA: The Future of Artificial Intelligence" [level=4] [ref=f1e781]'
+          - paragraph [ref=f1e782]: VOA Learning English · 6/30/2026
+        - button "The power of learning a new language ▶️ The power of learning a new language TED · 6/30/2026" [ref=f1e783] [cursor=pointer]:
+          - generic [ref=f1e784]:
+            - img "The power of learning a new language" [ref=f1e785]
+            - generic [ref=f1e787]: ▶️
+          - heading "The power of learning a new language" [level=4] [ref=f1e788]
+          - paragraph [ref=f1e789]: TED · 6/30/2026
+        - 'button "The Language News: AI and translation technology ▶️ The Language News: AI and translation technology BBC Learning English · 6/29/2026" [ref=f1e790] [cursor=pointer]':
+          - generic [ref=f1e791]:
+            - 'img "The Language News: AI and translation technology" [ref=f1e792]'
+            - generic [ref=f1e794]: ▶️
+          - 'heading "The Language News: AI and translation technology" [level=4] [ref=f1e795]'
+          - paragraph [ref=f1e796]: BBC Learning English · 6/29/2026
+        - 'button "VOA: Climate Change and Agriculture ▶️ VOA: Climate Change and Agriculture VOA Learning English · 6/29/2026" [ref=f1e797] [cursor=pointer]':
+          - generic [ref=f1e798]:
+            - 'img "VOA: Climate Change and Agriculture" [ref=f1e799]'
+            - generic [ref=f1e801]: ▶️
+          - 'heading "VOA: Climate Change and Agriculture" [level=4] [ref=f1e802]'
+          - paragraph [ref=f1e803]: VOA Learning English · 6/29/2026
+        - button "How to learn any language fast ▶️ How to learn any language fast TED · 6/29/2026" [ref=f1e804] [cursor=pointer]:
+          - generic [ref=f1e805]:
+            - img "How to learn any language fast" [ref=f1e806]
+            - generic [ref=f1e808]: ▶️
+          - heading "How to learn any language fast" [level=4] [ref=f1e809]
+          - paragraph [ref=f1e810]: TED · 6/29/2026
+        - 'button "English Idiom: Bite off more than you can chew ▶️ English Idiom: Bite off more than you can chew BBC Learning English · 6/28/2026" [ref=f1e811] [cursor=pointer]':
+          - generic [ref=f1e812]:
+            - 'img "English Idiom: Bite off more than you can chew" [ref=f1e813]'
+            - generic [ref=f1e815]: ▶️
+          - 'heading "English Idiom: Bite off more than you can chew" [level=4] [ref=f1e816]'
+          - paragraph [ref=f1e817]: BBC Learning English · 6/28/2026
+        - 'button "VOA: American History Series - Civil Rights ▶️ VOA: American History Series - Civil Rights VOA Learning English · 6/28/2026" [ref=f1e818] [cursor=pointer]':
+          - generic [ref=f1e819]:
+            - 'img "VOA: American History Series - Civil Rights" [ref=f1e820]'
+            - generic [ref=f1e822]: ▶️
+          - 'heading "VOA: American History Series - Civil Rights" [level=4] [ref=f1e823]'
+          - paragraph [ref=f1e824]: VOA Learning English · 6/28/2026
+        - button "The surprising habit of successful people ▶️ The surprising habit of successful people TED · 6/28/2026" [ref=f1e825] [cursor=pointer]:
+          - generic [ref=f1e826]:
+            - img "The surprising habit of successful people" [ref=f1e827]
+            - generic [ref=f1e829]: ▶️
+          - heading "The surprising habit of successful people" [level=4] [ref=f1e830]
+          - paragraph [ref=f1e831]: TED · 6/28/2026
+        - 'button "Pronunciation: Mastering the TH sound ▶️ Pronunciation: Mastering the TH sound BBC Learning English · 6/27/2026" [ref=f1e832] [cursor=pointer]':
+          - generic [ref=f1e833]:
+            - 'img "Pronunciation: Mastering the TH sound" [ref=f1e834]'
+            - generic [ref=f1e836]: ▶️
+          - 'heading "Pronunciation: Mastering the TH sound" [level=4] [ref=f1e837]'
+          - paragraph [ref=f1e838]: BBC Learning English · 6/27/2026
+        - 'button "VOA: Technology Report on Social Media ▶️ VOA: Technology Report on Social Media VOA Learning English · 6/27/2026" [ref=f1e839] [cursor=pointer]':
+          - generic [ref=f1e840]:
+            - 'img "VOA: Technology Report on Social Media" [ref=f1e841]'
+            - generic [ref=f1e843]: ▶️
+          - 'heading "VOA: Technology Report on Social Media" [level=4] [ref=f1e844]'
+          - paragraph [ref=f1e845]: VOA Learning English · 6/27/2026
+        - button "Why you should read classic literature ▶️ Why you should read classic literature TED · 6/27/2026" [ref=f1e846] [cursor=pointer]:
+          - generic [ref=f1e847]:
+            - img "Why you should read classic literature" [ref=f1e848]
+            - generic [ref=f1e850]: ▶️
+          - heading "Why you should read classic literature" [level=4] [ref=f1e851]
+          - paragraph [ref=f1e852]: TED · 6/27/2026
+        - 'button "Grammar Episode: Used to vs. Be used to ▶️ Grammar Episode: Used to vs. Be used to BBC Learning English · 6/26/2026" [ref=f1e853] [cursor=pointer]':
+          - generic [ref=f1e854]:
+            - 'img "Grammar Episode: Used to vs. Be used to" [ref=f1e855]'
+            - generic [ref=f1e857]: ▶️
+          - 'heading "Grammar Episode: Used to vs. Be used to" [level=4] [ref=f1e858]'
+          - paragraph [ref=f1e859]: BBC Learning English · 6/26/2026
+        - 'button "VOA: Health and Wellness Tips ▶️ VOA: Health and Wellness Tips VOA Learning English · 6/26/2026" [ref=f1e860] [cursor=pointer]':
+          - generic [ref=f1e861]:
+            - 'img "VOA: Health and Wellness Tips" [ref=f1e862]'
+            - generic [ref=f1e864]: ▶️
+          - 'heading "VOA: Health and Wellness Tips" [level=4] [ref=f1e865]'
+          - paragraph [ref=f1e866]: VOA Learning English · 6/26/2026
+        - 'button "Business English: Negotiation vocabulary ▶️ Business English: Negotiation vocabulary BBC Learning English · 6/25/2026" [ref=f1e867] [cursor=pointer]':
+          - generic [ref=f1e868]:
+            - 'img "Business English: Negotiation vocabulary" [ref=f1e869]'
+            - generic [ref=f1e871]: ▶️
+          - 'heading "Business English: Negotiation vocabulary" [level=4] [ref=f1e872]'
+          - paragraph [ref=f1e873]: BBC Learning English · 6/25/2026
+        - 'button "VOA: Education Innovation in Africa ▶️ VOA: Education Innovation in Africa VOA Learning English · 6/25/2026" [ref=f1e874] [cursor=pointer]':
+          - generic [ref=f1e875]:
+            - 'img "VOA: Education Innovation in Africa" [ref=f1e876]'
+            - generic [ref=f1e878]: ▶️
+          - 'heading "VOA: Education Innovation in Africa" [level=4] [ref=f1e879]'
+          - paragraph [ref=f1e880]: VOA Learning English · 6/25/2026
+        - button "Top 10 English mistakes learners make ▶️ Top 10 English mistakes learners make BBC Learning English · 6/24/2026" [ref=f1e881] [cursor=pointer]:
+          - generic [ref=f1e882]:
+            - img "Top 10 English mistakes learners make" [ref=f1e883]
+            - generic [ref=f1e885]: ▶️
+          - heading "Top 10 English mistakes learners make" [level=4] [ref=f1e886]
+          - paragraph [ref=f1e887]: BBC Learning English · 6/24/2026
+        - button "How to write a formal email in English ▶️ How to write a formal email in English BBC Learning English · 6/23/2026" [ref=f1e888] [cursor=pointer]:
+          - generic [ref=f1e889]:
+            - img "How to write a formal email in English" [ref=f1e890]
+            - generic [ref=f1e892]: ▶️
+          - heading "How to write a formal email in English" [level=4] [ref=f1e893]
+          - paragraph [ref=f1e894]: BBC Learning English · 6/23/2026

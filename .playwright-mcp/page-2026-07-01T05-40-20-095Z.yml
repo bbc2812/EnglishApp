@@ -1,0 +1,181 @@
+- generic [ref=f1e3]:
+  - complementary [ref=f1e4]:
+    - generic [ref=f1e5]:
+      - heading "WiseRain" [level=1] [ref=f1e6]
+      - paragraph [ref=f1e7]: English to C1/C2
+    - navigation [ref=f1e8]:
+      - generic [ref=f1e9]:
+        - paragraph [ref=f1e10]: Learn
+        - generic [ref=f1e11]:
+          - link "🗺️ Dashboard" [ref=f1e12] [cursor=pointer]:
+            - /url: "#/"
+            - generic [ref=f1e13]: 🗺️
+            - generic [ref=f1e14]: Dashboard
+          - link "🃏 Flashcards" [ref=f1e15] [cursor=pointer]:
+            - /url: "#/flashcards"
+            - generic [ref=f1e16]: 🃏
+            - generic [ref=f1e17]: Flashcards
+          - link "🎧 Listening" [ref=f1e18] [cursor=pointer]:
+            - /url: "#/listening"
+            - generic [ref=f1e19]: 🎧
+            - generic [ref=f1e20]: Listening
+          - link "📖 Reading" [ref=f1e21] [cursor=pointer]:
+            - /url: "#/reading"
+            - generic [ref=f1e22]: 📖
+            - generic [ref=f1e23]: Reading
+          - link "🎤 Shadowing" [ref=f1e24] [cursor=pointer]:
+            - /url: "#/shadowing"
+            - generic [ref=f1e25]: 🎤
+            - generic [ref=f1e26]: Shadowing
+      - generic [ref=f1e27]:
+        - paragraph [ref=f1e28]: Practice
+        - generic [ref=f1e29]:
+          - link "🎙️ Speaking" [ref=f1e30] [cursor=pointer]:
+            - /url: "#/speaking"
+            - generic [ref=f1e31]: 🎙️
+            - generic [ref=f1e32]: Speaking
+          - link "✍️ Writing" [ref=f1e33] [cursor=pointer]:
+            - /url: "#/writing"
+            - generic [ref=f1e34]: ✍️
+            - generic [ref=f1e35]: Writing
+          - link "🤖 AI Tutor" [ref=f1e36] [cursor=pointer]:
+            - /url: "#/tutor"
+            - generic [ref=f1e37]: 🤖
+            - generic [ref=f1e38]: AI Tutor
+      - generic [ref=f1e39]:
+        - paragraph [ref=f1e40]: Content
+        - generic [ref=f1e41]:
+          - link "📰 News" [ref=f1e42] [cursor=pointer]:
+            - /url: "#/news"
+            - generic [ref=f1e43]: 📰
+            - generic [ref=f1e44]: News
+          - link "🎙️ Podcasts" [ref=f1e45] [cursor=pointer]:
+            - /url: "#/podcasts"
+            - generic [ref=f1e46]: 🎙️
+            - generic [ref=f1e47]: Podcasts
+          - link "📺 YouTube" [ref=f1e48] [cursor=pointer]:
+            - /url: "#/youtube"
+            - generic [ref=f1e49]: 📺
+            - generic [ref=f1e50]: YouTube
+          - link "📥 Import" [ref=f1e51] [cursor=pointer]:
+            - /url: "#/import"
+            - generic [ref=f1e52]: 📥
+            - generic [ref=f1e53]: Import
+          - link "📚 My Learning" [ref=f1e54] [cursor=pointer]:
+            - /url: "#/learning"
+            - generic [ref=f1e55]: 📚
+            - generic [ref=f1e56]: My Learning
+    - generic [ref=f1e59]:
+      - generic [ref=f1e60]:
+        - generic [ref=f1e61]: ⚡
+        - text: Lvl 7
+      - generic [ref=f1e62]: 658/700 XP
+    - generic [ref=f1e65]:
+      - link "📊 Stats" [ref=f1e66] [cursor=pointer]:
+        - /url: "#/stats"
+        - generic [ref=f1e67]: 📊
+        - generic [ref=f1e68]: Stats
+      - link "⚙️ Settings" [ref=f1e69] [cursor=pointer]:
+        - /url: "#/settings"
+        - generic [ref=f1e70]: ⚙️
+        - generic [ref=f1e71]: Settings
+  - main [ref=f1e72]:
+    - generic [ref=f1e73]:
+      - generic [ref=f1e74]:
+        - generic [ref=f1e75]:
+          - heading "Good afternoon 👋" [level=2] [ref=f1e76]
+          - paragraph [ref=f1e77]: Your learning roadmap and daily progress
+        - button "🃏 Study Flashcards" [ref=f1e78] [cursor=pointer]:
+          - generic [ref=f1e79]: 🃏
+          - text: Study Flashcards
+      - generic [ref=f1e80]:
+        - generic [ref=f1e81]:
+          - paragraph [ref=f1e82]: 📝
+          - paragraph [ref=f1e83]: "15"
+          - paragraph [ref=f1e84]: Words Reviewed
+        - generic [ref=f1e85]:
+          - paragraph [ref=f1e86]: 📚
+          - paragraph [ref=f1e87]: "0"
+          - paragraph [ref=f1e88]: Total Words
+        - generic [ref=f1e89]:
+          - paragraph [ref=f1e90]: 🔥
+          - paragraph [ref=f1e91]: 3 days
+          - paragraph [ref=f1e92]: Streak
+        - generic [ref=f1e93]:
+          - paragraph [ref=f1e94]: ⭐
+          - paragraph [ref=f1e95]: "160"
+          - paragraph [ref=f1e96]: 8 lessons
+          - paragraph [ref=f1e97]: Today's XP
+      - generic [ref=f1e99]:
+        - generic [ref=f1e100]:
+          - generic [ref=f1e101]: ⚔️
+          - generic [ref=f1e102]:
+            - heading "Daily Challenge" [level=4] [ref=f1e103]
+            - paragraph [ref=f1e104]:
+              - generic [ref=f1e105]:
+                - text: 20 flashcards in 5 min —
+                - generic [ref=f1e106]: +25 XP
+        - button "Start" [ref=f1e107] [cursor=pointer]
+      - generic [ref=f1e108]:
+        - generic [ref=f1e109]: "🏅 Achievements:"
+        - generic [ref=f1e110]: 5 unlocked
+      - generic [ref=f1e111]:
+        - generic [ref=f1e112]:
+          - heading "Learning Roadmap" [level=3] [ref=f1e113]
+          - generic [ref=f1e114]: 3 / 5 units unlocked
+        - img [ref=f1e117]:
+          - generic [ref=f1e120] [cursor=pointer]:
+            - generic: Foundations
+            - generic: B1
+            - generic: 85%
+          - generic [ref=f1e123] [cursor=pointer]:
+            - generic: Daily Life
+            - generic: B1
+            - generic: 60%
+          - generic [ref=f1e126] [cursor=pointer]:
+            - generic: Work & Society
+            - generic: B2
+            - generic: 20%
+          - generic [ref=f1e129] [cursor=pointer]:
+            - generic: Media & Technology
+            - generic: B2
+          - generic [ref=f1e131] [cursor=pointer]:
+            - generic: Abstract Thinking
+            - generic: C1
+        - paragraph [ref=f1e133]: Complete 80% of a unit's lessons to unlock the next one. Click a unit to study.
+      - generic [ref=f1e134]:
+        - button "🃏 Flashcards Review due words with FSRS" [ref=f1e135] [cursor=pointer]:
+          - paragraph [ref=f1e136]: 🃏
+          - paragraph [ref=f1e137]: Flashcards
+          - paragraph [ref=f1e138]: Review due words with FSRS
+        - button "🎧 Listening Practice with audio content" [ref=f1e139] [cursor=pointer]:
+          - paragraph [ref=f1e140]: 🎧
+          - paragraph [ref=f1e141]: Listening
+          - paragraph [ref=f1e142]: Practice with audio content
+        - button "🤖 AI Tutor Chat and get personalized help" [ref=f1e143] [cursor=pointer]:
+          - paragraph [ref=f1e144]: 🤖
+          - paragraph [ref=f1e145]: AI Tutor
+          - paragraph [ref=f1e146]: Chat and get personalized help
+      - generic [ref=f1e147]:
+        - heading "Topical Vocabulary Sets" [level=3] [ref=f1e148]
+        - generic [ref=f1e149]:
+          - button "Business Meetings B1 business" [ref=f1e150] [cursor=pointer]:
+            - paragraph [ref=f1e151]: Business Meetings
+            - generic [ref=f1e152]:
+              - generic [ref=f1e153]: B1
+              - generic [ref=f1e154]: business
+          - button "Travel & Tourism B1 travel" [ref=f1e155] [cursor=pointer]:
+            - paragraph [ref=f1e156]: Travel & Tourism
+            - generic [ref=f1e157]:
+              - generic [ref=f1e158]: B1
+              - generic [ref=f1e159]: travel
+          - button "Technology Terms B2 technology" [ref=f1e160] [cursor=pointer]:
+            - paragraph [ref=f1e161]: Technology Terms
+            - generic [ref=f1e162]:
+              - generic [ref=f1e163]: B2
+              - generic [ref=f1e164]: technology
+          - button "Academic Writing C1 academic" [ref=f1e165] [cursor=pointer]:
+            - paragraph [ref=f1e166]: Academic Writing
+            - generic [ref=f1e167]:
+              - generic [ref=f1e168]: C1
+              - generic [ref=f1e169]: academic

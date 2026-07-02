@@ -1,0 +1,123 @@
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - generic [ref=e5]:
+      - heading "WiseRain" [level=1] [ref=e6]
+      - paragraph [ref=e7]: English to C1/C2
+    - navigation [ref=e8]:
+      - generic [ref=e9]:
+        - paragraph [ref=e10]: Learn
+        - generic [ref=e11]:
+          - link "🗺️ Dashboard" [ref=e12] [cursor=pointer]:
+            - /url: "#/"
+            - generic [ref=e13]: 🗺️
+            - generic [ref=e14]: Dashboard
+          - link "🃏 Flashcards" [ref=e15] [cursor=pointer]:
+            - /url: "#/flashcards"
+            - generic [ref=e16]: 🃏
+            - generic [ref=e17]: Flashcards
+          - link "🎧 Listening" [ref=e18] [cursor=pointer]:
+            - /url: "#/listening"
+            - generic [ref=e19]: 🎧
+            - generic [ref=e20]: Listening
+          - link "📖 Reading" [ref=e21] [cursor=pointer]:
+            - /url: "#/reading"
+            - generic [ref=e22]: 📖
+            - generic [ref=e23]: Reading
+          - link "🎤 Shadowing" [ref=e24] [cursor=pointer]:
+            - /url: "#/shadowing"
+            - generic [ref=e25]: 🎤
+            - generic [ref=e26]: Shadowing
+      - generic [ref=e27]:
+        - paragraph [ref=e28]: Practice
+        - generic [ref=e29]:
+          - link "🎙️ Speaking" [ref=e30] [cursor=pointer]:
+            - /url: "#/speaking"
+            - generic [ref=e31]: 🎙️
+            - generic [ref=e32]: Speaking
+          - link "✍️ Writing" [ref=e33] [cursor=pointer]:
+            - /url: "#/writing"
+            - generic [ref=e34]: ✍️
+            - generic [ref=e35]: Writing
+          - link "🤖 AI Tutor" [ref=e36] [cursor=pointer]:
+            - /url: "#/tutor"
+            - generic [ref=e37]: 🤖
+            - generic [ref=e38]: AI Tutor
+      - generic [ref=e39]:
+        - paragraph [ref=e40]: Content
+        - generic [ref=e41]:
+          - link "📰 News" [ref=e42] [cursor=pointer]:
+            - /url: "#/news"
+            - generic [ref=e43]: 📰
+            - generic [ref=e44]: News
+          - link "🎙️ Podcasts" [ref=e45] [cursor=pointer]:
+            - /url: "#/podcasts"
+            - generic [ref=e46]: 🎙️
+            - generic [ref=e47]: Podcasts
+          - link "📺 YouTube" [ref=e48] [cursor=pointer]:
+            - /url: "#/youtube"
+            - generic [ref=e49]: 📺
+            - generic [ref=e50]: YouTube
+          - link "📥 Import" [ref=e51] [cursor=pointer]:
+            - /url: "#/import"
+            - generic [ref=e52]: 📥
+            - generic [ref=e53]: Import
+          - link "📚 My Learning" [ref=e54] [cursor=pointer]:
+            - /url: "#/learning"
+            - generic [ref=e55]: 📚
+            - generic [ref=e56]: My Learning
+    - generic [ref=e59]:
+      - generic [ref=e60]:
+        - generic [ref=e61]: ⚡
+        - text: Lvl 7
+      - generic [ref=e62]: 658/700 XP
+    - generic [ref=e65]:
+      - link "📊 Stats" [ref=e66] [cursor=pointer]:
+        - /url: "#/stats"
+        - generic [ref=e67]: 📊
+        - generic [ref=e68]: Stats
+      - link "⚙️ Settings" [ref=e69] [cursor=pointer]:
+        - /url: "#/settings"
+        - generic [ref=e70]: ⚙️
+        - generic [ref=e71]: Settings
+  - main [ref=e72]:
+    - generic [ref=e227]:
+      - heading "Flashcards" [level=2] [ref=e228]
+      - paragraph [ref=e229]: Spaced repetition — FSRS-4.5
+      - generic [ref=e230]:
+        - paragraph [ref=e231]: ✅
+        - paragraph [ref=e232]: No cards due today!
+        - paragraph [ref=e233]: Come back tomorrow or add new words from the Dictionary popup.
+        - button "Study Anyway" [ref=e234] [cursor=pointer]
+  - generic [ref=e194]:
+    - generic [ref=e195]:
+      - generic [ref=e196]: 🔥
+      - paragraph [ref=e197]: 🏅 🔥 First Flame — Achievement Unlocked!
+      - button "✕" [ref=e198] [cursor=pointer]
+    - generic [ref=e199]:
+      - generic [ref=e200]: 📚
+      - paragraph [ref=e201]: 🏅 📚 Word Hoarder — Achievement Unlocked!
+      - button "✕" [ref=e202] [cursor=pointer]
+    - generic [ref=e203]:
+      - generic [ref=e204]: 🎯
+      - paragraph [ref=e205]: 🏅 🎯 Sharpshooter — Achievement Unlocked!
+      - button "✕" [ref=e206] [cursor=pointer]
+    - generic [ref=e207]:
+      - generic [ref=e208]: 🗣️
+      - paragraph [ref=e209]: 🏅 🗣️ Mimic Master — Achievement Unlocked!
+      - button "✕" [ref=e210] [cursor=pointer]
+    - generic [ref=e211]:
+      - generic [ref=e212]: ✍️
+      - paragraph [ref=e213]: 🏅 ✍️ Essay Writer — Achievement Unlocked!
+      - button "✕" [ref=e214] [cursor=pointer]
+    - generic [ref=e215]:
+      - generic [ref=e216]: ⚔️
+      - paragraph [ref=e217]: 🏅 ⚔️ Daily Warrior — Achievement Unlocked!
+      - button "✕" [ref=e218] [cursor=pointer]
+    - generic [ref=e219]:
+      - generic [ref=e220]: 💬
+      - paragraph [ref=e221]: 🏅 💬 Tutor Fan — Achievement Unlocked!
+      - button "✕" [ref=e222] [cursor=pointer]
+    - generic [ref=e223]:
+      - generic [ref=e224]: ⚡
+      - paragraph [ref=e225]: 🏅 ⚡ Speed Reader — Achievement Unlocked!
+      - button "✕" [ref=e226] [cursor=pointer]

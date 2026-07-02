@@ -1,0 +1,165 @@
+- generic [ref=f1e3]:
+  - complementary [ref=f1e4]:
+    - generic [ref=f1e5]:
+      - heading "WiseRain" [level=1] [ref=f1e6]
+      - paragraph [ref=f1e7]: English to C1/C2
+    - navigation [ref=f1e8]:
+      - generic [ref=f1e9]:
+        - paragraph [ref=f1e10]: Learn
+        - generic [ref=f1e11]:
+          - link "🗺️ Dashboard" [active] [ref=f1e12] [cursor=pointer]:
+            - /url: "#/"
+            - generic [ref=f1e13]: 🗺️
+            - generic [ref=f1e14]: Dashboard
+          - link "🃏 Flashcards" [ref=f1e15] [cursor=pointer]:
+            - /url: "#/flashcards"
+            - generic [ref=f1e16]: 🃏
+            - generic [ref=f1e17]: Flashcards
+          - link "🎧 Listening" [ref=f1e18] [cursor=pointer]:
+            - /url: "#/listening"
+            - generic [ref=f1e19]: 🎧
+            - generic [ref=f1e20]: Listening
+          - link "📖 Reading" [ref=f1e21] [cursor=pointer]:
+            - /url: "#/reading"
+            - generic [ref=f1e22]: 📖
+            - generic [ref=f1e23]: Reading
+          - link "🎤 Shadowing" [ref=f1e24] [cursor=pointer]:
+            - /url: "#/shadowing"
+            - generic [ref=f1e25]: 🎤
+            - generic [ref=f1e26]: Shadowing
+      - generic [ref=f1e27]:
+        - paragraph [ref=f1e28]: Practice
+        - generic [ref=f1e29]:
+          - link "🎙️ Speaking" [ref=f1e30] [cursor=pointer]:
+            - /url: "#/speaking"
+            - generic [ref=f1e31]: 🎙️
+            - generic [ref=f1e32]: Speaking
+          - link "✍️ Writing" [ref=f1e33] [cursor=pointer]:
+            - /url: "#/writing"
+            - generic [ref=f1e34]: ✍️
+            - generic [ref=f1e35]: Writing
+          - link "🤖 AI Tutor" [ref=f1e36] [cursor=pointer]:
+            - /url: "#/tutor"
+            - generic [ref=f1e37]: 🤖
+            - generic [ref=f1e38]: AI Tutor
+      - generic [ref=f1e39]:
+        - paragraph [ref=f1e40]: Content
+        - generic [ref=f1e41]:
+          - link "📰 News" [ref=f1e42] [cursor=pointer]:
+            - /url: "#/news"
+            - generic [ref=f1e43]: 📰
+            - generic [ref=f1e44]: News
+          - link "🎙️ Podcasts" [ref=f1e45] [cursor=pointer]:
+            - /url: "#/podcasts"
+            - generic [ref=f1e46]: 🎙️
+            - generic [ref=f1e47]: Podcasts
+          - link "📺 YouTube" [ref=f1e48] [cursor=pointer]:
+            - /url: "#/youtube"
+            - generic [ref=f1e49]: 📺
+            - generic [ref=f1e50]: YouTube
+          - link "📥 Import" [ref=f1e51] [cursor=pointer]:
+            - /url: "#/import"
+            - generic [ref=f1e52]: 📥
+            - generic [ref=f1e53]: Import
+          - link "📚 My Learning" [ref=f1e54] [cursor=pointer]:
+            - /url: "#/learning"
+            - generic [ref=f1e55]: 📚
+            - generic [ref=f1e56]: My Learning
+    - generic [ref=f1e59]:
+      - generic [ref=f1e60]:
+        - generic [ref=f1e61]: ⚡
+        - text: Lvl 7
+      - generic [ref=f1e62]: 658/700 XP
+    - generic [ref=f1e65]:
+      - link "📊 Stats" [ref=f1e66] [cursor=pointer]:
+        - /url: "#/stats"
+        - generic [ref=f1e67]: 📊
+        - generic [ref=f1e68]: Stats
+      - link "⚙️ Settings" [ref=f1e69] [cursor=pointer]:
+        - /url: "#/settings"
+        - generic [ref=f1e70]: ⚙️
+        - generic [ref=f1e71]: Settings
+  - main [ref=f1e72]:
+    - generic [ref=f1e332]:
+      - generic [ref=f1e333]:
+        - generic [ref=f1e334]:
+          - heading "Present Perfect Deep Dive" [level=2] [ref=f1e335]
+          - paragraph [ref=f1e336]: Listening Practice · Unit 1
+        - button "← Back" [ref=f1e337] [cursor=pointer]
+      - generic [ref=f1e348]:
+        - generic [ref=f1e349]:
+          - generic [ref=f1e350]:
+            - button "▶" [ref=f1e351] [cursor=pointer]
+            - button "-10s" [ref=f1e352] [cursor=pointer]
+            - button "+10s" [ref=f1e353] [cursor=pointer]
+            - generic [ref=f1e355]: 0:00
+          - generic [ref=f1e356]:
+            - generic [ref=f1e357]: "Speed:"
+            - button "0.5x" [ref=f1e358] [cursor=pointer]
+            - button "0.75x" [ref=f1e359] [cursor=pointer]
+            - button "1x" [ref=f1e360] [cursor=pointer]
+            - button "1.25x" [ref=f1e361] [cursor=pointer]
+            - button "1.5x" [ref=f1e362] [cursor=pointer]
+            - button "2x" [ref=f1e363] [cursor=pointer]
+          - generic [ref=f1e364]:
+            - paragraph [ref=f1e365]: The present perfect tense connects the past to the present
+            - paragraph [ref=f1e366]: We use it to talk about experiences that have relevance now
+            - paragraph [ref=f1e367]: For example, I have lived here for ten years means I still live here now
+            - paragraph [ref=f1e368]: This tense is formed with have or has plus the past participle of the main verb.
+        - generic [ref=f1e371]: 1/5 answered
+        - generic [ref=f1e372]:
+          - heading "Comprehension Exercises" [level=3] [ref=f1e373]
+          - generic [ref=f1e374]:
+            - generic [ref=f1e375]:
+              - generic [ref=f1e376]: Q1
+              - generic [ref=f1e377]: Multiple Choice
+            - generic [ref=f1e378]:
+              - paragraph [ref=f1e379]: Which sentence uses the present perfect correctly?
+              - generic [ref=f1e380]:
+                - button "I have visited Paris" [disabled] [ref=f1e381]
+                - button "I visited Paris" [disabled] [ref=f1e382]
+                - button "I have visit Paris" [disabled] [ref=f1e383]
+                - button "I visits Paris" [disabled] [ref=f1e384]
+              - paragraph [ref=f1e429]: ✅ Correct!
+          - generic [ref=f1e386]:
+            - generic [ref=f1e387]:
+              - generic [ref=f1e388]: Q2
+              - generic [ref=f1e389]: Multiple Choice
+            - generic [ref=f1e390]:
+              - paragraph [ref=f1e391]: She ___ here for five years.
+              - generic [ref=f1e392]:
+                - button "has lived" [ref=f1e393] [cursor=pointer]
+                - button "lived" [ref=f1e394] [cursor=pointer]
+                - button "have lived" [ref=f1e395] [cursor=pointer]
+                - button "living" [ref=f1e396] [cursor=pointer]
+              - button "Check Answer" [disabled] [ref=f1e397]
+          - generic [ref=f1e398]:
+            - generic [ref=f1e399]:
+              - generic [ref=f1e400]: Q3
+              - generic [ref=f1e401]: Fill in the Blank
+            - generic [ref=f1e402]:
+              - paragraph [ref=f1e403]: I ___ never ___ to Japan.
+              - generic [ref=f1e404]:
+                - textbox "Type your answer..." [ref=f1e405]
+                - button "Check" [disabled] [ref=f1e406]
+          - generic [ref=f1e407]:
+            - generic [ref=f1e408]:
+              - generic [ref=f1e409]: Q4
+              - generic [ref=f1e410]: Fill in the Blank
+            - generic [ref=f1e411]:
+              - paragraph [ref=f1e412]: They ___ already ___ the project.
+              - generic [ref=f1e413]:
+                - textbox "Type your answer..." [ref=f1e414]
+                - button "Check" [disabled] [ref=f1e415]
+          - generic [ref=f1e416]:
+            - generic [ref=f1e417]:
+              - generic [ref=f1e418]: Q5
+              - generic [ref=f1e419]: Multiple Choice
+            - generic [ref=f1e420]:
+              - paragraph [ref=f1e421]: Which tense connects past actions to the present?
+              - generic [ref=f1e422]:
+                - button "present perfect" [ref=f1e423] [cursor=pointer]
+                - button "simple past" [ref=f1e424] [cursor=pointer]
+                - button "past perfect" [ref=f1e425] [cursor=pointer]
+                - button "future perfect" [ref=f1e426] [cursor=pointer]
+              - button "Check Answer" [disabled] [ref=f1e427]
